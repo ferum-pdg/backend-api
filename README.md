@@ -1,8 +1,6 @@
-# Status
-
-![Tests on develop](https://github.com/ferum-pdg/backend-api/actions/workflows/test-develop.yml/badge.svg)
-
 # backend-api
+## Status
+![Tests on develop](https://github.com/ferum-pdg/backend-api/actions/workflows/test-d**evelop.yml/badge.svg**)
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 

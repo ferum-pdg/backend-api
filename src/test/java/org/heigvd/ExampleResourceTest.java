@@ -14,6 +14,6 @@ class ExampleResourceTest {
                 .when().get("/hello")
                 .then()
                 .statusCode(200)
-                .body(is("Hello from Quarkus REST, error"));
+                .body(is("Hello from Quarkus REST"));
     }
 }
