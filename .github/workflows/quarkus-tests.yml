@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - prod
-    # Optionnel: ne lancer que si la source est "develop"
     paths-ignore:
       - '**.md'
 
@@ -12,6 +11,7 @@ jobs:
   test:
     if: github.head_ref == 'develop'  # S'assure que la PR vient de develop
     runs-on: ubuntu-latest
+    name: Run Quarkus tests on PR to prod
 
     steps:
       - name: Checkout repository
