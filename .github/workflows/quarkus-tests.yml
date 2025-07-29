@@ -1,0 +1,27 @@
+name: Run Quarkus Tests on PR to prod
+
+on:
+  pull_request:
+    branches:
+      - prod
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  test:
+    if: github.head_ref == 'develop'  # S'assure que la PR vient de develop
+    runs-on: ubuntu-latest
+    name: Run Quarkus tests on PR to prod
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build and test with Maven
+        run: ./mvnw clean verify
