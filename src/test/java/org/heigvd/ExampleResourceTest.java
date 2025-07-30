@@ -1,6 +1,7 @@
 package org.heigvd;
 
 import io.quarkus.test.junit.QuarkusTest;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
@@ -15,5 +16,11 @@ class ExampleResourceTest {
                 .then()
                 .statusCode(200)
                 .body(is("Hello from Quarkus REST"));
+    }
+
+    @Test
+    void testBonjour(){
+        int result = 1 + 1;
+        Assertions.assertEquals(result, 2);
     }
 }
