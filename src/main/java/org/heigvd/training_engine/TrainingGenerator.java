@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface TrainingGenerator {
 
-    public List<Workout> generateTraining(Account account, TrainingPlan trainingPlan);
+    public List<Workout> generateTrainingWorkouts(Account account, TrainingPlan trainingPlan);
 }

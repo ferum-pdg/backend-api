@@ -10,25 +10,58 @@ public class Account {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    private UUID id;
 
-    String email;
+    private String email;
 
-    String password;
+    private String password;
 
     @Column(name = "first_name")
-    String firstName;
+    private String firstName;
 
     @Column(name = "last_name")
-    String lastName;
+    private String lastName;
 
     @Column(name = "phone_number")
-    String phoneNumber;
+    private String phoneNumber;
 
     @Column(name = "birth_date")
-    LocalDate birthDate;
+    private LocalDate birthDate;
 
-    Double weight;
+    private Double weight;
 
-    Double height;
+    private Double height;
+
+    @Column(name = "fcmax")
+    private int FCMax;
+
+    // CONSTRUCTORS ---------------------------------------------
+
+    public Account() {}
+
+    public Account(String email, String password, String firstName, String lastName, String phoneNumber,
+                   LocalDate birthDate, Double weight, Double height, int FCMax) {
+        this.email = email;
+        this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phoneNumber = phoneNumber;
+        this.birthDate = birthDate;
+        this.weight = weight;
+        this.height = height;
+        this.FCMax = FCMax;
+    }
+
+    public Account(String email, String firstName, String lastName,
+                   LocalDate birthDate, Double weight, Double height, int FCMax) {
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.birthDate = birthDate;
+        this.weight = weight;
+        this.height = height;
+        this.FCMax = FCMax;
+    }
+
+    // METHODS --------------------------------------------------
 }

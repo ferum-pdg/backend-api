@@ -3,6 +3,8 @@ package org.heigvd.entity;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.UUID;
 
 @Entity
@@ -45,4 +47,52 @@ public class Workout {
     private Double averageSpeed;
 
     private String source;
+
+    @Enumerated(EnumType.STRING)
+    private TrainingStatus status;
+
+    // CONSTRUCTORS ---------------------------------------------
+
+    public Workout() {}
+
+    public Workout(Account account, TrainingPlan trainingPlan, Sport sport, OffsetDateTime startTime,
+                   OffsetDateTime endTime, int durationSec, double distanceMeters, double caloriesKcal,
+                   int avgHeartRate, int maxHeartRate, Double averageSpeed, String source, TrainingStatus status) {
+        this.account = account;
+        this.trainingPlan = trainingPlan;
+        this.sport = sport;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.durationSec = durationSec;
+        this.distanceMeters = distanceMeters;
+        this.caloriesKcal = caloriesKcal;
+        this.avgHeartRate = avgHeartRate;
+        this.maxHeartRate = maxHeartRate;
+        this.averageSpeed = averageSpeed;
+        this.source = source;
+        this.status = status;
+    }
+
+    public Workout(Account account, TrainingPlan trainingPlan, Sport sport, OffsetDateTime startTime,
+                   OffsetDateTime endTime, String source, TrainingStatus status) {
+        this.account = account;
+        this.trainingPlan = trainingPlan;
+        this.sport = sport;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.source = source;
+        this.status = status;
+    }
+
+    // METHODS --------------------------------------------------
+
+    @Override
+    public String toString() {
+        return "{" + ",\n" +
+                "   id = " + id + ",\n" +
+                "   sport = " + sport +",\n" +
+                "   startTime = " + startTime.format(DateTimeFormatter.ofPattern("EEEE d MMMM 'at' HH:mm")) + ",\n" +
+                "   status = " + status +",\n" +
+                "}," + "\n";
+    }
 }

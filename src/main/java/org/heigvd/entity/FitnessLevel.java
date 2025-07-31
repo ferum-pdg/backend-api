@@ -18,4 +18,9 @@ public class FitnessLevel {
 
     @Column(name = "fitness_score")
     private int fitnessScore;
+
+    // CONSTRUCTORS ---------------------------------------------
+
+
+    // METHODS --------------------------------------------------
 }
