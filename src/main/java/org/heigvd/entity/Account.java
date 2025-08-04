@@ -3,6 +3,8 @@ package org.heigvd.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -35,6 +37,9 @@ public class Account {
     @Column(name = "fcmax")
     private int FCMax;
 
+    @OneToMany
+    private List<FitnessLevel> fitnessLevels  = new ArrayList<>();
+
     // CONSTRUCTORS ---------------------------------------------
 
     public Account() {}
@@ -64,4 +69,15 @@ public class Account {
     }
 
     // METHODS --------------------------------------------------
+
+    public List<FitnessLevel> getFitnessLevels() { return fitnessLevels; }
+    public void setFitnessLevels(List<FitnessLevel> fitnessLevels) { this.fitnessLevels = fitnessLevels; }
+    public void addFitnessLevel(FitnessLevel fitnessLevel) { this.fitnessLevels.add(fitnessLevel); }
+    public FitnessLevel getLastFitnessLevel() {
+        if (fitnessLevels == null || fitnessLevels.isEmpty()) {
+            return null;
+        }
+        return fitnessLevels.getLast();
+    }
+
 }

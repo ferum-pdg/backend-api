@@ -2,17 +2,71 @@ package org.heigvd.training_engine;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import org.heigvd.entity.*;
+import org.heigvd.entity.Workout.Workout;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.temporal.IsoFields;
 import java.util.*;
 
 @ApplicationScoped
 public class TrainingGeneratorV1 implements TrainingGenerator {
 
+    public List<Workout> generateTrainingWorkouts(TrainingPlan trainingPlan) {
+
+        List<Goal> goals = trainingPlan.getGoals();
+
+        int nbOfWorkoutsPerWeek = calculateNbOfWorkoutsPerWeek(goals, trainingPlan.getAccount());
+
+        int nbOfTrainingWeeks = calculateNbOfWeeks(trainingPlan);
+
+        // Set de startDate to the end date minus the number of training weeks
+        LocalDate startDate = trainingPlan.getEndDate().minusWeeks(nbOfTrainingWeeks);
+
+        if(nbOfWorkoutsPerWeek > trainingPlan.getDaysOfWeek().size()) {
+            throw new IllegalArgumentException("Not enough available days to schedule the workouts.");
+        }
+
+        return new ArrayList<Workout>();
+    }
+
+    /**
+     * Calculates the number of workouts per week based on the goals and use a mathematical formula to take to account
+     * the shared effect of EF for cycling and running.
+     * @param goals
+     * @return
+     */
+    private Integer calculateNbOfWorkoutsPerWeek(List<Goal> goals, Account account) {
+        Map<Sport, Integer> workoutPerSport = new HashMap<>();
+
+        for (Goal goal : goals) {
+            Sport sport = goal.getSport();
+            int nbWorkouts = goal.getNbOfWorkoutsPerWeek();
+            workoutPerSport.put(sport, workoutPerSport.getOrDefault(sport, 0) + nbWorkouts);
+        }
+
+        int running = workoutPerSport.getOrDefault(Sport.RUNNING, 0);
+        int cycling = workoutPerSport.getOrDefault(Sport.CYCLING, 0);
+        int swimming = workoutPerSport.getOrDefault(Sport.SWIMMING, 0);
+
+        double fitnessLevelPonderation = (double) account.getLastFitnessLevel().getFitnessLevel() / 200 + 0.4;
+
+        return (int) Math.round(
+                (running + cycling) * fitnessLevelPonderation +
+                (swimming > 1 ? swimming - 1 : swimming)
+        );
+    }
+
+    private Integer calculateNbOfWeeks(TrainingPlan trainingPlan) {
+        if (trainingPlan.getGoals().isEmpty()) {
+            return 0;
+        }
+
+        return trainingPlan.getGoals().stream()
+                .map(Goal::getNbOfWeek)
+                .max(Integer::compareTo)
+                .orElse(0);
+    }
+
+    /*
     public List<Workout> generateTrainingWorkouts(Account account, TrainingPlan trainingPlan) {
         List<Workout> workouts = new ArrayList<>();
 
@@ -70,4 +124,6 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         OffsetDateTime end = start.plusHours(1);
         return new Workout(account, plan, sport, start, end, "GENERATOR_V1", TrainingStatus.PLANNED);
     }
+
+    */
 }

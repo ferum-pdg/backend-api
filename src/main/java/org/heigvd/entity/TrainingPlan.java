@@ -36,22 +36,25 @@ public class TrainingPlan {
     @Column(name = "long_outgoing")
     private List<DayOfWeek> longOutgoing;
 
+    @ManyToOne
+    private Account account;
+
 
     // CONSTRUCTORS ---------------------------------------------
 
     public TrainingPlan() {}
 
-    public TrainingPlan(Goal _goal, LocalDate _startDate, List<DayOfWeek> _daysOfWeek, List<DayOfWeek> _longOutgoing) {
-        this(List.of(_goal), _startDate, _daysOfWeek, _longOutgoing);
+    public TrainingPlan(Goal _goal, LocalDate _endDate, List<DayOfWeek> _daysOfWeek, List<DayOfWeek> _longOutgoing, Account _account) {
+        this(List.of(_goal), _endDate, _daysOfWeek, _longOutgoing, _account);
     }
 
 
-    public TrainingPlan(List<Goal> _goals, LocalDate _startDate, List<DayOfWeek> _daysOfWeek, List<DayOfWeek> _longOutgoing) {
+    public TrainingPlan(List<Goal> _goals, LocalDate _endDate, List<DayOfWeek> _daysOfWeek, List<DayOfWeek> _longOutgoing, Account _account) {
         this.goals = _goals;
-        this.startDate = _startDate;
-        this.endDate = _startDate.plusWeeks(_goals.stream().findFirst().get().getNbOfWeek());
+        this.endDate = _endDate;
         this.daysOfWeek = _daysOfWeek;
         this.longOutgoing = _longOutgoing;
+        this.account = _account;
     }
 
     // METHODS --------------------------------------------------
@@ -67,6 +70,9 @@ public class TrainingPlan {
     public LocalDate getStartDate() {
         return startDate;
     }
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
 
     public LocalDate getEndDate() {
         return endDate;
@@ -74,6 +80,30 @@ public class TrainingPlan {
 
     public List<DayOfWeek> getDaysOfWeek() {
         return daysOfWeek;
+    }
+
+    public List<DayOfWeek> getLongOutgoing() {
+        return longOutgoing;
+    }
+    public void setLongOutgoing(List<DayOfWeek> longOutgoing) {
+        this.longOutgoing = longOutgoing;
+    }
+
+    public void setGoals(List<Goal> goals) {
+        this.goals = goals;
+    }
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    public void setDaysOfWeek(List<DayOfWeek> daysOfWeek) {
+        this.daysOfWeek = daysOfWeek;
+    }
+    public Account getAccount() {
+        return account;
+    }
+    public void setAccount(Account account) {
+        this.account = account;
     }
 
     @Override

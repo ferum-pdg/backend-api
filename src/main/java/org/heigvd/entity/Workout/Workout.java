@@ -1,10 +1,13 @@
-package org.heigvd.entity;
+package org.heigvd.entity.Workout;
 
 import jakarta.persistence.*;
+import org.heigvd.entity.Account;
+import org.heigvd.entity.Sport;
+import org.heigvd.entity.TrainingPlan;
+import org.heigvd.entity.TrainingStatus;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import java.util.UUID;
 
 @Entity

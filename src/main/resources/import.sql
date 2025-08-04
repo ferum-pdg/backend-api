@@ -8,5 +8,7 @@ INSERT INTO goal (name, elevation_gain, nb_of_week, nb_of_workouts_per_week, tar
 VALUES
     ('5km', 50,8, 2, 5, 'RUNNING'),
     ('10km', 100, 8, 2, 10, 'RUNNING'),
-    ('Half-marathon', 1500, 12, 3, 21.1, 'RUNNING'),
-    ('Marathon', 200, 20, 4, 42.2, 'RUNNING');
+    ('Half-marathon', 150, 12, 3, 21.1, 'RUNNING'),
+    ('Marathon', 200, 20, 4, 42.2, 'RUNNING'),
+    ('Cycling 20km', '300', 8, 2,20, 'CYCLING');
+

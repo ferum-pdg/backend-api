@@ -3,6 +3,7 @@ package org.heigvd;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.heigvd.entity.*;
+import org.heigvd.entity.Workout.Workout;
 import org.heigvd.service.GoalService;
 import org.heigvd.service.TrainingPlanService;
 import org.heigvd.training_engine.TrainingGeneratorV1;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @QuarkusTest
@@ -27,20 +29,24 @@ public class TrainingGeneratorV1Test {
     @Test
     void generateTraining() {
 
-        Goal g = goalService.getSpecificGoal(Sport.RUNNING, 5.0);
+        Goal g1 = goalService.getSpecificGoal(Sport.RUNNING, 10.0);
+        Goal g2 = goalService.getSpecificGoal(Sport.CYCLING, 20.0);
 
         List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY, DayOfWeek.SUNDAY);
+        //days = List.of(DayOfWeek.SATURDAY);
 
-        LocalDate startDate = LocalDate.of(2025, 5, 24);
-
-        TrainingPlan tp = new TrainingPlan(g, startDate, days, days);
+        LocalDate endDate = LocalDate.of(2025, 12, 24);
 
         Account account = new Account("guillaumetrueb@etik.com", "Guillaume", "Trüeb",
                 LocalDate.of(1999, 9, 21), 77.0, 176.0, 205);
 
-        List<Workout> workouts = trainingGeneratorV1.generateTrainingWorkouts(account, tp);
+        FitnessLevel fitnessLevel = new FitnessLevel(LocalDate.now(), 75);
 
-        System.out.println("Generated " + workouts.size() + " workouts for the training plan.");
+        account.addFitnessLevel(fitnessLevel);
+
+        TrainingPlan tp = new TrainingPlan(List.of(g1,g2), endDate, days, days, account);
+
+        List<Workout> workouts = trainingGeneratorV1.generateTrainingWorkouts(tp);
 
         System.out.println(workouts);
 
