@@ -3,7 +3,6 @@ package org.heigvd.entity.Workout;
 import jakarta.persistence.*;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
-import org.heigvd.entity.TrainingPlan;
 import org.heigvd.entity.TrainingStatus;
 
 import java.time.OffsetDateTime;
@@ -19,9 +18,6 @@ public class Workout {
 
     @ManyToOne
     private Account account;
-
-    @ManyToOne
-    private TrainingPlan trainingPlan;
 
     private Sport sport;
 
@@ -58,11 +54,10 @@ public class Workout {
 
     public Workout() {}
 
-    public Workout(Account account, TrainingPlan trainingPlan, Sport sport, OffsetDateTime startTime,
+    public Workout(Account account, Sport sport, OffsetDateTime startTime,
                    OffsetDateTime endTime, int durationSec, double distanceMeters, double caloriesKcal,
                    int avgHeartRate, int maxHeartRate, Double averageSpeed, String source, TrainingStatus status) {
         this.account = account;
-        this.trainingPlan = trainingPlan;
         this.sport = sport;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -76,10 +71,9 @@ public class Workout {
         this.status = status;
     }
 
-    public Workout(Account account, TrainingPlan trainingPlan, Sport sport, OffsetDateTime startTime,
+    public Workout(Account account, Sport sport, OffsetDateTime startTime,
                    OffsetDateTime endTime, String source, TrainingStatus status) {
         this.account = account;
-        this.trainingPlan = trainingPlan;
         this.sport = sport;
         this.startTime = startTime;
         this.endTime = endTime;

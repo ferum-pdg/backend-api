@@ -39,4 +39,17 @@ public class Goal {
     public Sport getSport() { return this.sport; }
 
     public int getNbOfWorkoutsPerWeek() { return this.nbOfWorkoutsPerWeek; }
+
+    @Override
+    public String toString() {
+        return "\n {\n" +
+                "  id=" + id + "\n" +
+                "  sport=" + sport + "\n" +
+                "  name='" + name + '\'' + "\n" +
+                "  nbOfWorkoutsPerWeek=" + nbOfWorkoutsPerWeek + "\n" +
+                "  nbOfWeek=" + nbOfWeek + "\n" +
+                "  targetDistance=" + targetDistance + "\n" +
+                "  elevationGain=" + elevetionGain + "\n" +
+                " }";
+    }
 }

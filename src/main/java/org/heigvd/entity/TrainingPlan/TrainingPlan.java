@@ -1,10 +1,15 @@
-package org.heigvd.entity;
+package org.heigvd.entity.TrainingPlan;
 
 import jakarta.persistence.*;
+import org.heigvd.entity.Account;
+import org.heigvd.entity.Goal;
+import org.heigvd.entity.Sport;
+import org.heigvd.entity.Workout.Workout;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,6 +44,11 @@ public class TrainingPlan {
     @ManyToOne
     private Account account;
 
+    @OneToMany
+    private List<Workout> workouts;
+
+    @OneToMany
+    private List<DailyPlan> pairWeeklyPlans;
 
     // CONSTRUCTORS ---------------------------------------------
 
@@ -106,15 +116,30 @@ public class TrainingPlan {
         this.account = account;
     }
 
+    public List<Workout> getWorkouts() { return workouts; }
+    public void setWorkouts(List<Workout> workouts) { this.workouts = workouts; }
+
+    public List<DailyPlan> getPairWeeklyPlans() { return pairWeeklyPlans; }
+    public void setPairWeeklyPlans(List<DailyPlan> pairWeeklyPlans) { this.pairWeeklyPlans = pairWeeklyPlans; }
+    public void addPairWeeklyPlan(DailyPlan dailyPlan) {
+        if (this.pairWeeklyPlans == null) {
+            this.pairWeeklyPlans = new ArrayList<>();
+        }
+        this.pairWeeklyPlans.add(dailyPlan);
+    }
+
+
     @Override
     public String toString() {
-        return "TrainingPlan{" +
-                "id=" + id +
-                ", goals=" + goals +
-                ", startDate=" + startDate +
-                ", endDate=" + endDate +
-                ", daysOfWeek=" + daysOfWeek +
-                ", longOutgoing=" + longOutgoing +
+        return "TrainingPlan { \n" +
+                " id=" + id + " \n" +
+                " goals=" + goals + " \n" +
+                " startDate=" + startDate + " \n" +
+                " endDate=" + endDate + " \n" +
+                " daysOfWeek=" + daysOfWeek + " \n" +
+                " longOutgoing=" + longOutgoing + " \n" +
+                " account=" + account.getEmail() + " \n" +
+                " dailyPlans=" + pairWeeklyPlans + " \n" +
                 '}';
     }
 }
