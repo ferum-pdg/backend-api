@@ -8,10 +8,7 @@ import org.heigvd.entity.Workout.Workout;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 public class TrainingPlan {
@@ -119,7 +116,12 @@ public class TrainingPlan {
     public List<Workout> getWorkouts() { return workouts; }
     public void setWorkouts(List<Workout> workouts) { this.workouts = workouts; }
 
-    public List<DailyPlan> getPairWeeklyPlans() { return pairWeeklyPlans; }
+    public List<DailyPlan> getPairWeeklyPlans() {
+        if (pairWeeklyPlans != null) {
+            pairWeeklyPlans.sort(Comparator.comparing(DailyPlan::getDayOfWeek));
+        }
+        return pairWeeklyPlans;
+    }
     public void setPairWeeklyPlans(List<DailyPlan> pairWeeklyPlans) { this.pairWeeklyPlans = pairWeeklyPlans; }
     public void addPairWeeklyPlan(DailyPlan dailyPlan) {
         if (this.pairWeeklyPlans == null) {
@@ -139,7 +141,7 @@ public class TrainingPlan {
                 " daysOfWeek=" + daysOfWeek + " \n" +
                 " longOutgoing=" + longOutgoing + " \n" +
                 " account=" + account.getEmail() + " \n" +
-                " dailyPlans=" + pairWeeklyPlans + " \n" +
-                '}';
+                " dailyPlans=" + getPairWeeklyPlans() + " \n" +
+                "}";
     }
 }

@@ -10,6 +10,12 @@ VALUES
     ('10km', 100, 8, 2, 10, 'RUNNING'),
     ('Half-marathon', 150, 12, 3, 21.1, 'RUNNING'),
     ('Marathon', 200, 20, 4, 42.2, 'RUNNING'),
-    ('Cycling 20km', '300', 8, 2,20, 'CYCLING'),
-    ('Swimming 1km', 0, 8, 2, 1.0, 'SWIMMING');
+    ('Cycling 20km', 300, 8, 2,20, 'CYCLING'),
+    ('Cycling 40km', 600, 8, 2,40, 'CYCLING'),
+    ('Cycling 100km', 1000, 12, 4,100, 'CYCLING'),
+    ('Cycling 180km', 1500, 16, 5,180, 'CYCLING'),
+    ('Swimming 500m', 0, 8, 2, 0.5, 'SWIMMING'),
+    ('Swimming 1000m', 0, 8, 2, 1.0, 'SWIMMING'),
+    ('Swimming 1800m', 0, 10, 3, 1.8, 'SWIMMING'),
+    ('Swimming 3900m', 0, 10, 4, 3.9, 'SWIMMING');
 

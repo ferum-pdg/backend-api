@@ -8,12 +8,15 @@ import org.heigvd.entity.Workout.Workout;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class TrainingGeneratorV1 implements TrainingGenerator {
 
+    public static boolean CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY = false;
+
+    @Override
     public List<Workout> generateTrainingWorkouts(TrainingPlan trainingPlan) {
 
         List<Goal> goals = trainingPlan.getGoals();
@@ -22,81 +25,118 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
 
         int nbOfTrainingWeeks = calculateNbOfWeeks(trainingPlan);
 
-        // Set de startDate to the end date minus the number of training weeks
+        // Start date calcul
         LocalDate startDate = trainingPlan.getEndDate().minusWeeks(nbOfTrainingWeeks);
 
-        if(nbOfWorkoutsPerWeek > trainingPlan.getDaysOfWeek().size()) {
+        CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY = trainingPlan.getAccount().getLastFitnessLevel().getFitnessLevel() >= 60;
+
+        if(nbOfWorkoutsPerWeek > trainingPlan.getDaysOfWeek().size() && !CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY) {
             throw new IllegalArgumentException("Not enough available days to schedule the workouts.");
         }
 
-        HashMap<Sport, Integer> sportDistribution = calculateSportDistribution(nbOfWorkoutsPerWeek, goals);
+        LinkedHashMap<Sport, Integer> sportDistribution = calculateSportDistribution(nbOfWorkoutsPerWeek, goals);
 
-        generateDailyPlans(trainingPlan, sportDistribution);
+        List<DailyPlan> dailyPlans = generateWeeklyDailyPlans(trainingPlan, sportDistribution);
 
+        trainingPlan.setPairWeeklyPlans(dailyPlans);
+        trainingPlan.setStartDate(startDate);
+
+        // On ne génère pas les Workout pour l'instant
         return null;
     }
 
-    private void generateDailyPlans(TrainingPlan trainingPlan, HashMap<Sport, Integer> sportDistribution) {
+    private List<DailyPlan> generateWeeklyDailyPlans(TrainingPlan trainingPlan, LinkedHashMap<Sport, Integer> sportDistribution) {
         List<DailyPlan> dailyPlans = new ArrayList<>();
         List<DayOfWeek> daysOfWeek = trainingPlan.getDaysOfWeek();
+        int totalDays = daysOfWeek.size();
 
-        // I want to distribute the sports evenly across the days of the week
-        int dayIndex = 0;
-        int sportIndex = 0;
+        // Sort sports by number of sessions to plan (descending)
+        List<Map.Entry<Sport, Integer>> sportsByFreq = new ArrayList<>(sportDistribution.entrySet());
+        sportsByFreq.sort((a, b) -> b.getValue().compareTo(a.getValue()));
 
-        int nbOfSports = sportDistribution.size();
-        int nbOfDays = daysOfWeek.size();
+        // Mark assigned days
+        Map<Integer, Sport> assignedDays = new HashMap<>();
+        Set<Integer> usedDayIndexes = new HashSet<>();
 
-        // While there are still training to distribute, we go through available days and distribute the sports
-        // with an decalage of the number of sports so the number of sports is distributed evenly across the days of the week.
-        while (sportDistribution.values().stream().anyMatch(count -> count > 0)) {
-            // If the current sport has no more workouts to distribute, we move to the next sport
-            while (sportIndex < nbOfSports && sportDistribution.get(Sport.values()[sportIndex]) <= 0) {
-                sportIndex++;
+        for (Map.Entry<Sport, Integer> entry : sportsByFreq) {
+            Sport sport = entry.getKey();
+            int count = entry.getValue();
+
+            if (count <= 0) continue;
+            if (count > totalDays) {
+                throw new IllegalArgumentException("Too many workouts to fit in available days.");
             }
 
-            // If we have reached the end of the sports list, we reset the index
-            if (sportIndex >= nbOfSports) {
-                sportIndex = 0;
+            // Try to space evenly the sessions
+            List<Integer> positions = new ArrayList<>();
+            double interval = (double) totalDays / count;
+
+            for (int i = 0; i < count; i++) {
+                int idealIndex = (int) Math.round(i * interval);
+                int idx = findClosestFreeDay(idealIndex, usedDayIndexes, totalDays);
+
+                if (idx != -1) {
+                    positions.add(idx);
+                    usedDayIndexes.add(idx);
+                    assignedDays.put(idx, sport);
+                }
             }
-
-            // If we have a valid sport to distribute
-            if (sportIndex < nbOfSports) {
-                Sport currentSport = Sport.values()[sportIndex];
-                dailyPlans.add(new DailyPlan(daysOfWeek.get(dayIndex), currentSport));
-                sportDistribution.put(currentSport, sportDistribution.get(currentSport) - 1);
-            }
-
-            // Increment day index and wrap around if necessary
-            dayIndex = (dayIndex + 3) % nbOfDays;
-
-            // Increment sport index and wrap around if necessary
-            sportIndex = (sportIndex + 1) % nbOfSports;
         }
 
-        /* While all elements in sportDistribution is not equals to 0, we will add the sport to the daily plans
-        while (sportDistribution.values().stream().anyMatch(count -> count > 0)) {
-            // go trough trainingPlan.getDaysOfWeek() and add the sport to the daily plans
-            for (int i = 0; i < nbOfDays; i += nbOfSports) {
-                DayOfWeek dayOfWeek = daysOfWeek.get(dayIndex);
-                dailyPlans.add(new DailyPlan(dayOfWeek, Sport.values()[sportIndex]));
-                sportDistribution.put(Sport.values()[sportIndex], sportDistribution.get(Sport.values()[sportIndex]) - 1);
-                dayIndex = (dayIndex + 1) % nbOfDays; // Increment day index and wrap around if necessary
-                sportIndex = (sportIndex + 1) % nbOfSports; // Increment sport
-            }
-        }*/
+        // Ensure no same sport two days in a row (soft rule)
+        List<Integer> sortedIndexes = new ArrayList<>(assignedDays.keySet());
+        Collections.sort(sortedIndexes);
 
-        trainingPlan.setPairWeeklyPlans(dailyPlans);
+        for (int i = 1; i < sortedIndexes.size(); i++) {
+            int prev = sortedIndexes.get(i - 1);
+            int curr = sortedIndexes.get(i);
+            if (curr - prev == 1 && assignedDays.get(prev).equals(assignedDays.get(curr))) {
+                // Try to swap with a further unassigned day
+                for (int j = totalDays - 1; j >= 0; j--) {
+                    if (!usedDayIndexes.contains(j)) {
+                        assignedDays.put(j, assignedDays.get(curr));
+                        assignedDays.remove(curr);
+                        usedDayIndexes.remove(curr);
+                        usedDayIndexes.add(j);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Build the daily plans
+        for (int i = 0; i < totalDays; i++) {
+            if (assignedDays.containsKey(i)) {
+                dailyPlans.add(new DailyPlan(daysOfWeek.get(i), assignedDays.get(i)));
+            }
+        }
+
+        return dailyPlans;
     }
 
     /**
-     * Calculates the distribution of sports based on the goals and the number of workouts per week.
-     * @param nbOfWorkoutsPerWeek the total number of workouts per week
-     * @param goals the list of goals for the training plan
-     * @return a map with the sport as key and the number of workouts as value
+     * Finds the closest index to `target` that is not already used
      */
-    private HashMap<Sport, Integer> calculateSportDistribution(Integer nbOfWorkoutsPerWeek, List<Goal> goals) {
-        HashMap<Sport, Integer> sportDistribution = new HashMap<>();
+    private int findClosestFreeDay(int target, Set<Integer> used, int totalDays) {
+        int radius = 0;
+        while (radius < totalDays) {
+            int lower = target - radius;
+            int upper = target + radius;
+            if (lower >= 0 && !used.contains(lower)) return lower;
+            if (upper < totalDays && !used.contains(upper)) return upper;
+            radius++;
+        }
+        return -1;
+    }
+
+
+    /**
+     * Calcule la distribution des sports en reprenant ta logique initiale
+     * (alternance running/cycling si nécessaire) et en s'assurant qu'on ne dépasse
+     * pas nbOfWorkoutsPerWeek.
+     */
+    private LinkedHashMap<Sport, Integer> calculateSportDistribution(Integer nbOfWorkoutsPerWeek, List<Goal> goals) {
+        LinkedHashMap<Sport, Integer> sportDistribution = new LinkedHashMap<>();
 
         for (Goal goal : goals) {
             Sport sport = goal.getSport();
@@ -105,30 +145,59 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         }
 
         if (sportDistribution.containsKey(Sport.RUNNING) && sportDistribution.containsKey(Sport.CYCLING)) {
-
-            // If both running and cycling are present, we need to adjust the distribution
             int running = sportDistribution.get(Sport.RUNNING);
             int cycling = sportDistribution.get(Sport.CYCLING);
+            int swimming = sportDistribution.getOrDefault(Sport.SWIMMING, 0);
 
-            int nbOfWorkoutsPerWeekWithoutSwimming = nbOfWorkoutsPerWeek - sportDistribution.getOrDefault(Sport.SWIMMING, 0);
+            int nbOfWorkoutsPerWeekWithoutSwimming = nbOfWorkoutsPerWeek - swimming;
+            if (nbOfWorkoutsPerWeekWithoutSwimming < 0) nbOfWorkoutsPerWeekWithoutSwimming = 0;
 
             if (running + cycling > nbOfWorkoutsPerWeekWithoutSwimming) {
-                // If the total exceeds the number of workouts per week, we need to scale down
-                double scalingFactor = (double) nbOfWorkoutsPerWeekWithoutSwimming / (running + cycling);
-                sportDistribution.put(Sport.RUNNING, (int) Math.round(running * scalingFactor));
-                sportDistribution.put(Sport.CYCLING, (int) Math.round(cycling * scalingFactor));
+                sportDistribution.put(Sport.RUNNING, 0);
+                sportDistribution.put(Sport.CYCLING, 0);
+                for (int i = 0; i < nbOfWorkoutsPerWeekWithoutSwimming; i++) {
+                    if (i % 2 == 0) {
+                        sportDistribution.put(Sport.RUNNING, sportDistribution.getOrDefault(Sport.RUNNING, 0) + 1);
+                    } else {
+                        sportDistribution.put(Sport.CYCLING, sportDistribution.getOrDefault(Sport.CYCLING, 0) + 1);
+                    }
+                }
             }
+        }
+
+        // Ensure total <= nbOfWorkoutsPerWeek (scale down if needed)
+        int total = sportDistribution.values().stream().mapToInt(Integer::intValue).sum();
+        if (total > nbOfWorkoutsPerWeek) {
+            LinkedHashMap<Sport, Integer> scaled = new LinkedHashMap<>();
+            double factor = (double) nbOfWorkoutsPerWeek / total;
+            int roundedSum = 0;
+            for (Map.Entry<Sport, Integer> e : sportDistribution.entrySet()) {
+                int scaledVal = (int) Math.round(e.getValue() * factor);
+                scaledVal = Math.max(0, scaledVal);
+                scaled.put(e.getKey(), scaledVal);
+                roundedSum += scaledVal;
+            }
+            int diff = nbOfWorkoutsPerWeek - roundedSum;
+            List<Sport> keys = new ArrayList<>(scaled.keySet());
+            int i = 0;
+            while (diff != 0 && !keys.isEmpty()) {
+                Sport s = keys.get(i % keys.size());
+                int v = scaled.get(s);
+                if (diff > 0) {
+                    scaled.put(s, v + 1);
+                    diff--;
+                } else if (diff < 0 && v > 0) {
+                    scaled.put(s, v - 1);
+                    diff++;
+                }
+                i++;
+            }
+            return scaled;
         }
 
         return sportDistribution;
     }
 
-    /**
-     * Calculates the number of workouts per week based on the goals and use a mathematical formula to take to account
-     * the shared effect of EF for cycling and running.
-     * @param goals the list of goals for the training plan
-     * @return the total number of workouts per week
-     */
     private Integer calculateNbOfWorkoutsPerWeek(List<Goal> goals, Account account) {
         Map<Sport, Integer> workoutPerSport = new HashMap<>();
 
@@ -142,19 +211,14 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         int cycling = workoutPerSport.getOrDefault(Sport.CYCLING, 0);
         int swimming = workoutPerSport.getOrDefault(Sport.SWIMMING, 0);
 
-        double fitnessLevelPonderation = (double) account.getLastFitnessLevel().getFitnessLevel() / 200 + 0.4;
+        double fitnessLevelPonderation = (double) account.getLastFitnessLevel().getFitnessLevel() / 200 + 0.45;
 
         return (int) Math.round(
                 (running + cycling) * fitnessLevelPonderation +
-                swimming
+                        swimming
         );
     }
 
-    /**
-     * Calculates the number of weeks needed for the training plan based on the goals.
-     * @param trainingPlan the training plan to analyze
-     * @return the number of weeks needed for the training plan
-     */
     private Integer calculateNbOfWeeks(TrainingPlan trainingPlan) {
         if (trainingPlan.getGoals().isEmpty()) {
             return 0;
