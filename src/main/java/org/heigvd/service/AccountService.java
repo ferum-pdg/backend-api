@@ -1,6 +1,8 @@
 package org.heigvd.service;
 
 import org.heigvd.entity.Account;
+import org.heigvd.entity.FitnessLevel;
+import org.heigvd.entity.Workout;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
@@ -127,13 +129,39 @@ public class AccountService {
 
     /**
      * @brief Supprime définitivement un compte de la base de données
+     *        et met à null les références dans Workout et FitnessLevel.
      * @param id L'identifiant UUID du compte à supprimer
      */
     @Transactional
     public void deleteAccount(UUID id) {
-        Account account = getAccountById(id);
+        Account account = getAccountById(id); // ou Account.findById(id) selon ton usage
+
+        // 1. Détacher les FitnessLevels liés
+        List<FitnessLevel> fitnessLevels = entityManager
+                .createQuery("SELECT f FROM FitnessLevel f WHERE f.account.id = :id", FitnessLevel.class)
+                .setParameter("id", id)
+                .getResultList();
+
+        for (FitnessLevel f : fitnessLevels) {
+            f.setAccount(null);
+            entityManager.merge(f);
+        }
+
+        // 2. Détacher les Workouts liés
+        List<Workout> workouts = entityManager
+                .createQuery("SELECT w FROM Workout w WHERE w.account.id = :id", Workout.class)
+                .setParameter("id", id)
+                .getResultList();
+
+        for (Workout w : workouts) {
+            w.setAccount(null);
+            entityManager.merge(w);
+        }
+
+        // 3. Supprimer le compte
         entityManager.remove(account);
     }
+
 
     /**
      * @brief Recherche des comptes par nom ou prénom (insensible à la casse)

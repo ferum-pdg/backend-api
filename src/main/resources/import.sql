@@ -30,24 +30,16 @@ VALUES
 -- ==========================================
 INSERT INTO fitnesslevel (id, account_id, date, fitness_score)
 VALUES
-    -- Alice Martin - progression sur 3 mois
+    -- Alice Martin
     (gen_random_uuid(), (SELECT id FROM account WHERE email = 'alice.martin@email.com'), '2024-01-01', 65),
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'alice.martin@email.com'), '2024-02-01', 70),
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'alice.martin@email.com'), '2024-03-01', 75),
 
-    -- Bob Dupont - niveau stable élevé
+    -- Bob Dupont
     (gen_random_uuid(), (SELECT id FROM account WHERE email = 'bob.dupont@email.com'), '2024-01-01', 85),
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'bob.dupont@email.com'), '2024-02-01', 87),
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'bob.dupont@email.com'), '2024-03-01', 88),
 
-    -- Claire Bernard - débutante en progression
+    -- Claire Bernard
     (gen_random_uuid(), (SELECT id FROM account WHERE email = 'claire.bernard@email.com'), '2024-01-01', 45),
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'claire.bernard@email.com'), '2024-02-01', 55),
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'claire.bernard@email.com'), '2024-03-01', 62),
 
-    -- David Moreau - niveau intermédiaire
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'david.moreau@email.com'), '2024-01-01', 72),
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'david.moreau@email.com'), '2024-02-01', 75),
+    -- David Moreau
     (gen_random_uuid(), (SELECT id FROM account WHERE email = 'david.moreau@email.com'), '2024-03-01', 78);
 
 -- 4. INSERTION DES PLANS D'ENTRAINEMENT
@@ -129,7 +121,7 @@ VALUES
     (gen_random_uuid(), (SELECT id FROM account WHERE email = 'alice.martin@email.com'), (SELECT id FROM trainingplan WHERE start_date = '2024-01-01'), 0, '2024-01-13 09:00:00+01', '2024-01-13 09:40:00+01', 2400, 4000, 6.0, 250, 148, 163, 'Manual', 'COMPLETED'),
 
     -- Workout planifié
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'alice.martin@email.com'), (SELECT id FROM trainingplan WHERE start_date = '2024-01-01'), 0, '2024-08-07 18:00:00+01', '2024-08-07 18:30:00+01', 1800, 3000, 6.0, 210, NULL, NULL, 'Manual', 'PLANNED');
+    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'alice.martin@email.com'), (SELECT id FROM trainingplan WHERE start_date = '2024-01-01'), 0, '2024-08-07 18:00:00+01', '2024-08-07 18:30:00+01', 1800, 3000, 6.0, 210, 146, 177, 'Manual', 'PLANNED');
 
 -- Workouts de Bob (Course à pied - Objectif Half-marathon)
 INSERT INTO workout (id, account_id, trainingplan_id, sport, start_time, end_time, duration_sec, distance_meters, average_speed, calories_kcal, avg_heart_rate, max_heart_rate, source, status)
@@ -158,27 +150,3 @@ VALUES
     (gen_random_uuid(), (SELECT id FROM account WHERE email = 'david.moreau@email.com'), (SELECT id FROM trainingplan WHERE start_date = '2024-01-15'), 0, '2024-01-20 08:00:00+01', '2024-01-20 08:50:00+01', 3000, 8000, 9.6, 550, 155, 172, 'Polar', 'COMPLETED'),
     -- Sortie longue du dimanche
     (gen_random_uuid(), (SELECT id FROM account WHERE email = 'david.moreau@email.com'), (SELECT id FROM trainingplan WHERE start_date = '2024-01-15'), 0, '2024-01-21 09:00:00+01', '2024-01-21 11:15:00+01', 8100, 18000, 8.0, 980, 152, 168, 'Polar', 'COMPLETED');
-
--- Workouts supplémentaires (autres sports)
-INSERT INTO workout (id, account_id, sport, start_time, end_time, duration_sec, distance_meters, average_speed, calories_kcal, avg_heart_rate, max_heart_rate, source, status)
-VALUES
-    -- Vélo pour Bob
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'bob.dupont@email.com'), 1, '2024-02-15 14:00:00+01', '2024-02-15 16:30:00+01', 9000, 45000, 18.0, 650, 145, 165, 'Strava', 'COMPLETED'),
-
-    -- Natation pour Claire
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'claire.bernard@email.com'), 2, '2024-03-12 12:00:00+01', '2024-03-12 12:45:00+01', 2700, 1500, 2.0, 220, 135, 150, 'Manual', 'COMPLETED'),
-
-    -- Vélo pour David
-    (gen_random_uuid(), (SELECT id FROM account WHERE email = 'david.moreau@email.com'), 1, '2024-01-25 13:00:00+01', '2024-01-25 15:45:00+01', 9900, 55000, 20.0, 750, 140, 160, 'Garmin', 'COMPLETED');
-
--- ==========================================
--- RÉSUMÉ DES DONNÉES CRÉÉES :
--- ==========================================
--- - 8 objectifs (4 course, 2 vélo, 2 natation)
--- - 4 comptes utilisateurs avec profils variés
--- - 12 niveaux de fitness (progression sur 3 mois)
--- - 4 plans d'entrainement avec objectifs différents
--- - Jours d'entrainement et sorties longues configurés
--- - 16+ workouts avec statuts variés (COMPLETED, PLANNED, ABORTED)
--- - Données cohérentes avec sports et niveaux différents
--- ==========================================

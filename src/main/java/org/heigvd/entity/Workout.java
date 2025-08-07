@@ -15,6 +15,7 @@ public class Workout {
     private UUID id;
 
     @ManyToOne
+    @JoinColumn(name = "account_id", nullable = true)
     private Account account;
 
     @ManyToOne
@@ -84,7 +85,121 @@ public class Workout {
         this.status = status;
     }
 
-    // METHODS --------------------------------------------------
+    // GETTERS AND SETTERS --------------------------------------
+
+    public UUID getId() {
+        return id;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public TrainingPlan getTrainingPlan() {
+        return trainingPlan;
+    }
+
+    public Sport getSport() {
+        return sport;
+    }
+
+    public OffsetDateTime getStartTime() {
+        return startTime;
+    }
+
+    public OffsetDateTime getEndTime() {
+        return endTime;
+    }
+
+    public int getDurationSec() {
+        return durationSec;
+    }
+
+    public double getDistanceMeters() {
+        return distanceMeters;
+    }
+
+    public double getCaloriesKcal() {
+        return caloriesKcal;
+    }
+
+    public int getAvgHeartRate() {
+        return avgHeartRate;
+    }
+
+    public int getMaxHeartRate() {
+        return maxHeartRate;
+    }
+
+    public Double getAverageSpeed() {
+        return averageSpeed;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public TrainingStatus getStatus() {
+        return status;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
+    public void setTrainingPlan(TrainingPlan trainingPlan) {
+        this.trainingPlan = trainingPlan;
+    }
+
+    public void setSport(Sport sport) {
+        this.sport = sport;
+    }
+
+    public void setStartTime(OffsetDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setEndTime(OffsetDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public void setDurationSec(int durationSec) {
+        this.durationSec = durationSec;
+    }
+
+    public void setDistanceMeters(double distanceMeters) {
+        this.distanceMeters = distanceMeters;
+    }
+
+    public void setCaloriesKcal(double caloriesKcal) {
+        this.caloriesKcal = caloriesKcal;
+    }
+
+    public void setAvgHeartRate(int avgHeartRate) {
+        this.avgHeartRate = avgHeartRate;
+    }
+
+    public void setMaxHeartRate(int maxHeartRate) {
+        this.maxHeartRate = maxHeartRate;
+    }
+
+    public void setAverageSpeed(Double averageSpeed) {
+        this.averageSpeed = averageSpeed;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public void setStatus(TrainingStatus status) {
+        this.status = status;
+    }
+
+    // UTILITY METHODS ------------------------------------------
 
     @Override
     public String toString() {

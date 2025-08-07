@@ -148,14 +148,16 @@ public class AccountResource {
     public Response updateAccount(@PathParam("id") UUID id, Account updatedAccount) {
         try {
             Account account = accountService.updateAccount(id, updatedAccount);
-            return Response.ok(account).build();
+            AccountDto accountDto = new AccountDto(account);
+
+            return Response.ok(accountDto).build();
         } catch (NotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Account not found")
+                    .entity("Compte non trouvé")
                     .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("Error updating account: " + e.getMessage())
+                    .entity("Erreur lors de la mise à jour du compte: " + e.getMessage())
                     .build();
         }
     }
@@ -168,10 +170,12 @@ public class AccountResource {
     public Response patchAccount(@PathParam("id") UUID id, Account partialUpdate) {
         try {
             Account account = accountService.patchAccount(id, partialUpdate);
-            return Response.ok(account).build();
+            AccountDto accountDto = new AccountDto(account);
+
+            return Response.ok(accountDto).build();
         } catch (NotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Account not found")
+                    .entity("Compte non trouvé")
                     .build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.CONFLICT)
@@ -179,7 +183,7 @@ public class AccountResource {
                     .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("Error updating account: " + e.getMessage())
+                    .entity("Erreur lors de la mise à jour du compte: " + e.getMessage())
                     .build();
         }
     }
@@ -195,11 +199,11 @@ public class AccountResource {
             return Response.status(Response.Status.NO_CONTENT).build();
         } catch (NotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("Account not found")
+                    .entity("Compte non trouvé")
                     .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("Error deleting account: " + e.getMessage())
+                    .entity("Erreur lors de la suppression du compte: " + e.getMessage())
                     .build();
         }
     }
