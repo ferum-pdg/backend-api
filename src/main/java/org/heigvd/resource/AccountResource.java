@@ -12,6 +12,9 @@ import org.jboss.resteasy.reactive.common.util.RestMediaType;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * @brief Contrôleur REST pour les opérations sur les comptes
+ */
 @Path("/accounts")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -21,7 +24,10 @@ public class AccountResource {
     AccountService accountService;
 
     /**
-     * GET /accounts - Récupère tous les comptes
+     * @brief Récupère la liste de tous les comptes
+     * @return Response contenant la liste des comptes ou une erreur
+     * @retval 200 OK - Liste des comptes au format JSON
+     * @retval 500 INTERNAL_SERVER_ERROR - Erreur lors de la récupération
      */
     @GET
     @Produces(RestMediaType.APPLICATION_JSON)
@@ -41,10 +47,15 @@ public class AccountResource {
     }
 
     /**
-     * GET /accounts/{id} - Récupère un compte par ID
+     * @brief Récupère un compte spécifique par son identifiant
+     * @param id L'identifiant unique du compte (UUID)
+     * @return Response contenant le compte demandé ou une erreur
+     * @retval 200 OK - Compte trouvé et retourné
+     * @retval 404 NOT_FOUND - Compte non trouvé
+     * @retval 500 INTERNAL_SERVER_ERROR - Erreur serveur
      */
     @GET
-    @Path("/id/{id}")
+    @Path("/{id}")
     public Response getAccountById(@PathParam("id") UUID id) {
         try {
             Account account = accountService.getAccountById(id);
@@ -63,7 +74,12 @@ public class AccountResource {
     }
 
     /**
-     * GET /accounts/email/{email} - Récupère un compte par email
+     * @brief Récupère un compte par son adresse email
+     * @param email L'adresse email du compte à rechercher
+     * @return Response contenant le compte trouvé ou une erreur
+     * @retval 200 OK - Compte trouvé
+     * @retval 404 NOT_FOUND - Aucun compte avec cet email
+     * @retval 500 INTERNAL_SERVER_ERROR - Erreur serveur
      */
     @GET
     @Path("/email/{email}")
@@ -86,7 +102,12 @@ public class AccountResource {
     }
 
     /**
-     * GET /accounts/search?name={searchTerm} - Recherche par nom/prénom
+     * @brief Recherche des comptes par nom ou prénom
+     * @param searchTerm Le terme de recherche (nom ou prénom)
+     * @return Response contenant la liste des comptes correspondants
+     * @retval 200 OK - Liste des comptes trouvés (peut être vide)
+     * @retval 400 BAD_REQUEST - Terme de recherche manquant ou vide
+     * @retval 500 INTERNAL_SERVER_ERROR - Erreur serveur
      */
     @GET
     @Path("/search")
@@ -112,7 +133,13 @@ public class AccountResource {
     }
 
     /**
-     * POST /accounts - Crée un nouveau compte
+     * @brief Crée un nouveau compte utilisateur
+     * @param account L'objet Account contenant les informations du nouveau compte
+     * @return Response contenant le compte créé ou une erreur
+     * @retval 201 CREATED - Compte créé avec succès
+     * @retval 400 BAD_REQUEST - Email manquant ou invalide
+     * @retval 409 CONFLICT - Email déjà utilisé
+     * @retval 500 INTERNAL_SERVER_ERROR - Erreur serveur
      */
     @POST
     public Response createAccount(Account account) {
@@ -141,7 +168,13 @@ public class AccountResource {
     }
 
     /**
-     * PUT /accounts/{id} - Met à jour un compte complet
+     * @brief Met à jour complètement un compte existant
+     * @param id L'identifiant du compte à mettre à jour
+     * @param updatedAccount L'objet Account avec les nouvelles informations
+     * @return Response contenant le compte mis à jour ou une erreur
+     * @retval 200 OK - Compte mis à jour avec succès
+     * @retval 404 NOT_FOUND - Compte non trouvé
+     * @retval 500 INTERNAL_SERVER_ERROR - Erreur serveur
      */
     @PUT
     @Path("/{id}")
@@ -163,7 +196,14 @@ public class AccountResource {
     }
 
     /**
-     * PATCH /accounts/{id} - Met à jour partiellement un compte
+     * @brief Met à jour partiellement un compte existant
+     * @param id L'identifiant du compte à modifier
+     * @param partialUpdate L'objet Account contenant seulement les champs à modifier
+     * @return Response contenant le compte mis à jour ou une erreur
+     * @retval 200 OK - Compte modifié avec succès
+     * @retval 404 NOT_FOUND - Compte non trouvé
+     * @retval 409 CONFLICT - Conflit lors de la modification (ex: email déjà utilisé)
+     * @retval 500 INTERNAL_SERVER_ERROR - Erreur serveur
      */
     @PATCH
     @Path("/{id}")
@@ -189,7 +229,12 @@ public class AccountResource {
     }
 
     /**
-     * DELETE /accounts/{id} - Supprime un compte
+     * @brief Supprime définitivement un compte
+     * @param id L'identifiant du compte à supprimer
+     * @return Response indiquant le succès ou l'échec de l'opération
+     * @retval 204 NO_CONTENT - Compte supprimé avec succès
+     * @retval 404 NOT_FOUND - Compte non trouvé
+     * @retval 500 INTERNAL_SERVER_ERROR - Erreur serveur
      */
     @DELETE
     @Path("/{id}")

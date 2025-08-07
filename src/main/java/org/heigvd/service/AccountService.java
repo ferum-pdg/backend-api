@@ -47,7 +47,7 @@ public class AccountService {
     /**
      * @brief Récupère un compte par son adresse email
      * @param email L'adresse email du compte à rechercher
-     * @return Le compte correspondant à l'email ou null si non trouvé
+     * @return Le compte correspondant à l'email ou null si non trouvé6
      */
     public Account getAccountByEmail(String email) {
         try {
@@ -66,17 +66,7 @@ public class AccountService {
      */
     @Transactional
     public Account createAccount(Account account) {
-        // Vérification de l'unicité de l'email
-        if (getAccountByEmail(account.getEmail()) != null) {
-            throw new IllegalArgumentException("Account with email " + account.getEmail() + " already exists");
-        }
-
-        // Génération automatique de l'UUID si absent
-        if (account.getId() == null) {
-            account.setId(UUID.randomUUID());
-        }
-
-        entityManager.persist(account);
+        //  TODO
         return account;
     }
 
@@ -162,7 +152,6 @@ public class AccountService {
         entityManager.remove(account);
     }
 
-
     /**
      * @brief Recherche des comptes par nom ou prénom (insensible à la casse)
      * @param searchTerm Le terme de recherche à chercher dans les noms et prénoms
@@ -176,15 +165,6 @@ public class AccountService {
                         Account.class)
                 .setParameter("searchTerm", "%" + searchTerm + "%")
                 .getResultList();
-    }
-
-    /**
-     * @brief Compte le nombre total de comptes dans la base de données
-     * @return Le nombre total de comptes existants
-     */
-    public long countAccounts() {
-        return entityManager.createQuery("SELECT COUNT(a) FROM Account a", Long.class)
-                .getSingleResult();
     }
 
     /**
