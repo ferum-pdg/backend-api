@@ -91,6 +91,5 @@ public class AuthResource {
 
         return Response.ok(new UserExtendedDto(user)).build();
     }
-
  */
 }

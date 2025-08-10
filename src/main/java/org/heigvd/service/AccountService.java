@@ -42,7 +42,6 @@ public class AccountService {
         }
     }
 
-    // Surcharge pour UUID direct
     public Optional<Account> findById(UUID id) {
         try {
             Account account = em.find(Account.class, id);
@@ -97,22 +96,9 @@ public class AccountService {
         return BCrypt.hashpw(rawPassword, BCrypt.gensalt());
     }
 
-    public boolean existsByEmail(String email) {
-        Long count = em.createQuery("SELECT COUNT(a) FROM Account a WHERE a.email = :email", Long.class)
-                .setParameter("email", email)
-                .getSingleResult();
-        return count > 0;
-    }
-
     public List<Account> findByLastName(String lastName) {
         return em.createQuery("SELECT a FROM Account a WHERE a.lastName LIKE :lastName", Account.class)
                 .setParameter("lastName", "%" + lastName + "%")
                 .getResultList();
-    }
-
-    // Méthode utile pour les statistiques
-    public long countAccounts() {
-        return em.createQuery("SELECT COUNT(a) FROM Account a", Long.class)
-                .getSingleResult();
     }
 }
