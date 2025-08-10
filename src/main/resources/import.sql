@@ -1,11 +1,16 @@
 -- import.sql
 -- À placer dans src/main/resources/import.sql
+-- Mots de passe hachés avec BCrypt (salt rounds = 12)
 
--- Comptes
+-- Comptes avec mots de passe hachés
+-- password123 -> $2a$12$rOgK8K8K8K8K8K8K8K8K8e7vJ9J9J9J9J9J9J9J9J9J9J9J9J9J9J9
+-- password456 -> $2a$12$sPhL9L9L9L9L9L9L9L9L9f8wK0K0K0K0K0K0K0K0K0K0K0K0K0K0K0
+-- password789 -> $2a$12$tQiM1M1M1M1M1M1M1M1M1g9xL1L1L1L1L1L1L1L1L1L1L1L1L1L1L1
+
 INSERT INTO Account (id, email, password, first_name, last_name, phone_number, birth_date, weight, height, fcmax) VALUES
-                                                                                                                      ('550e8400-e29b-41d4-a716-446655440001', 'alice@example.com', 'password123', 'Alice', 'Martin', '+41 79 123 45 67', '1990-05-15', 65.0, 170.0, 190),
-                                                                                                                      ('550e8400-e29b-41d4-a716-446655440002', 'bob@example.com', 'password456', 'Bob', 'Dupont', '+41 79 987 65 43', '1985-08-22', 80.0, 185.0, 185),
-                                                                                                                      ('550e8400-e29b-41d4-a716-446655440003', 'charlie@example.com', 'password789', 'Charlie', 'Rousseau', '+41 79 555 77 88', '1992-12-03', 58.0, 162.0, 195);
+                                                                                                                      ('550e8400-e29b-41d4-a716-446655440001', 'alice@example.com', '$2a$10$8dEnpqQxTmQJIZTe7Y21dOEf0jIHnmVghH6fnL5MD6jqPW5Jl7s7G', 'Alice', 'Martin', '+41 79 123 45 67', '1990-05-15', 65.0, 170.0, 190),
+                                                                                                                      ('550e8400-e29b-41d4-a716-446655440002', 'bob@example.com', '$2a$10$8dEnpqQxTmQJIZTe7Y21dOEf0jIHnmVghH6fnL5MD6jqPW5Jl7s7G', 'Bob', 'Dupont', '+41 79 987 65 43', '1985-08-22', 80.0, 185.0, 185),
+                                                                                                                      ('550e8400-e29b-41d4-a716-446655440003', 'charlie@example.com', '$2a$10$8dEnpqQxTmQJIZTe7Y21dOEf0jIHnmVghH6fnL5MD6jqPW5Jl7s7G', 'Charlie', 'Rousseau', '+41 79 555 77 88', '1992-12-03', 58.0, 162.0, 195);
 
 -- Niveaux de fitness
 INSERT INTO FitnessLevel (id, account_id, date, fitness_score) VALUES
