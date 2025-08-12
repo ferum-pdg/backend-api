@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
+import org.heigvd.dto.AccountDto;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 import org.heigvd.dto.LoginRequestDto;
 import org.heigvd.dto.LoginResponseDto;
@@ -14,6 +15,7 @@ import org.heigvd.service.AccountService;
 import org.heigvd.service.JwtService;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Path("/auth")
 @Produces(RestMediaType.APPLICATION_JSON)
@@ -44,22 +46,16 @@ public class AuthResource {
         return Response.ok(new LoginResponseDto(token)).build();
 
     }
-/*
+
     @GET
     @Path("/me")
     @Authenticated
     public Response getMe(SecurityContext context) {
 
-        String id = context.getUserPrincipal().getName();
-        Long userId = Long.valueOf(id);
-
-        UserExtendedDto userExtendedDtoDto = userService.findById(userId)
-                .map(UserExtendedDto::new)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        return Response.ok(userExtendedDtoDto).build();
+        return Response.ok("{\"status\": \"ok\", \"message\": \"Endpoint works!\"}").build();
     }
 
+/*
     @PUT
     @Path("/me")
     @Authenticated
