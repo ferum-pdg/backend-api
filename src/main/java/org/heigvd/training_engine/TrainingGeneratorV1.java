@@ -4,12 +4,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.heigvd.entity.*;
 import org.heigvd.entity.TrainingPlan.DailyPlan;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
+import org.heigvd.entity.Workout.IntensityZone;
+import org.heigvd.entity.Workout.PlannedDataPoint;
 import org.heigvd.entity.Workout.Workout;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class TrainingGeneratorV1 implements TrainingGenerator {
@@ -17,7 +19,7 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
     public static boolean CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY = false;
 
     @Override
-    public List<Workout> generateTrainingWorkouts(TrainingPlan trainingPlan) {
+    public void generateTrainingWorkouts(TrainingPlan trainingPlan) {
 
         List<Goal> goals = trainingPlan.getGoals();
 
@@ -28,7 +30,7 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         // Start date calcul
         LocalDate startDate = trainingPlan.getEndDate().minusWeeks(nbOfTrainingWeeks);
 
-        CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY = trainingPlan.getAccount().getLastFitnessLevel().getFitnessLevel() >= 60;
+        CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY = trainingPlan.getAccount().getLastFitnessLevel().getFitnessLevel() >= 60 && goals.size() > 1;
 
         if(nbOfWorkoutsPerWeek > trainingPlan.getDaysOfWeek().size() && !CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY) {
             throw new IllegalArgumentException("Not enough available days to schedule the workouts.");
@@ -42,8 +44,74 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         trainingPlan.setStartDate(startDate);
 
         // On ne génère pas les Workout pour l'instant
-        return null;
+
+        List<Workout> workouts = new ArrayList<>();
+
+        LocalDate today = LocalDate.now();
+        LocalDate firstWeekStart = today.isBefore(startDate) ? startDate : today;
+
+        for (DailyPlan dp : dailyPlans) {
+            LocalDate workoutDate = firstWeekStart.with(dp.getDayOfWeek());
+            workouts.add(generateWorkout(trainingPlan, workoutDate, dp.getSport()));
+        }
+
+        trainingPlan.setWorkouts(workouts);
     }
+
+    private Workout generateWorkout(TrainingPlan tp, LocalDate workoutDate, Sport sport) {
+        // Transformer LocalDate en OffsetDateTime basé sur la timezone de l’utilisateur
+        OffsetDateTime start = workoutDate.atTime(18, 0) // 18h par défaut
+                .atZone(OffsetDateTime.now().getOffset()) // Utiliser l'offset actuel
+                .toOffsetDateTime();
+
+        // Durée par défaut selon le sport (V1)
+        int durationSec;
+        switch (sport) {
+            case RUNNING -> durationSec = 60 * 45; // 45 min
+            case CYCLING -> durationSec = 60 * 90; // 1h30
+            case SWIMMING -> durationSec = 60 * 30; // 30 min
+            default -> durationSec = 60 * 45;
+        }
+
+        OffsetDateTime end = start.plusSeconds(durationSec);
+
+        List<PlannedDataPoint> plannedDataPoints = new ArrayList<>();
+
+        // Règles simples de phases (V1)
+        int warmupSec = (int) (durationSec * 0.2);
+        int mainSec = (int) (durationSec * 0.7);
+
+        OffsetDateTime phaseStart = start;
+
+        // Phase 1 : Échauffement (Zone 1, ~60% FC max)
+        plannedDataPoints.add(
+                new PlannedDataPoint(phaseStart, phaseStart.plusSeconds(warmupSec), null, tp.getAccount().getFCMax() / 100 * IntensityZone.ENDURANCE.getMinHr())
+        );
+        phaseStart = phaseStart.plusSeconds(warmupSec);
+
+        // Phase 2 : Corps de séance (Zone 2, ~70% FC max)
+        plannedDataPoints.add(
+                new PlannedDataPoint(phaseStart, phaseStart.plusSeconds(mainSec), null, tp.getAccount().getFCMax() / 100 * IntensityZone.TEMPO.getMinHr())
+        );
+        phaseStart = phaseStart.plusSeconds(mainSec);
+
+        // Phase 3 : Retour au calme (Zone 1)
+        plannedDataPoints.add(
+                new PlannedDataPoint(phaseStart, end, null, tp.getAccount().getFCMax() / 100 * IntensityZone.ENDURANCE.getMinHr())
+        );
+
+        // Création de l’entraînement avec des PlannedDataPoints simples
+        return new Workout(
+                tp.getAccount(),
+                sport,
+                start,
+                end,
+                "AUTO_GENERATED_V1",
+                TrainingStatus.PLANNED,
+                plannedDataPoints
+        );
+    }
+
 
     private List<DailyPlan> generateWeeklyDailyPlans(TrainingPlan trainingPlan, LinkedHashMap<Sport, Integer> sportDistribution) {
         List<DailyPlan> dailyPlans = new ArrayList<>();
@@ -163,36 +231,6 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
                     }
                 }
             }
-        }
-
-        // Ensure total <= nbOfWorkoutsPerWeek (scale down if needed)
-        int total = sportDistribution.values().stream().mapToInt(Integer::intValue).sum();
-        if (total > nbOfWorkoutsPerWeek) {
-            LinkedHashMap<Sport, Integer> scaled = new LinkedHashMap<>();
-            double factor = (double) nbOfWorkoutsPerWeek / total;
-            int roundedSum = 0;
-            for (Map.Entry<Sport, Integer> e : sportDistribution.entrySet()) {
-                int scaledVal = (int) Math.round(e.getValue() * factor);
-                scaledVal = Math.max(0, scaledVal);
-                scaled.put(e.getKey(), scaledVal);
-                roundedSum += scaledVal;
-            }
-            int diff = nbOfWorkoutsPerWeek - roundedSum;
-            List<Sport> keys = new ArrayList<>(scaled.keySet());
-            int i = 0;
-            while (diff != 0 && !keys.isEmpty()) {
-                Sport s = keys.get(i % keys.size());
-                int v = scaled.get(s);
-                if (diff > 0) {
-                    scaled.put(s, v + 1);
-                    diff--;
-                } else if (diff < 0 && v > 0) {
-                    scaled.put(s, v - 1);
-                    diff++;
-                }
-                i++;
-            }
-            return scaled;
         }
 
         return sportDistribution;

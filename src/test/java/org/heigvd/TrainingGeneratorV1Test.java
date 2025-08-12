@@ -5,24 +5,18 @@ import jakarta.inject.Inject;
 import org.heigvd.entity.*;
 import org.heigvd.entity.TrainingPlan.DailyPlan;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.Workout.Workout;
 import org.heigvd.service.GoalService;
-import org.heigvd.service.TrainingPlanService;
 import org.heigvd.training_engine.TrainingGeneratorV1;
 import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 public class TrainingGeneratorV1Test {
-
-    @Inject
-    TrainingPlanService trainingPlanService;
 
     @Inject
     GoalService goalService;
@@ -87,7 +81,7 @@ public class TrainingGeneratorV1Test {
     @Test
     void testSimpleRunningSpacing() {
         Goal running = goalService.getSpecificGoal(Sport.RUNNING, 10.0);
-        List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY);
+        List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.FRIDAY);
         LocalDate endDate = LocalDate.of(2025, 12, 24);
 
         Account account = new Account("runner@etik.com", "Test", "Runner",
@@ -99,7 +93,7 @@ public class TrainingGeneratorV1Test {
         trainingGeneratorV1.generateTrainingWorkouts(tp);
 
         long mondayCount = tp.getPairWeeklyPlans().stream().filter(dp -> dp.getDayOfWeek() == DayOfWeek.MONDAY).count();
-        long wednesdayCount = tp.getPairWeeklyPlans().stream().filter(dp -> dp.getDayOfWeek() == DayOfWeek.WEDNESDAY).count();
+        long wednesdayCount = tp.getPairWeeklyPlans().stream().filter(dp -> dp.getDayOfWeek() == DayOfWeek.FRIDAY).count();
 
         System.out.println(tp);
 

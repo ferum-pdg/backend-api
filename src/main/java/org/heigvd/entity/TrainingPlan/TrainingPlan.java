@@ -9,6 +9,7 @@ import org.heigvd.entity.Workout.Workout;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 public class TrainingPlan {
@@ -142,6 +143,7 @@ public class TrainingPlan {
                 " longOutgoing=" + longOutgoing + " \n" +
                 " account=" + account.getEmail() + " \n" +
                 " dailyPlans=" + getPairWeeklyPlans() + " \n" +
+                " workouts=" + workouts + " \n" +
                 "}";
     }
 }

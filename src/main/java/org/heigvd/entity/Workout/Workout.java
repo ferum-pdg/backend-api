@@ -7,7 +7,10 @@ import org.heigvd.entity.TrainingStatus;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 public class Workout {
@@ -50,6 +53,12 @@ public class Workout {
     @Enumerated(EnumType.STRING)
     private TrainingStatus status;
 
+    @OneToMany
+    private List<PlannedDataPoint> plannedDataPoints = new ArrayList<>();
+
+    @OneToMany
+    private List<WorkoutDataPoint> actualDataPoints = new ArrayList<>();
+
     // CONSTRUCTORS ---------------------------------------------
 
     public Workout() {}
@@ -72,24 +81,70 @@ public class Workout {
     }
 
     public Workout(Account account, Sport sport, OffsetDateTime startTime,
-                   OffsetDateTime endTime, String source, TrainingStatus status) {
+                   OffsetDateTime endTime, String source, TrainingStatus status, List<PlannedDataPoint> plannedDataPoints) {
         this.account = account;
         this.sport = sport;
         this.startTime = startTime;
         this.endTime = endTime;
         this.source = source;
         this.status = status;
+        this.plannedDataPoints = plannedDataPoints;
     }
 
     // METHODS --------------------------------------------------
 
+    public UUID getId() { return id; }
+
+    public Account getAccount() { return account; }
+    public void setAccount(Account account) { this.account = account; }
+
+    public Sport getSport() { return sport; }
+    public void setSport(Sport sport) { this.sport = sport; }
+
+    public OffsetDateTime getStartTime() { return startTime; }
+    public void setStartTime(OffsetDateTime startTime) { this.startTime = startTime; }
+
+    public OffsetDateTime getEndTime() { return endTime; }
+    public void setEndTime(OffsetDateTime endTime) { this.endTime = endTime; }
+
+    public int getDurationSec() { return durationSec; }
+    public void setDurationSec(int durationSec) { this.durationSec = durationSec; }
+
+    public double getDistanceMeters() { return distanceMeters; }
+    public void setDistanceMeters(double distanceMeters) { this.distanceMeters = distanceMeters; }
+
+    public double getCaloriesKcal() { return caloriesKcal; }
+    public void setCaloriesKcal(double caloriesKcal) { this.caloriesKcal = caloriesKcal; }
+
+    public int getAvgHeartRate() { return avgHeartRate; }
+    public void setAvgHeartRate(int avgHeartRate) { this.avgHeartRate = avgHeartRate; }
+
+    public int getMaxHeartRate() { return maxHeartRate; }
+    public void setMaxHeartRate(int maxHeartRate) { this.maxHeartRate = maxHeartRate; }
+
+    public Double getAverageSpeed() { return averageSpeed; }
+    public void setAverageSpeed(Double averageSpeed) { this.averageSpeed = averageSpeed; }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
+
+    public TrainingStatus getStatus() { return status; }
+    public void setStatus(TrainingStatus status) { this.status = status; }
+
+    public List<PlannedDataPoint> getPlannedDataPoints() { return plannedDataPoints; }
+    public void setPlannedDataPoints(List<PlannedDataPoint> plannedDataPoints) { this.plannedDataPoints = plannedDataPoints; }
+
+    public List<WorkoutDataPoint> getActualDataPoints() { return actualDataPoints; }
+    public void setActualDataPoints(List<WorkoutDataPoint> actualDataPoints) { this.actualDataPoints = actualDataPoints; }
+
     @Override
     public String toString() {
-        return "{" + ",\n" +
+        return " {" + "\n" +
                 "   id = " + id + ",\n" +
                 "   sport = " + sport +",\n" +
                 "   startTime = " + startTime.format(DateTimeFormatter.ofPattern("EEEE d MMMM 'at' HH:mm")) + ",\n" +
                 "   status = " + status +",\n" +
-                "}," + "\n";
+                "   plannedDataPoints = " + plannedDataPoints + "\n" +
+                " }" + "\n";
     }
 }
