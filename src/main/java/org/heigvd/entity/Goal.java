@@ -35,10 +35,7 @@ public class Goal {
 
     @DecimalMin("0.0")
     @Column(name = "elevation_gain")
-    private Double elevationGain;
-
-    @ManyToMany(mappedBy = "goals")
-    private List<TrainingPlan> trainingPlans;
+    private Double elevetionGain;
 
     // CONSTRUCTORS ---------------------------------------------
 
@@ -51,10 +48,10 @@ public class Goal {
         this.nbOfWorkoutsPerWeek = nbOfWorkoutsPerWeek;
         this.nbOfWeek = nbOfWeek;
         this.targetDistance = targetDistance;
-        this.elevationGain = elevationGain;
+        this.elevetionGain = elevationGain;
     }
 
-    // GETTERS & SETTERS ----------------------------------------
+    // METHODS --------------------------------------------------
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -74,9 +71,19 @@ public class Goal {
     public Double getTargetDistance() { return targetDistance; }
     public void setTargetDistance(Double targetDistance) { this.targetDistance = targetDistance; }
 
-    public Double getElevationGain() { return elevationGain; }
-    public void setElevationGain(Double elevationGain) { this.elevationGain = elevationGain; }
+    public Double getElevationGain() { return elevetionGain; }
+    public void setElevationGain(Double elevationGain) { this.elevetionGain = elevationGain; }
 
-    public List<TrainingPlan> getTrainingPlans() { return trainingPlans; }
-    public void setTrainingPlans(List<TrainingPlan> trainingPlans) { this.trainingPlans = trainingPlans; }
+    @Override
+    public String toString() {
+        return "\n {\n" +
+                "  id=" + id + "\n" +
+                "  sport=" + sport + "\n" +
+                "  name='" + name + '\'' + "\n" +
+                "  nbOfWorkoutsPerWeek=" + nbOfWorkoutsPerWeek + "\n" +
+                "  nbOfWeek=" + nbOfWeek + "\n" +
+                "  targetDistance=" + targetDistance + "\n" +
+                "  elevationGain=" + elevetionGain + "\n" +
+                " }";
+    }
 }

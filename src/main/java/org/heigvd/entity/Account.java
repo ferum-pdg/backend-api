@@ -2,9 +2,11 @@ package org.heigvd.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import org.heigvd.entity.Workout.Workout;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Entity
@@ -47,14 +49,11 @@ public class Account {
     @Column(name = "fcmax")
     private int FCMax;
 
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
-    private List<FitnessLevel> fitnessLevels;
+    @OneToMany
+    private List<FitnessLevel> fitnessLevels  = new ArrayList<>();
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
     private List<Workout> workouts;
-
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
-    private List<TrainingPlan> trainingPlans;
 
     // CONSTRUCTORS ---------------------------------------------
 
@@ -84,7 +83,7 @@ public class Account {
         this.FCMax = FCMax;
     }
 
-    // GETTERS & SETTERS ----------------------------------------
+    // METHODS --------------------------------------------------
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -118,10 +117,12 @@ public class Account {
 
     public List<FitnessLevel> getFitnessLevels() { return fitnessLevels; }
     public void setFitnessLevels(List<FitnessLevel> fitnessLevels) { this.fitnessLevels = fitnessLevels; }
+    public void addFitnessLevel(FitnessLevel fitnessLevel) { this.fitnessLevels.add(fitnessLevel); }
+    public FitnessLevel getLastFitnessLevel() {
+        if (fitnessLevels == null || fitnessLevels.isEmpty()) {
+            return null;
+        }
+        return fitnessLevels.getLast();
+    }
 
-    public List<Workout> getWorkouts() { return workouts; }
-    public void setWorkouts(List<Workout> workouts) { this.workouts = workouts; }
-
-    public List<TrainingPlan> getTrainingPlans() { return trainingPlans; }
-    public void setTrainingPlans(List<TrainingPlan> trainingPlans) { this.trainingPlans = trainingPlans; }
 }

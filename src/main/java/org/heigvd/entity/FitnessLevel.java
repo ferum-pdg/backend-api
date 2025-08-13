@@ -13,39 +13,48 @@ public class FitnessLevel {
     private UUID id;
 
     @NotNull
-    @ManyToOne
-    @JoinColumn(name = "account_id")
-    private Account account;
-
-    @NotNull
     private LocalDate date;
 
     @Min(1)
     @Max(10)
-    @Column(name = "fitness_score")
-    private int fitnessScore;
+    @Column(name = "fitness_level")
+    private Integer fitnessLevel;
 
     // CONSTRUCTORS ---------------------------------------------
 
-    public FitnessLevel() {}
-
-    public FitnessLevel(Account account, LocalDate date, int fitnessScore) {
-        this.account = account;
-        this.date = date;
-        this.fitnessScore = fitnessScore;
+    public FitnessLevel() {
     }
 
-    // GETTERS & SETTERS ----------------------------------------
+    public FitnessLevel(LocalDate date, int fitnessLevel) {
+        this.id = UUID.randomUUID();
+        this.date = date;
+        this.fitnessLevel = fitnessLevel;
+    }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    // METHODS --------------------------------------------------
 
-    public Account getAccount() { return account; }
-    public void setAccount(Account account) { this.account = account; }
+    public UUID getId() {
+        return id;
+    }
 
-    public LocalDate getDate() { return date; }
-    public void setDate(LocalDate date) { this.date = date; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public int getFitnessScore() { return fitnessScore; }
-    public void setFitnessScore(int fitnessScore) { this.fitnessScore = fitnessScore; }
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public int getFitnessLevel() {
+        return fitnessLevel;
+    }
+
+    public void setFitnessLevel(int fitnessLevel) {
+        this.fitnessLevel = fitnessLevel;
+    }
+
 }

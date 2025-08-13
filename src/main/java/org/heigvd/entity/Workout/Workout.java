@@ -1,10 +1,13 @@
-package org.heigvd.entity;
+package org.heigvd.entity.Workout;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import org.heigvd.entity.Account;
+import org.heigvd.entity.Sport;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -14,101 +17,74 @@ public class Workout {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotNull
     @ManyToOne
-    @JoinColumn(name = "account_id")
     private Account account;
 
-    @ManyToOne
-    @JoinColumn(name = "training_plan_id")
-    private TrainingPlan trainingPlan;
-
-    @NotNull
-    @Enumerated(EnumType.STRING)
     private Sport sport;
 
-    @NotNull
     @Column(name = "start_time")
     private OffsetDateTime startTime;
 
     @Column(name = "end_time")
     private OffsetDateTime endTime;
 
-    @Min(0)
     @Column(name = "duration_sec")
     private int durationSec;
 
-    @DecimalMin("0.0")
     @Column(name = "distance_meters")
     private double distanceMeters;
 
-    @DecimalMin("0.0")
     @Column(name = "calories_kcal")
     private double caloriesKcal;
 
-    @Min(0)
-    @Max(220)
     @Column(name = "avg_heart_rate")
     private int avgHeartRate;
 
-    @Min(0)
-    @Max(220)
     @Column(name = "max_heart_rate")
     private int maxHeartRate;
 
-    @DecimalMin("0.0")
     @Column(name = "average_speed")
     private Double averageSpeed;
 
     private String source;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    private TrainingStatus status;
+    private WorkoutStatus status;
+
+    @OneToMany
+    private List<PlannedDataPoint> plannedDataPoints = new ArrayList<>();
+
+    @OneToMany
+    private List<WorkoutDataPoint> actualDataPoints = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "workout_type")
+    private WorkoutType workoutType;
 
     // CONSTRUCTORS ---------------------------------------------
 
     public Workout() {}
 
-    public Workout(Account account, TrainingPlan trainingPlan, Sport sport, OffsetDateTime startTime,
-                   OffsetDateTime endTime, int durationSec, double distanceMeters, double caloriesKcal,
-                   int avgHeartRate, int maxHeartRate, Double averageSpeed, String source, TrainingStatus status) {
+    public Workout(Account account, Sport sport, OffsetDateTime startTime,
+                   OffsetDateTime endTime, String source, WorkoutStatus status, List<PlannedDataPoint> plannedDataPoints,
+                   WorkoutType workoutType) {
         this.account = account;
-        this.trainingPlan = trainingPlan;
-        this.sport = sport;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.durationSec = durationSec;
-        this.distanceMeters = distanceMeters;
-        this.caloriesKcal = caloriesKcal;
-        this.avgHeartRate = avgHeartRate;
-        this.maxHeartRate = maxHeartRate;
-        this.averageSpeed = averageSpeed;
-        this.source = source;
-        this.status = status;
-    }
-
-    public Workout(Account account, TrainingPlan trainingPlan, Sport sport, OffsetDateTime startTime,
-                   OffsetDateTime endTime, String source, TrainingStatus status) {
-        this.account = account;
-        this.trainingPlan = trainingPlan;
         this.sport = sport;
         this.startTime = startTime;
         this.endTime = endTime;
         this.source = source;
         this.status = status;
+        this.plannedDataPoints = plannedDataPoints;
+        this.workoutType = workoutType;
+        this.durationSec = (int) (endTime.toEpochSecond() - startTime.toEpochSecond());
     }
 
-    // GETTERS & SETTERS ----------------------------------------
+    // METHODS --------------------------------------------------
 
     public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
 
     public Account getAccount() { return account; }
     public void setAccount(Account account) { this.account = account; }
-
-    public TrainingPlan getTrainingPlan() { return trainingPlan; }
-    public void setTrainingPlan(TrainingPlan trainingPlan) { this.trainingPlan = trainingPlan; }
 
     public Sport getSport() { return sport; }
     public void setSport(Sport sport) { this.sport = sport; }
@@ -140,16 +116,23 @@ public class Workout {
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }
 
-    public TrainingStatus getStatus() { return status; }
-    public void setStatus(TrainingStatus status) { this.status = status; }
+    public WorkoutStatus getStatus() { return status; }
+    public void setStatus(WorkoutStatus status) { this.status = status; }
+
+    public List<PlannedDataPoint> getPlannedDataPoints() { return plannedDataPoints; }
+    public void setPlannedDataPoints(List<PlannedDataPoint> plannedDataPoints) { this.plannedDataPoints = plannedDataPoints; }
+
+    public List<WorkoutDataPoint> getActualDataPoints() { return actualDataPoints; }
+    public void setActualDataPoints(List<WorkoutDataPoint> actualDataPoints) { this.actualDataPoints = actualDataPoints; }
 
     @Override
     public String toString() {
-        return "{" + ",\n" +
+        return " {" + "\n" +
                 "   id = " + id + ",\n" +
                 "   sport = " + sport +",\n" +
                 "   startTime = " + startTime.format(DateTimeFormatter.ofPattern("EEEE d MMMM 'at' HH:mm")) + ",\n" +
                 "   status = " + status +",\n" +
-                "}," + "\n";
+                "   plannedDataPoints = " + plannedDataPoints + "\n" +
+                " }" + "\n";
     }
 }
