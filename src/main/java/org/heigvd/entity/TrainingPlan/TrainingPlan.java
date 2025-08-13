@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Goal;
 import org.heigvd.entity.Sport;
+import org.heigvd.entity.Workout.TrainingPlanPhase;
 import org.heigvd.entity.Workout.Workout;
 
 import java.time.DayOfWeek;
@@ -47,6 +48,10 @@ public class TrainingPlan {
 
     @OneToMany
     private List<DailyPlan> pairWeeklyPlans;
+
+    // temporary field for the training generator
+    @Transient
+    private TrainingPlanPhase currentPhase;
 
     // CONSTRUCTORS ---------------------------------------------
 
@@ -117,12 +122,7 @@ public class TrainingPlan {
     public List<Workout> getWorkouts() { return workouts; }
     public void setWorkouts(List<Workout> workouts) { this.workouts = workouts; }
 
-    public List<DailyPlan> getPairWeeklyPlans() {
-        if (pairWeeklyPlans != null) {
-            pairWeeklyPlans.sort(Comparator.comparing(DailyPlan::getDayOfWeek));
-        }
-        return pairWeeklyPlans;
-    }
+    public List<DailyPlan> getPairWeeklyPlans() { return pairWeeklyPlans; }
     public void setPairWeeklyPlans(List<DailyPlan> pairWeeklyPlans) { this.pairWeeklyPlans = pairWeeklyPlans; }
     public void addPairWeeklyPlan(DailyPlan dailyPlan) {
         if (this.pairWeeklyPlans == null) {
@@ -131,6 +131,8 @@ public class TrainingPlan {
         this.pairWeeklyPlans.add(dailyPlan);
     }
 
+    public TrainingPlanPhase getCurrentPhase() { return currentPhase; }
+    public void setCurrentPhase(TrainingPlanPhase currentPhase) { this.currentPhase = currentPhase; }
 
     @Override
     public String toString() {
@@ -142,7 +144,7 @@ public class TrainingPlan {
                 " daysOfWeek=" + daysOfWeek + " \n" +
                 " longOutgoing=" + longOutgoing + " \n" +
                 " account=" + account.getEmail() + " \n" +
-                " dailyPlans=" + getPairWeeklyPlans() + " \n" +
+                " dailyPlans=" + pairWeeklyPlans + " \n" +
                 " workouts=" + workouts + " \n" +
                 "}";
     }

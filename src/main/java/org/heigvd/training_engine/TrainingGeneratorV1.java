@@ -4,231 +4,274 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.heigvd.entity.*;
 import org.heigvd.entity.TrainingPlan.DailyPlan;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.Workout.IntensityZone;
-import org.heigvd.entity.Workout.PlannedDataPoint;
-import org.heigvd.entity.Workout.Workout;
+import org.heigvd.entity.Workout.*;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
+/**
+ * Générateur de plan d'entraînement version 1.
+ * Distribue les sports de manière équilibrée sur la semaine selon les objectifs de l'utilisateur.
+ */
 @ApplicationScoped
 public class TrainingGeneratorV1 implements TrainingGenerator {
 
-    public static boolean CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY = false;
+    /** Indique si plusieurs entraînements par jour sont autorisés (utilisateurs avancés uniquement) */
+    private static boolean canHaveMultipleWorkoutsPerDay = false;
 
+    /**
+     * Génère l'ensemble des entraînements pour un plan d'entraînement donné.
+     *
+     * @param trainingPlan le plan d'entraînement à compléter avec les workouts et daily plans
+     * @throws IllegalArgumentException si pas assez de jours disponibles pour programmer les entraînements
+     */
     @Override
     public void generateTrainingWorkouts(TrainingPlan trainingPlan) {
-
         List<Goal> goals = trainingPlan.getGoals();
+        Account account = trainingPlan.getAccount();
 
-        int nbOfWorkoutsPerWeek = calculateNbOfWorkoutsPerWeek(goals, trainingPlan.getAccount());
+        // Calculs préliminaires
+        int nbWorkoutsPerWeek = calculateNbOfWorkoutsPerWeek(goals, account);
+        int nbTrainingWeeks = calculateNbOfWeeks(trainingPlan);
+        LocalDate startDate = trainingPlan.getEndDate().minusWeeks(nbTrainingWeeks);
 
-        int nbOfTrainingWeeks = calculateNbOfWeeks(trainingPlan);
+        // Détermine si plusieurs entraînements par jour sont autorisés (niveau élevé + objectifs multiples)
+        canHaveMultipleWorkoutsPerDay = account.getLastFitnessLevel().getFitnessLevel() >= 60 && goals.size() > 1;
 
-        // Start date calcul
-        LocalDate startDate = trainingPlan.getEndDate().minusWeeks(nbOfTrainingWeeks);
-
-        CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY = trainingPlan.getAccount().getLastFitnessLevel().getFitnessLevel() >= 60 && goals.size() > 1;
-
-        if(nbOfWorkoutsPerWeek > trainingPlan.getDaysOfWeek().size() && !CAN_HAVE_MULTIPLE_WORKOUTS_PER_DAY) {
-            throw new IllegalArgumentException("Not enough available days to schedule the workouts.");
+        // Vérification de faisabilité
+        if (nbWorkoutsPerWeek > trainingPlan.getDaysOfWeek().size() && !canHaveMultipleWorkoutsPerDay) {
+            throw new IllegalArgumentException("Pas assez de jours disponibles pour programmer tous les entraînements.");
         }
 
-        LinkedHashMap<Sport, Integer> sportDistribution = calculateSportDistribution(nbOfWorkoutsPerWeek, goals);
-
+        // Distribution des sports sur la semaine
+        LinkedHashMap<Sport, Integer> sportDistribution = calculateSportDistribution(nbWorkoutsPerWeek, goals);
         List<DailyPlan> dailyPlans = generateWeeklyDailyPlans(trainingPlan, sportDistribution);
 
+        // Configuration du plan d'entraînement
         trainingPlan.setPairWeeklyPlans(dailyPlans);
         trainingPlan.setStartDate(startDate);
 
-        // On ne génère pas les Workout pour l'instant
-
-        List<Workout> workouts = new ArrayList<>();
-
-        LocalDate today = LocalDate.now();
-        LocalDate firstWeekStart = today.isBefore(startDate) ? startDate : today;
-
-        for (DailyPlan dp : dailyPlans) {
-            LocalDate workoutDate = firstWeekStart.with(dp.getDayOfWeek());
-            workouts.add(generateWorkout(trainingPlan, workoutDate, dp.getSport()));
-        }
-
+        // Génération des entraînements pour la première semaine
+        List<Workout> workouts = generateWorkouts(trainingPlan, dailyPlans);
         trainingPlan.setWorkouts(workouts);
     }
 
-    private Workout generateWorkout(TrainingPlan tp, LocalDate workoutDate, Sport sport) {
-        // Transformer LocalDate en OffsetDateTime basé sur la timezone de l’utilisateur
-        OffsetDateTime start = workoutDate.atTime(18, 0) // 18h par défaut
-                .atZone(OffsetDateTime.now().getOffset()) // Utiliser l'offset actuel
+    /**
+     * Génère la liste des entraînements pour la première semaine.
+     *
+     * @param trainingPlan le plan d'entraînement contenant les informations utilisateur
+     * @param dailyPlans la liste des plans quotidiens définissant sport et jour pour chaque entraînement
+     * @return une liste d'entraînements planifiés pour la première semaine
+     */
+    private List<Workout> generateWorkouts(TrainingPlan trainingPlan, List<DailyPlan> dailyPlans) {
+        LocalDate today = LocalDate.now();
+        LocalDate firstWeekStart = today.isBefore(trainingPlan.getStartDate()) ? trainingPlan.getStartDate() : today;
+
+        return dailyPlans.stream()
+                .map(dailyPlan -> {
+                    LocalDate workoutDate = firstWeekStart.with(dailyPlan.getDayOfWeek());
+                    return generateWorkout(trainingPlan, workoutDate, dailyPlan.getSport());
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Génère un entraînement individuel pour une date et un sport donnés.
+     *
+     * @param trainingPlan le plan d'entraînement pour récupérer les informations utilisateur
+     * @param workoutDate la date à laquelle programmer l'entraînement
+     * @param sport le sport à pratiquer lors de cet entraînement
+     * @return un entraînement planifié avec heure, durée et type définis
+     */
+    private Workout generateWorkout(TrainingPlan trainingPlan, LocalDate workoutDate, Sport sport) {
+        // Heure de début par défaut : 18h
+        OffsetDateTime start = workoutDate.atTime(18, 0)
+                .atZone(OffsetDateTime.now().getOffset())
                 .toOffsetDateTime();
 
-        // Durée par défaut selon le sport (V1)
-        int durationSec;
-        switch (sport) {
-            case RUNNING -> durationSec = 60 * 45; // 45 min
-            case CYCLING -> durationSec = 60 * 90; // 1h30
-            case SWIMMING -> durationSec = 60 * 30; // 30 min
-            default -> durationSec = 60 * 45;
-        }
+        // Durée selon le sport
+        int durationMinutes = switch (sport) {
+            case RUNNING -> 45;
+            case CYCLING -> 90;
+            case SWIMMING -> 30;
+            default -> 45;
+        };
 
-        OffsetDateTime end = start.plusSeconds(durationSec);
+        OffsetDateTime end = start.plusMinutes(durationMinutes);
 
-        List<PlannedDataPoint> plannedDataPoints = new ArrayList<>();
-
-        // Règles simples de phases (V1)
-        int warmupSec = (int) (durationSec * 0.2);
-        int mainSec = (int) (durationSec * 0.7);
-
-        OffsetDateTime phaseStart = start;
-
-        // Phase 1 : Échauffement (Zone 1, ~60% FC max)
-        plannedDataPoints.add(
-                new PlannedDataPoint(phaseStart, phaseStart.plusSeconds(warmupSec), null, tp.getAccount().getFCMax() / 100 * IntensityZone.ENDURANCE.getMinHr())
-        );
-        phaseStart = phaseStart.plusSeconds(warmupSec);
-
-        // Phase 2 : Corps de séance (Zone 2, ~70% FC max)
-        plannedDataPoints.add(
-                new PlannedDataPoint(phaseStart, phaseStart.plusSeconds(mainSec), null, tp.getAccount().getFCMax() / 100 * IntensityZone.TEMPO.getMinHr())
-        );
-        phaseStart = phaseStart.plusSeconds(mainSec);
-
-        // Phase 3 : Retour au calme (Zone 1)
-        plannedDataPoints.add(
-                new PlannedDataPoint(phaseStart, end, null, tp.getAccount().getFCMax() / 100 * IntensityZone.ENDURANCE.getMinHr())
-        );
-
-        // Création de l’entraînement avec des PlannedDataPoints simples
         return new Workout(
-                tp.getAccount(),
+                trainingPlan.getAccount(),
                 sport,
                 start,
                 end,
                 "AUTO_GENERATED_V1",
-                TrainingStatus.PLANNED,
-                plannedDataPoints
+                WorkoutStatus.PLANNED,
+                new ArrayList<>(), // PlannedDataPoints vides pour la V1
+                WorkoutType.EF     // Type par défaut : Endurance Fondamentale
         );
     }
 
-
+    /**
+     * Génère les plans quotidiens en distribuant les sports de manière équilibrée sur la semaine.
+     *
+     * @param trainingPlan le plan d'entraînement contenant les jours disponibles
+     * @param sportDistribution la répartition des sports avec le nombre d'entraînements par sport
+     * @return une liste de plans quotidiens triés par jour de semaine
+     */
     private List<DailyPlan> generateWeeklyDailyPlans(TrainingPlan trainingPlan, LinkedHashMap<Sport, Integer> sportDistribution) {
-        List<DailyPlan> dailyPlans = new ArrayList<>();
         List<DayOfWeek> daysOfWeek = trainingPlan.getDaysOfWeek();
         int totalDays = daysOfWeek.size();
 
-        // Sort sports by number of sessions to plan (descending)
-        List<Map.Entry<Sport, Integer>> sportsByFreq = new ArrayList<>(sportDistribution.entrySet());
-        sportsByFreq.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+        Map<Integer, Sport> assignments = new HashMap<>();
+        Set<Integer> usedDays = new HashSet<>();
 
-        // Mark assigned days
-        Map<Integer, Sport> assignedDays = new HashMap<>();
-        Set<Integer> usedDayIndexes = new HashSet<>();
+        // Attribution des sports par ordre de fréquence décroissante
+        sportDistribution.entrySet().stream()
+                .sorted(Map.Entry.<Sport, Integer>comparingByValue().reversed())
+                .forEach(entry -> assignSport(entry.getKey(), entry.getValue(), totalDays, assignments, usedDays));
 
-        for (Map.Entry<Sport, Integer> entry : sportsByFreq) {
-            Sport sport = entry.getKey();
-            int count = entry.getValue();
+        // Évite les sports consécutifs identiques
+        avoidConsecutiveSameSports(assignments, usedDays, totalDays);
 
-            if (count <= 0) continue;
-            if (count > totalDays) {
-                throw new IllegalArgumentException("Too many workouts to fit in available days.");
-            }
+        // Construction des plans quotidiens triés par jour de semaine
+        List<DailyPlan> dailyPlans = assignments.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> new DailyPlan(daysOfWeek.get(entry.getKey()), entry.getValue(), WorkoutType.EF))
+                .toList();
 
-            // Try to space evenly the sessions
-            List<Integer> positions = new ArrayList<>();
-            double interval = (double) totalDays / count;
+        // Définit le type d'entraînement pour chaque plan quotidien
+        defineWorkoutType(trainingPlan, dailyPlans);
 
-            for (int i = 0; i < count; i++) {
-                int idealIndex = (int) Math.round(i * interval);
-                int idx = findClosestFreeDay(idealIndex, usedDayIndexes, totalDays);
+        return dailyPlans;
+    }
 
-                if (idx != -1) {
-                    positions.add(idx);
-                    usedDayIndexes.add(idx);
-                    assignedDays.put(idx, sport);
-                }
+    private void defineWorkoutType(TrainingPlan tp, List<DailyPlan> dps) {
+
+        for(DailyPlan dp : dps) {
+            switch(dp.getSport()) {
+                case RUNNING -> dp.setWorkoutType(WorkoutType.EF);
+                case CYCLING -> dp.setWorkoutType(WorkoutType.EF);
+                case SWIMMING -> dp.setWorkoutType(WorkoutType.TECHNIC);
+                default -> dp.setWorkoutType(WorkoutType.EF);
             }
         }
+    }
 
-        // Ensure no same sport two days in a row (soft rule)
-        List<Integer> sortedIndexes = new ArrayList<>(assignedDays.keySet());
-        Collections.sort(sortedIndexes);
+    /**
+     * Attribue un sport sur les jours disponibles en les espaçant de manière équitable.
+     *
+     * @param sport le sport à programmer
+     * @param count le nombre d'entraînements de ce sport à programmer dans la semaine
+     * @param totalDays le nombre total de jours disponibles dans la semaine
+     * @param assignments la map des attributions existantes (index jour -> sport)
+     * @param usedDays l'ensemble des index de jours déjà utilisés
+     * @throws IllegalArgumentException si le nombre d'entraînements dépasse les jours disponibles
+     */
+    private void assignSport(Sport sport, int count, int totalDays, Map<Integer, Sport> assignments, Set<Integer> usedDays) {
+        if (count <= 0) return;
 
-        for (int i = 1; i < sortedIndexes.size(); i++) {
-            int prev = sortedIndexes.get(i - 1);
-            int curr = sortedIndexes.get(i);
-            if (curr - prev == 1 && assignedDays.get(prev).equals(assignedDays.get(curr))) {
-                // Try to swap with a further unassigned day
+        if (count > totalDays) {
+            throw new IllegalArgumentException("Trop d'entraînements à programmer pour les jours disponibles.");
+        }
+
+        // Calcul de l'intervalle idéal pour espacer les sessions
+        double interval = (double) totalDays / count;
+
+        for (int i = 0; i < count; i++) {
+            int idealIndex = (int) Math.round(i * interval);
+            int dayIndex = findClosestFreeDay(idealIndex, usedDays, totalDays);
+
+            if (dayIndex != -1) {
+                assignments.put(dayIndex, sport);
+                usedDays.add(dayIndex);
+            }
+        }
+    }
+
+    /**
+     * Évite d'avoir le même sport sur des jours consécutifs en déplaçant vers des jours plus éloignés.
+     *
+     * @param assignments la map des attributions actuelles (index jour -> sport)
+     * @param usedDays l'ensemble des index de jours déjà utilisés
+     * @param totalDays le nombre total de jours disponibles dans la semaine
+     */
+    private void avoidConsecutiveSameSports(Map<Integer, Sport> assignments, Set<Integer> usedDays, int totalDays) {
+        List<Integer> sortedDays = assignments.keySet().stream().sorted().toList();
+
+        for (int i = 1; i < sortedDays.size(); i++) {
+            int previousDay = sortedDays.get(i - 1);
+            int currentDay = sortedDays.get(i);
+
+            // Si deux jours consécutifs ont le même sport
+            if (currentDay - previousDay == 1 && assignments.get(previousDay).equals(assignments.get(currentDay))) {
+                // Trouve le jour libre le plus éloigné pour déplacer l'entraînement
                 for (int j = totalDays - 1; j >= 0; j--) {
-                    if (!usedDayIndexes.contains(j)) {
-                        assignedDays.put(j, assignedDays.get(curr));
-                        assignedDays.remove(curr);
-                        usedDayIndexes.remove(curr);
-                        usedDayIndexes.add(j);
+                    if (!usedDays.contains(j)) {
+                        assignments.put(j, assignments.remove(currentDay));
+                        usedDays.add(j);
+                        usedDays.remove(currentDay);
                         break;
                     }
                 }
             }
         }
-
-        // Build the daily plans
-        for (int i = 0; i < totalDays; i++) {
-            if (assignedDays.containsKey(i)) {
-                dailyPlans.add(new DailyPlan(daysOfWeek.get(i), assignedDays.get(i)));
-            }
-        }
-
-        return dailyPlans;
     }
 
     /**
-     * Finds the closest index to `target` that is not already used
+     * Trouve le jour libre le plus proche de l'index cible.
+     *
+     * @param target l'index du jour idéal recherché
+     * @param used l'ensemble des index de jours déjà utilisés
+     * @param totalDays le nombre total de jours disponibles
+     * @return l'index du jour libre le plus proche, ou -1 si aucun jour libre trouvé
      */
     private int findClosestFreeDay(int target, Set<Integer> used, int totalDays) {
-        int radius = 0;
-        while (radius < totalDays) {
+        for (int radius = 0; radius < totalDays; radius++) {
             int lower = target - radius;
             int upper = target + radius;
+
             if (lower >= 0 && !used.contains(lower)) return lower;
             if (upper < totalDays && !used.contains(upper)) return upper;
-            radius++;
         }
         return -1;
     }
 
-
     /**
-     * Calcule la distribution des sports en reprenant ta logique initiale
-     * (alternance running/cycling si nécessaire) et en s'assurant qu'on ne dépasse
-     * pas nbOfWorkoutsPerWeek.
+     * Calcule la distribution des sports selon les objectifs et le niveau de forme.
+     * Gère l'alternance running/cycling si nécessaire pour éviter la surcharge.
+     *
+     * @param nbOfWorkoutsPerWeek le nombre total d'entraînements à programmer par semaine
+     * @param goals la liste des objectifs de l'utilisateur définissant sports et fréquences
+     * @return une map ordonnée contenant la distribution finale des sports (sport -> nombre d'entraînements)
      */
-    private LinkedHashMap<Sport, Integer> calculateSportDistribution(Integer nbOfWorkoutsPerWeek, List<Goal> goals) {
-        LinkedHashMap<Sport, Integer> sportDistribution = new LinkedHashMap<>();
+    private LinkedHashMap<Sport, Integer> calculateSportDistribution(int nbOfWorkoutsPerWeek, List<Goal> goals) {
+        // Agrégation des entraînements par sport
+        Map<Sport, Integer> sportCounts = goals.stream()
+                .collect(Collectors.groupingBy(
+                        Goal::getSport,
+                        Collectors.summingInt(Goal::getNbOfWorkoutsPerWeek)
+                ));
 
-        for (Goal goal : goals) {
-            Sport sport = goal.getSport();
-            int nbWorkouts = goal.getNbOfWorkoutsPerWeek();
-            sportDistribution.put(sport, sportDistribution.getOrDefault(sport, 0) + nbWorkouts);
-        }
+        LinkedHashMap<Sport, Integer> sportDistribution = new LinkedHashMap<>(sportCounts);
 
+        // Gestion spéciale running + cycling : alternance si dépassement
         if (sportDistribution.containsKey(Sport.RUNNING) && sportDistribution.containsKey(Sport.CYCLING)) {
             int running = sportDistribution.get(Sport.RUNNING);
             int cycling = sportDistribution.get(Sport.CYCLING);
             int swimming = sportDistribution.getOrDefault(Sport.SWIMMING, 0);
+            int availableSlots = Math.max(0, nbOfWorkoutsPerWeek - swimming);
 
-            int nbOfWorkoutsPerWeekWithoutSwimming = nbOfWorkoutsPerWeek - swimming;
-            if (nbOfWorkoutsPerWeekWithoutSwimming < 0) nbOfWorkoutsPerWeekWithoutSwimming = 0;
-
-            if (running + cycling > nbOfWorkoutsPerWeekWithoutSwimming) {
+            if (running + cycling > availableSlots) {
+                // Réinitialise et alterne running/cycling
                 sportDistribution.put(Sport.RUNNING, 0);
                 sportDistribution.put(Sport.CYCLING, 0);
-                for (int i = 0; i < nbOfWorkoutsPerWeekWithoutSwimming; i++) {
-                    if (i % 2 == 0) {
-                        sportDistribution.put(Sport.RUNNING, sportDistribution.getOrDefault(Sport.RUNNING, 0) + 1);
-                    } else {
-                        sportDistribution.put(Sport.CYCLING, sportDistribution.getOrDefault(Sport.CYCLING, 0) + 1);
-                    }
+
+                for (int i = 0; i < availableSlots; i++) {
+                    Sport sport = (i % 2 == 0) ? Sport.RUNNING : Sport.CYCLING;
+                    sportDistribution.merge(sport, 1, Integer::sum);
                 }
             }
         }
@@ -236,35 +279,42 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         return sportDistribution;
     }
 
-    private Integer calculateNbOfWorkoutsPerWeek(List<Goal> goals, Account account) {
-        Map<Sport, Integer> workoutPerSport = new HashMap<>();
-
-        for (Goal goal : goals) {
-            Sport sport = goal.getSport();
-            int nbWorkouts = goal.getNbOfWorkoutsPerWeek();
-            workoutPerSport.put(sport, workoutPerSport.getOrDefault(sport, 0) + nbWorkouts);
-        }
+    /**
+     * Calcule le nombre d'entraînements par semaine en tenant compte du niveau de forme.
+     *
+     * @param goals la liste des objectifs définissant les sports et fréquences souhaitées
+     * @param account le compte utilisateur contenant le niveau de forme actuel
+     * @return le nombre d'entraînements par semaine ajusté selon le niveau de forme
+     */
+    private int calculateNbOfWorkoutsPerWeek(List<Goal> goals, Account account) {
+        // Agrégation des entraînements par sport
+        Map<Sport, Integer> workoutPerSport = goals.stream()
+                .collect(Collectors.groupingBy(
+                        Goal::getSport,
+                        Collectors.summingInt(Goal::getNbOfWorkoutsPerWeek)
+                ));
 
         int running = workoutPerSport.getOrDefault(Sport.RUNNING, 0);
         int cycling = workoutPerSport.getOrDefault(Sport.CYCLING, 0);
         int swimming = workoutPerSport.getOrDefault(Sport.SWIMMING, 0);
 
+        // Pondération basée sur le niveau de forme (0.45 à 0.95)
         double fitnessLevelPonderation = (double) account.getLastFitnessLevel().getFitnessLevel() / 200 + 0.45;
 
-        return (int) Math.round(
-                (running + cycling) * fitnessLevelPonderation +
-                        swimming
-        );
+        // Application de la pondération sur running/cycling, swimming reste inchangé
+        return (int) Math.round((running + cycling) * fitnessLevelPonderation + swimming);
     }
 
-    private Integer calculateNbOfWeeks(TrainingPlan trainingPlan) {
-        if (trainingPlan.getGoals().isEmpty()) {
-            return 0;
-        }
-
+    /**
+     * Calcule le nombre de semaines d'entraînement basé sur l'objectif le plus long.
+     *
+     * @param trainingPlan le plan d'entraînement contenant la liste des objectifs
+     * @return le nombre de semaines du plus long objectif, ou 0 si aucun objectif
+     */
+    private int calculateNbOfWeeks(TrainingPlan trainingPlan) {
         return trainingPlan.getGoals().stream()
-                .map(Goal::getNbOfWeek)
-                .max(Integer::compareTo)
+                .mapToInt(Goal::getNbOfWeek)
+                .max()
                 .orElse(0);
     }
 }

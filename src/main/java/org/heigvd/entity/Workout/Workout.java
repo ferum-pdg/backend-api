@@ -3,14 +3,12 @@ package org.heigvd.entity.Workout;
 import jakarta.persistence.*;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
-import org.heigvd.entity.TrainingStatus;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Entity
 public class Workout {
@@ -51,7 +49,7 @@ public class Workout {
     private String source;
 
     @Enumerated(EnumType.STRING)
-    private TrainingStatus status;
+    private WorkoutStatus status;
 
     @OneToMany
     private List<PlannedDataPoint> plannedDataPoints = new ArrayList<>();
@@ -59,29 +57,17 @@ public class Workout {
     @OneToMany
     private List<WorkoutDataPoint> actualDataPoints = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "workout_type")
+    private WorkoutType workoutType;
+
     // CONSTRUCTORS ---------------------------------------------
 
     public Workout() {}
 
     public Workout(Account account, Sport sport, OffsetDateTime startTime,
-                   OffsetDateTime endTime, int durationSec, double distanceMeters, double caloriesKcal,
-                   int avgHeartRate, int maxHeartRate, Double averageSpeed, String source, TrainingStatus status) {
-        this.account = account;
-        this.sport = sport;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.durationSec = durationSec;
-        this.distanceMeters = distanceMeters;
-        this.caloriesKcal = caloriesKcal;
-        this.avgHeartRate = avgHeartRate;
-        this.maxHeartRate = maxHeartRate;
-        this.averageSpeed = averageSpeed;
-        this.source = source;
-        this.status = status;
-    }
-
-    public Workout(Account account, Sport sport, OffsetDateTime startTime,
-                   OffsetDateTime endTime, String source, TrainingStatus status, List<PlannedDataPoint> plannedDataPoints) {
+                   OffsetDateTime endTime, String source, WorkoutStatus status, List<PlannedDataPoint> plannedDataPoints,
+                   WorkoutType workoutType) {
         this.account = account;
         this.sport = sport;
         this.startTime = startTime;
@@ -89,6 +75,8 @@ public class Workout {
         this.source = source;
         this.status = status;
         this.plannedDataPoints = plannedDataPoints;
+        this.workoutType = workoutType;
+        this.durationSec = (int) (endTime.toEpochSecond() - startTime.toEpochSecond());
     }
 
     // METHODS --------------------------------------------------
@@ -128,8 +116,8 @@ public class Workout {
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }
 
-    public TrainingStatus getStatus() { return status; }
-    public void setStatus(TrainingStatus status) { this.status = status; }
+    public WorkoutStatus getStatus() { return status; }
+    public void setStatus(WorkoutStatus status) { this.status = status; }
 
     public List<PlannedDataPoint> getPlannedDataPoints() { return plannedDataPoints; }
     public void setPlannedDataPoints(List<PlannedDataPoint> plannedDataPoints) { this.plannedDataPoints = plannedDataPoints; }
