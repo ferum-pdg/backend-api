@@ -3,7 +3,7 @@ package org.heigvd.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import org.heigvd.entity.TrainingPlan;
+import org.heigvd.entity.TrainingPlan.TrainingPlan;
 
 @ApplicationScoped
 public class TrainingPlanService {
