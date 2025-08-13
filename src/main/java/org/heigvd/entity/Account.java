@@ -1,10 +1,12 @@
 package org.heigvd.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import org.heigvd.entity.Workout.Workout;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Entity
@@ -14,13 +16,19 @@ public class Account {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Email
+    @NotBlank
+    @Column(unique = true)
     private String email;
 
+    @NotBlank
     private String password;
 
+    @NotBlank
     @Column(name = "first_name")
     private String firstName;
 
+    @NotBlank
     @Column(name = "last_name")
     private String lastName;
 
@@ -30,15 +38,22 @@ public class Account {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
+    @DecimalMin("0.0")
     private Double weight;
 
+    @DecimalMin("0.0")
     private Double height;
 
+    @Min(1)
+    @Max(220)
     @Column(name = "fcmax")
     private int FCMax;
 
     @OneToMany
     private List<FitnessLevel> fitnessLevels  = new ArrayList<>();
+
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    private List<Workout> workouts;
 
     // CONSTRUCTORS ---------------------------------------------
 

@@ -4,7 +4,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.heigvd.entity.*;
 import org.heigvd.entity.TrainingPlan.DailyPlan;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.Workout.*;
+import org.heigvd.entity.Workout.Workout;
+import org.heigvd.entity.Workout.WorkoutStatus;
+import org.heigvd.entity.Workout.WorkoutType;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;

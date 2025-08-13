@@ -1,6 +1,7 @@
 package org.heigvd.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -11,15 +12,18 @@ public class FitnessLevel {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     private LocalDate date;
 
-    // The fitness score is a value between 0 and 100, where 0 is the worst fitness level and 100 is the best.
-    @Column(name = "fitness_score")
+    @Min(1)
+    @Max(10)
+    @Column(name = "fitness_level")
     private Integer fitnessLevel;
 
     // CONSTRUCTORS ---------------------------------------------
 
-    public FitnessLevel() {}
+    public FitnessLevel() {
+    }
 
     public FitnessLevel(LocalDate date, int fitnessLevel) {
         this.id = UUID.randomUUID();
@@ -29,12 +33,28 @@ public class FitnessLevel {
 
     // METHODS --------------------------------------------------
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public LocalDate getDate() { return date; }
-    public void setDate(LocalDate date) { this.date = date; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public int getFitnessLevel() { return fitnessLevel; }
-    public void setFitnessLevel(int fitnessLevel) { this.fitnessLevel = fitnessLevel; }
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public int getFitnessLevel() {
+        return fitnessLevel;
+    }
+
+    public void setFitnessLevel(int fitnessLevel) {
+        this.fitnessLevel = fitnessLevel;
+    }
+
 }
