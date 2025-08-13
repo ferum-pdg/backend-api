@@ -248,7 +248,8 @@ public class WorkoutResource {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
-            List<WorkoutDto> workouts = workoutService.findByTrainingPlan(authenticatedAccountId, planId);
+            //List<WorkoutDto> workouts = workoutService.findByTrainingPlan(authenticatedAccountId, planId);
+            List<WorkoutDto> workouts = null;
 
             return Response.ok(workouts).build();
         } catch (Exception e) {

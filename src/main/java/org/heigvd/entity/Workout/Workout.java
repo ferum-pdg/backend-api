@@ -82,6 +82,7 @@ public class Workout {
     // METHODS --------------------------------------------------
 
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public Account getAccount() { return account; }
     public void setAccount(Account account) { this.account = account; }

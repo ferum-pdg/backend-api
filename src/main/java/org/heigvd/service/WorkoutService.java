@@ -6,6 +6,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.heigvd.dto.WorkoutDto;
 import org.heigvd.entity.*;
+import org.heigvd.entity.TrainingPlan.TrainingPlan;
+import org.heigvd.entity.Workout.Workout;
+import org.heigvd.entity.Workout.WorkoutStatus;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -96,6 +99,7 @@ public class WorkoutService {
         return workouts.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
+    /*
     public List<WorkoutDto> findByTrainingPlan(UUID accountId, UUID trainingPlanId) {
         List<Workout> workouts = em.createQuery(
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.trainingPlan.id = :trainingPlanId ORDER BY w.startTime DESC",
@@ -105,6 +109,8 @@ public class WorkoutService {
                 .getResultList();
         return workouts.stream().map(this::convertToDto).collect(Collectors.toList());
     }
+
+     */
 
     // CREATE OPERATION
     @Transactional
@@ -176,16 +182,7 @@ public class WorkoutService {
                 existingWorkout.setSource(workoutDto.getSource());
             }
             if (workoutDto.getStatus() != null) {
-                existingWorkout.setStatus(TrainingStatus.valueOf(workoutDto.getStatus().toUpperCase()));
-            }
-
-            // Mise à jour du training plan si nécessaire
-            if (workoutDto.getTrainingPlanId() != null) {
-                TrainingPlan trainingPlan = em.find(TrainingPlan.class, workoutDto.getTrainingPlanId());
-                if (trainingPlan == null) {
-                    throw new RuntimeException("TrainingPlan not found with ID: " + workoutDto.getTrainingPlanId());
-                }
-                existingWorkout.setTrainingPlan(trainingPlan);
+                existingWorkout.setStatus(WorkoutStatus.valueOf(workoutDto.getStatus().toUpperCase()));
             }
 
             em.merge(existingWorkout);
@@ -222,7 +219,7 @@ public class WorkoutService {
         return new WorkoutDto(
                 workout.getId(),
                 workout.getAccount().getId(),
-                workout.getTrainingPlan() != null ? workout.getTrainingPlan().getId() : null,
+                null,
                 workout.getSport().name(),
                 workout.getStartTime(),
                 workout.getEndTime(),
@@ -240,18 +237,13 @@ public class WorkoutService {
     public Workout convertToEntity(WorkoutDto dto, Account account, TrainingPlan trainingPlan) {
         return new Workout(
                 account,
-                trainingPlan,
                 Sport.valueOf(dto.getSport().toUpperCase()),
                 dto.getStartTime(),
                 dto.getEndTime(),
-                dto.getDurationSec() != null ? dto.getDurationSec() : 0,
-                dto.getDistanceMeters() != null ? dto.getDistanceMeters() : 0.0,
-                dto.getCaloriesKcal() != null ? dto.getCaloriesKcal() : 0.0,
-                dto.getAvgHeartRate() != null ? dto.getAvgHeartRate() : 0,
-                dto.getMaxHeartRate() != null ? dto.getMaxHeartRate() : 0,
-                dto.getAverageSpeed(),
                 dto.getSource(),
-                TrainingStatus.valueOf(dto.getStatus().toUpperCase())
+                WorkoutStatus.valueOf(dto.getStatus().toUpperCase()),
+                null, // Assuming plannedDataPoints are not provided in DTO
+                null // Assuming workoutType is not provided in DTO
         );
     }
 
