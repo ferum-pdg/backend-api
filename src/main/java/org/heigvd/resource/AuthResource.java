@@ -13,9 +13,7 @@ import org.heigvd.dto.LoginResponseDto;
 import org.heigvd.entity.Account;
 import org.heigvd.service.AccountService;
 import org.heigvd.service.JwtService;
-
 import java.util.Optional;
-import java.util.UUID;
 
 @Path("/auth")
 @Produces(RestMediaType.APPLICATION_JSON)
@@ -46,10 +44,6 @@ public class AuthResource {
             return Response.ok(new LoginResponseDto(token)).build();
 
         } catch (Exception e) {
-            // Log l'erreur pour le debugging
-            System.err.println("Erreur lors du login: " + e.getMessage());
-            e.printStackTrace();
-
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"Erreur interne du serveur\"}")
                     .build();
@@ -113,7 +107,7 @@ public class AuthResource {
 
             Account account = accountOpt.get();
 
-            //Pas email ni id
+            //Pas email et id
             account.setFirstName(accountDto.getFirstName());
             account.setLastName(accountDto.getLastName());
             account.setPhoneNumber(accountDto.getPhoneNumber());
