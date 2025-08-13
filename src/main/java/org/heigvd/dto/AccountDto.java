@@ -117,7 +117,7 @@ public class AccountDto {
         this.height = height;
     }
 
-    public Integer getFcMax() {
+    public int getFcMax() {
         return fcMax;
     }
 

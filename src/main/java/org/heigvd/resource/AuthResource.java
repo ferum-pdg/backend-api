@@ -32,60 +32,116 @@ public class AuthResource {
     @Path("/login")
     @Transactional
     public Response login(@Valid LoginRequestDto dto) {
+        try {
+            Optional<Account> userOpt = accountService.findByEmail(dto.getEmail());
 
-        Optional<Account> userOpt = accountService.findByEmail(dto.getEmail());
+            if (userOpt.isEmpty() || !accountService.checkPassword(dto.getPassword(), userOpt.get().getPassword())) {
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity("{\"error\": \"Identifiants invalides\"}")
+                        .build();
+            }
 
-        if (userOpt.isEmpty() || !accountService.checkPassword(dto.getPassword(), userOpt.get().getPassword())) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity("Identifiants invalides").build();
+            String token = jwtService.generateToken(userOpt.get().getId());
+
+            return Response.ok(new LoginResponseDto(token)).build();
+
+        } catch (Exception e) {
+            // Log l'erreur pour le debugging
+            System.err.println("Erreur lors du login: " + e.getMessage());
+            e.printStackTrace();
+
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"Erreur interne du serveur\"}")
+                    .build();
         }
-
-
-        String token = jwtService.generateToken(userOpt.get().getId());
-
-        return Response.ok(new LoginResponseDto(token)).build();
-
     }
 
     @GET
     @Path("/me")
     @Authenticated
     public Response getMe(SecurityContext context) {
+        try {
+            String userId = context.getUserPrincipal().getName();
 
-        return Response.ok("{\"status\": \"ok\", \"message\": \"Endpoint works!\"}").build();
+            Optional<Account> accountOpt = accountService.findById(userId);
+
+            if (accountOpt.isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("{\"error\": \"User not found\"}")
+                        .build();
+            }
+
+            Account account = accountOpt.get();
+
+            AccountDto accountDto = new AccountDto(
+                    account.getId(),
+                    account.getEmail(),
+                    account.getFirstName(),
+                    account.getLastName(),
+                    account.getPhoneNumber(),
+                    account.getBirthDate(),
+                    account.getWeight(),
+                    account.getHeight(),
+                    account.getFCMax()
+            );
+
+            return Response.ok(accountDto).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .build();
+        }
     }
 
-/*
+
     @PUT
     @Path("/me")
     @Authenticated
-    public Response updateMe(SecurityContext context, @Valid UserExtendedDto userExtendedDto) {
+    @Transactional
+    public Response updateMe(SecurityContext context, @Valid AccountDto accountDto) {
+        try {
+            String userId = context.getUserPrincipal().getName();
 
-        String id = context.getUserPrincipal().getName();
-        Long userId = Long.valueOf(id);
+            Optional<Account> accountOpt = accountService.findById(userId);
 
-        User user = userService.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+            if (accountOpt.isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("{\"error\": \"User not found\"}")
+                        .build();
+            }
 
-        // Mise à jour des champs de base
-        user.setFirstName(userExtendedDto.getFirstName());
-        user.setLastName(userExtendedDto.getLastName());
-        user.setEmail(userExtendedDto.getEmail());
-        user.setUsername(userExtendedDto.getUsername());
+            Account account = accountOpt.get();
 
-        // Mise à jour des champs d'adresse
-        user.setAddress(userExtendedDto.getAddress());
-        user.setCity(userExtendedDto.getCity());
-        user.setPostalCode(userExtendedDto.getPostalCode());
-        user.setCountry(userExtendedDto.getCountry());
+            //Pas email ni id
+            account.setFirstName(accountDto.getFirstName());
+            account.setLastName(accountDto.getLastName());
+            account.setPhoneNumber(accountDto.getPhoneNumber());
+            account.setBirthDate(accountDto.getBirthDate());
+            account.setWeight(accountDto.getWeight());
+            account.setHeight(accountDto.getHeight());
+            account.setFCMax(accountDto.getFcMax());
 
-        // Mise à jour des champs de contact et profil
-        user.setPhoneNumber(userExtendedDto.getPhoneNumber());
-        user.setProfilePicture(userExtendedDto.getProfilePicture());
+            accountService.update(account);
 
-        userService.update(user);
+            AccountDto updatedAccountDto = new AccountDto(
+                    account.getId(),
+                    account.getEmail(),
+                    account.getFirstName(),
+                    account.getLastName(),
+                    account.getPhoneNumber(),
+                    account.getBirthDate(),
+                    account.getWeight(),
+                    account.getHeight(),
+                    account.getFCMax()
+            );
 
-        return Response.ok(new UserExtendedDto(user)).build();
+            return Response.ok(updatedAccountDto).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .build();
+        }
     }
- */
 }
