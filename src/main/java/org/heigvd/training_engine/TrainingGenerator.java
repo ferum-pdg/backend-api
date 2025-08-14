@@ -4,5 +4,5 @@ import org.heigvd.entity.TrainingPlan.TrainingPlan;
 
 public interface TrainingGenerator {
 
-    public void generateTrainingWorkouts(TrainingPlan trainingPlan);
+    public TrainingPlan generateTrainingWorkouts(TrainingPlan trainingPlan);
 }

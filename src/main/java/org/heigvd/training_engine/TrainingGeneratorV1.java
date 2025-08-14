@@ -31,7 +31,7 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
      * @throws IllegalArgumentException si pas assez de jours disponibles pour programmer les entraînements
      */
     @Override
-    public void generateTrainingWorkouts(TrainingPlan trainingPlan) {
+    public TrainingPlan generateTrainingWorkouts(TrainingPlan trainingPlan) {
         List<Goal> goals = trainingPlan.getGoals();
         Account account = trainingPlan.getAccount();
 
@@ -59,6 +59,8 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         // Génération des entraînements pour la première semaine
         List<Workout> workouts = generateWorkouts(trainingPlan, dailyPlans);
         trainingPlan.setWorkouts(workouts);
+
+        return trainingPlan;
     }
 
     /**
@@ -150,6 +152,12 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         return dailyPlans;
     }
 
+
+    /**
+     * Définit le type d'entraînement pour chaque plan quotidien en fonction du sport.
+     * @param tp le plan d'entraînement pour lequel définir les types
+     * @param dps la liste des plans quotidiens à mettre à jour
+     */
     private void defineWorkoutType(TrainingPlan tp, List<DailyPlan> dps) {
 
         for(DailyPlan dp : dps) {

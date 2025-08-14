@@ -12,9 +12,11 @@ public class PlannedDataPoint {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private OffsetDateTime start;
+    @Column(name = "start_time")
+    private OffsetDateTime startTime;
 
-    private OffsetDateTime end;
+    @Column(name = "end_time")
+    private OffsetDateTime endTime;
 
     @Column(name = "speed_mps")
     private Double speedMps;
@@ -27,9 +29,9 @@ public class PlannedDataPoint {
     public PlannedDataPoint() {
     }
 
-    public PlannedDataPoint(OffsetDateTime start, OffsetDateTime end, Double speedMps, Integer heartRate) {
-        this.start = start;
-        this.end = end;
+    public PlannedDataPoint(OffsetDateTime startTime, OffsetDateTime endTime, Double speedMps, Integer heartRate) {
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.speedMps = speedMps;
         this.heartRate = heartRate;
     }
@@ -40,8 +42,8 @@ public class PlannedDataPoint {
     public String toString() {
         return "{" + "\n" +
                 "    id=" + id + "\n" +
-                "    start=" + start + "\n" +
-                "    end=" + end + "\n" +
+                "    start=" + startTime + "\n" +
+                "    end=" + endTime + "\n" +
                 "    speedMps=" + speedMps + "\n" +
                 "    heartRate=" + heartRate + "\n" +
                 "   }";

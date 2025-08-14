@@ -25,6 +25,7 @@ public class DailyPlan {
     @Column(name = "workout_type")
     private WorkoutType workoutType;
 
+
     // CONSTRUCTORS ---------------------------------------------
 
     public DailyPlan() { }

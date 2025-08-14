@@ -16,7 +16,7 @@ public class FitnessLevel {
     private LocalDate date;
 
     @Min(1)
-    @Max(10)
+    @Max(100)
     @Column(name = "fitness_level")
     private Integer fitnessLevel;
 
@@ -26,7 +26,6 @@ public class FitnessLevel {
     }
 
     public FitnessLevel(LocalDate date, int fitnessLevel) {
-        this.id = UUID.randomUUID();
         this.date = date;
         this.fitnessLevel = fitnessLevel;
     }

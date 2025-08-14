@@ -43,14 +43,15 @@ public class TrainingPlan {
     @ManyToOne
     private Account account;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     private List<Workout> workouts;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DailyPlan> pairWeeklyPlans;
 
     // temporary field for the training generator
-    @Transient
+    @Enumerated(EnumType.STRING)
+    @Column(name = "current_phase")
     private TrainingPlanPhase currentPhase;
 
     // CONSTRUCTORS ---------------------------------------------
