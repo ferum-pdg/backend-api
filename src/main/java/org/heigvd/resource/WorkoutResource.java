@@ -6,6 +6,9 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.heigvd.dto.WorkoutDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
@@ -153,82 +156,6 @@ public class WorkoutResource {
 
             Workout createdWorkout = workoutService.create(workout);
             return Response.status(Response.Status.CREATED).entity(createdWorkout).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"Invalid input: " + e.getMessage() + "\"}")
-                    .build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
-                    .build();
-        }
-    }
-
-    @PUT
-    @Path("/{id}")
-    @Transactional
-    public Response updateWorkout(
-            @PathParam("id") UUID id,
-            @Valid WorkoutDto workoutDto,
-            @Context SecurityContext context) {
-        try {
-            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
-
-            // Vérifier que le workout existe et appartient à l'utilisateur
-            Optional<Workout> existingWorkoutOpt = workoutService.findById(id);
-            if (existingWorkoutOpt.isEmpty()) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"error\": \"Workout not found\"}")
-                        .build();
-            }
-
-            Workout existingWorkout = existingWorkoutOpt.get();
-            if (!existingWorkout.getAccount().getId().equals(authenticatedAccountId)) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity("{\"error\": \"You can only update your own workouts\"}")
-                        .build();
-            }
-
-            // S'assurer que l'accountId reste le même
-            workoutDto.setAccountId(authenticatedAccountId);
-
-            // Créer un workout temporaire avec les nouvelles valeurs pour la mise à jour
-            Workout updatedData = new Workout();
-
-            if (workoutDto.getSport() != null) {
-                updatedData.setSport(Sport.valueOf(workoutDto.getSport().toUpperCase()));
-            }
-            if (workoutDto.getStartTime() != null) {
-                updatedData.setStartTime(workoutDto.getStartTime());
-            }
-            if (workoutDto.getEndTime() != null) {
-                updatedData.setEndTime(workoutDto.getEndTime());
-            }
-            if (workoutDto.getSource() != null) {
-                updatedData.setSource(workoutDto.getSource());
-            }
-            if (workoutDto.getStatus() != null) {
-                updatedData.setStatus(WorkoutStatus.valueOf(workoutDto.getStatus().toUpperCase()));
-            }
-            if (workoutDto.getDurationSec() != null) {
-                updatedData.setDurationSec((int) workoutDto.getDurationSec().longValue());
-            }
-            updatedData.setDistanceMeters(workoutDto.getDistanceMeters());
-            if (workoutDto.getCaloriesKcal() != null) {
-                updatedData.setCaloriesKcal(workoutDto.getCaloriesKcal().intValue());
-            }
-            updatedData.setAvgHeartRate(workoutDto.getAvgHeartRate());
-            updatedData.setMaxHeartRate(workoutDto.getMaxHeartRate());
-            updatedData.setAverageSpeed(workoutDto.getAverageSpeed());
-
-            Optional<Workout> updatedWorkoutOpt = workoutService.update(id, updatedData);
-            if (updatedWorkoutOpt.isEmpty()) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"error\": \"Workout not found\"}")
-                        .build();
-            }
-
-            return Response.ok(updatedWorkoutOpt.get()).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("{\"error\": \"Invalid input: " + e.getMessage() + "\"}")
