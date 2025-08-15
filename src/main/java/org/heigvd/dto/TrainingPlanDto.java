@@ -1,5 +1,7 @@
 package org.heigvd.dto;
 
+import org.heigvd.entity.Goal;
+import org.heigvd.entity.TrainingPlan.DailyPlan;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
 
 import java.time.DayOfWeek;
@@ -13,6 +15,8 @@ public class TrainingPlanDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private List<DayOfWeek> daysOfWeek;
+    private List<DailyPlan> dailyPlans;
+    private List<Goal> goals;
 
     // CONSTRUCTORS ---------------------------------------------
 
@@ -23,6 +27,8 @@ public class TrainingPlanDto {
         this.startDate = tp.getStartDate();
         this.endDate = tp.getEndDate();
         this.daysOfWeek = tp.getDaysOfWeek();
+        this.dailyPlans = tp.getPairWeeklyPlans();
+        this.goals = tp.getGoals();
     }
 
     // METHODS --------------------------------------------------
@@ -38,5 +44,11 @@ public class TrainingPlanDto {
 
     public List<DayOfWeek> getDaysOfWeek() { return daysOfWeek; }
     public void setDaysOfWeek(List<DayOfWeek> daysOfWeek) { this.daysOfWeek = daysOfWeek; }
+
+    public List<DailyPlan> getDailyPlans() { return dailyPlans; }
+    public void setDailyPlans(List<DailyPlan> dailyPlans) { this.dailyPlans = dailyPlans; }
+
+    public List<Goal> getGoals() { return goals; }
+    public void setGoals(List<Goal> goals) { this.goals = goals; }
 
 }

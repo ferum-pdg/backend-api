@@ -15,6 +15,11 @@ public class TrainingPlanService {
     EntityManager em;
 
     public void create(TrainingPlan tp) {
+        // we need to check if the user already has a training plan
+        Optional<TrainingPlan> existingPlan = getMyTrainingPlan(tp.getAccount().getId());
+        if (existingPlan.isPresent()) {
+            throw new IllegalStateException("User already has a training plan.");
+        }
         em.persist(tp);
     }
 

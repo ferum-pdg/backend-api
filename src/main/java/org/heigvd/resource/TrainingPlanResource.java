@@ -10,6 +10,8 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import org.heigvd.dto.TrainingPlanDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.FitnessLevel;
 import org.heigvd.entity.Goal;
@@ -31,6 +33,7 @@ import java.util.UUID;
 @Path("/training-plan")
 @Produces(RestMediaType.APPLICATION_JSON)
 @Consumes(RestMediaType.APPLICATION_JSON)
+@Authenticated
 public class TrainingPlanResource {
 
     @Inject
@@ -49,28 +52,29 @@ public class TrainingPlanResource {
     EntityManager em;
 
     @GET
-    public Response getMyTrainingPlan() {
-        UUID accountId = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
+    public Response getMyTrainingPlan(SecurityContext securityContext) {
 
-        createNewTrainingPlan();
+        UUID accountId = UUID.fromString(securityContext.getUserPrincipal().getName());
+
+        createNewTrainingPlan(accountId);
 
         Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
 
-        if (tp == null) {
+        if (tp.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND).entity("Training plan not found").build();
         }
 
         // Assuming the training plan is found, return it
-        return Response.ok(tp).build();
+        return Response.ok(new TrainingPlanDto(tp.get())).build();
     }
 
     @Transactional
-    public void createNewTrainingPlan() {
+    public void createNewTrainingPlan(UUID accountId) {
         Goal g1 = goalService.getSpecificGoal(Sport.RUNNING, 10.0);
         List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY);
         LocalDate endDate = LocalDate.of(2025, 12, 24);
 
-        Optional<Account> account = accountService.findById(UUID.fromString("550e8400-e29b-41d4-a716-446655440001"));
+        Optional<Account> account = accountService.findById(accountId);
 
         // Persist the fitness level
 

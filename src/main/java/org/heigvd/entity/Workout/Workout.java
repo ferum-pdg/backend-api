@@ -20,6 +20,7 @@ public class Workout {
     @ManyToOne
     private Account account;
 
+    @Enumerated(EnumType.STRING)
     private Sport sport;
 
     @Column(name = "start_time")
