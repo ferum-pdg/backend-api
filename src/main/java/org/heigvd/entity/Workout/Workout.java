@@ -1,5 +1,7 @@
 package org.heigvd.entity.Workout;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
@@ -17,9 +19,11 @@ public class Workout {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @JsonIgnore
     @ManyToOne
     private Account account;
 
+    @Enumerated(EnumType.STRING)
     private Sport sport;
 
     @Column(name = "start_time")
