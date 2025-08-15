@@ -7,9 +7,14 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import org.heigvd.dto.WorkoutDto;
+import org.heigvd.entity.Account;
+import org.heigvd.entity.Sport;
+import org.heigvd.entity.Workout.Workout;
+import org.heigvd.entity.Workout.WorkoutStatus;
 import org.heigvd.service.WorkoutService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
+import jakarta.persistence.EntityManager;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -24,13 +29,16 @@ public class WorkoutResource {
     @Inject
     WorkoutService workoutService;
 
+    @Inject
+    EntityManager em;
+
     @GET
     @Path("/{id}")
-    public Response getWorkout(@PathParam("id") UUID id, @Context SecurityContext context) {
+    public Response getWorkout(@PathParam("id") UUID id, @Context SecurityContext context){
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
-            Optional<WorkoutDto> workoutOpt = workoutService.findById(id);
+            Optional<Workout> workoutOpt = workoutService.findById(id);
 
             if (workoutOpt.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -38,10 +46,9 @@ public class WorkoutResource {
                         .build();
             }
 
-            WorkoutDto workout = workoutOpt.get();
+            Workout workout = workoutOpt.get();
 
-            // Vérifier que l'utilisateur authentifié est propriétaire du workout
-            if (!workout.getAccountId().equals(authenticatedAccountId)) {
+            if (!workout.getAccount().getId().equals(authenticatedAccountId)) {
                 return Response.status(Response.Status.FORBIDDEN)
                         .entity("{\"error\": \"You can only access your own workouts\"}")
                         .build();
@@ -61,7 +68,7 @@ public class WorkoutResource {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
-            List<WorkoutDto> workouts = workoutService.findByAccountId(authenticatedAccountId);
+            List<Workout> workouts = workoutService.findByAccountId(authenticatedAccountId);
 
             return Response.ok(workouts).build();
         } catch (Exception e) {
@@ -80,42 +87,14 @@ public class WorkoutResource {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
             try {
-                org.heigvd.entity.Sport sportEnum = org.heigvd.entity.Sport.valueOf(sport.toUpperCase());
-                List<WorkoutDto> workouts = workoutService.findByAccountIdAndSport(authenticatedAccountId, sportEnum);
+                Sport sportEnum = Sport.valueOf(sport.toUpperCase());
+                List<Workout> workouts = workoutService.findByAccountIdAndSport(authenticatedAccountId, sportEnum);
                 return Response.ok(workouts).build();
             } catch (IllegalArgumentException e) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity("{\"error\": \"Invalid sport: " + sport + "\"}")
                         .build();
             }
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
-                    .build();
-        }
-    }
-
-    @GET
-    @Path("/my/date-range")
-    public Response getMyWorkoutsByDateRange(
-            @QueryParam("startDate") String startDateStr,
-            @QueryParam("endDate") String endDateStr,
-            @Context SecurityContext context) {
-        try {
-            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
-
-            if (startDateStr == null || endDateStr == null) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("{\"error\": \"startDate and endDate parameters are required\"}")
-                        .build();
-            }
-
-            OffsetDateTime startDate = OffsetDateTime.parse(startDateStr);
-            OffsetDateTime endDate = OffsetDateTime.parse(endDateStr);
-
-            List<WorkoutDto> workouts = workoutService.findByDateRange(authenticatedAccountId, startDate, endDate);
-
-            return Response.ok(workouts).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
@@ -132,11 +111,51 @@ public class WorkoutResource {
             // S'assurer que le workout est créé pour le compte authentifié
             workoutDto.setAccountId(authenticatedAccountId);
 
-            WorkoutDto createdWorkout = workoutService.create(workoutDto);
+            // Récupérer le compte
+            Account account = em.find(Account.class, authenticatedAccountId);
+            if (account == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Account not found\"}")
+                        .build();
+            }
+
+            // Créer le workout
+            Workout workout = new Workout(
+                    account,
+                    Sport.valueOf(workoutDto.getSport().toUpperCase()),
+                    workoutDto.getStartTime(),
+                    workoutDto.getEndTime(),
+                    workoutDto.getSource(),
+                    WorkoutStatus.valueOf(workoutDto.getStatus().toUpperCase()),
+                    null, // plannedDataPoints
+                    null  // workoutType
+            );
+
+            // Définir les autres propriétés
+            if (workoutDto.getDurationSec() != null) {
+                workout.setDurationSec((int) workoutDto.getDurationSec().longValue());
+            }
+            if (workoutDto.getDistanceMeters() != null) {
+                workout.setDistanceMeters(workoutDto.getDistanceMeters());
+            }
+            if (workoutDto.getCaloriesKcal() != null) {
+                workout.setCaloriesKcal(workoutDto.getCaloriesKcal().intValue());
+            }
+            if (workoutDto.getAvgHeartRate() != null) {
+                workout.setAvgHeartRate(workoutDto.getAvgHeartRate());
+            }
+            if (workoutDto.getMaxHeartRate() != null) {
+                workout.setMaxHeartRate(workoutDto.getMaxHeartRate());
+            }
+            if (workoutDto.getAverageSpeed() != null) {
+                workout.setAverageSpeed(workoutDto.getAverageSpeed());
+            }
+
+            Workout createdWorkout = workoutService.create(workout);
             return Response.status(Response.Status.CREATED).entity(createdWorkout).build();
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
+                    .entity("{\"error\": \"Invalid input: " + e.getMessage() + "\"}")
                     .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -156,15 +175,15 @@ public class WorkoutResource {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
             // Vérifier que le workout existe et appartient à l'utilisateur
-            Optional<WorkoutDto> existingWorkoutOpt = workoutService.findById(id);
+            Optional<Workout> existingWorkoutOpt = workoutService.findById(id);
             if (existingWorkoutOpt.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("{\"error\": \"Workout not found\"}")
                         .build();
             }
 
-            WorkoutDto existingWorkout = existingWorkoutOpt.get();
-            if (!existingWorkout.getAccountId().equals(authenticatedAccountId)) {
+            Workout existingWorkout = existingWorkoutOpt.get();
+            if (!existingWorkout.getAccount().getId().equals(authenticatedAccountId)) {
                 return Response.status(Response.Status.FORBIDDEN)
                         .entity("{\"error\": \"You can only update your own workouts\"}")
                         .build();
@@ -173,7 +192,36 @@ public class WorkoutResource {
             // S'assurer que l'accountId reste le même
             workoutDto.setAccountId(authenticatedAccountId);
 
-            Optional<WorkoutDto> updatedWorkoutOpt = workoutService.update(id, workoutDto);
+            // Créer un workout temporaire avec les nouvelles valeurs pour la mise à jour
+            Workout updatedData = new Workout();
+
+            if (workoutDto.getSport() != null) {
+                updatedData.setSport(Sport.valueOf(workoutDto.getSport().toUpperCase()));
+            }
+            if (workoutDto.getStartTime() != null) {
+                updatedData.setStartTime(workoutDto.getStartTime());
+            }
+            if (workoutDto.getEndTime() != null) {
+                updatedData.setEndTime(workoutDto.getEndTime());
+            }
+            if (workoutDto.getSource() != null) {
+                updatedData.setSource(workoutDto.getSource());
+            }
+            if (workoutDto.getStatus() != null) {
+                updatedData.setStatus(WorkoutStatus.valueOf(workoutDto.getStatus().toUpperCase()));
+            }
+            if (workoutDto.getDurationSec() != null) {
+                updatedData.setDurationSec((int) workoutDto.getDurationSec().longValue());
+            }
+            updatedData.setDistanceMeters(workoutDto.getDistanceMeters());
+            if (workoutDto.getCaloriesKcal() != null) {
+                updatedData.setCaloriesKcal(workoutDto.getCaloriesKcal().intValue());
+            }
+            updatedData.setAvgHeartRate(workoutDto.getAvgHeartRate());
+            updatedData.setMaxHeartRate(workoutDto.getMaxHeartRate());
+            updatedData.setAverageSpeed(workoutDto.getAverageSpeed());
+
+            Optional<Workout> updatedWorkoutOpt = workoutService.update(id, updatedData);
             if (updatedWorkoutOpt.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("{\"error\": \"Workout not found\"}")
@@ -181,26 +229,15 @@ public class WorkoutResource {
             }
 
             return Response.ok(updatedWorkoutOpt.get()).build();
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
+                    .entity("{\"error\": \"Invalid input: " + e.getMessage() + "\"}")
                     .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
                     .build();
         }
-    }
-
-    @PATCH
-    @Path("/{id}")
-    @Transactional
-    public Response patchWorkout(
-            @PathParam("id") UUID id,
-            WorkoutDto workoutDto,
-            @Context SecurityContext context) {
-        // Même logique que PUT pour la mise à jour partielle
-        return updateWorkout(id, workoutDto, context);
     }
 
     @DELETE
@@ -211,15 +248,15 @@ public class WorkoutResource {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
             // Vérifier que le workout existe et appartient à l'utilisateur
-            Optional<WorkoutDto> workoutOpt = workoutService.findById(id);
+            Optional<Workout> workoutOpt = workoutService.findById(id);
             if (workoutOpt.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("{\"error\": \"Workout not found\"}")
                         .build();
             }
 
-            WorkoutDto workout = workoutOpt.get();
-            if (!workout.getAccountId().equals(authenticatedAccountId)) {
+            Workout workout = workoutOpt.get();
+            if (!workout.getAccount().getId().equals(authenticatedAccountId)) {
                 return Response.status(Response.Status.FORBIDDEN)
                         .entity("{\"error\": \"You can only delete your own workouts\"}")
                         .build();
@@ -248,8 +285,9 @@ public class WorkoutResource {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
-            //List<WorkoutDto> workouts = workoutService.findByTrainingPlan(authenticatedAccountId, planId);
-            List<WorkoutDto> workouts = null;
+            // TODO: Implémenter cette méthode quand elle sera disponible dans le service
+            //List<Workout> workouts = workoutService.findByTrainingPlan(authenticatedAccountId, planId);
+            List<Workout> workouts = null;
 
             return Response.ok(workouts).build();
         } catch (Exception e) {
