@@ -6,6 +6,9 @@ import jakarta.persistence.EntityManager;
 import org.heigvd.entity.Goal;
 import org.heigvd.entity.Sport;
 
+import java.util.List;
+import java.util.UUID;
+
 @ApplicationScoped
 public class GoalService {
 
@@ -17,5 +20,15 @@ public class GoalService {
                 .setParameter("sport", sport)
                 .setParameter("targetDistance", targetDistance)
                 .getSingleResult();
+    }
+
+    public List<Goal> getGoalsByIds(List<UUID> goalIds) {
+        return em.createQuery("SELECT g FROM Goal g WHERE g.id IN :goalIds", Goal.class)
+                .setParameter("goalIds", goalIds)
+                .getResultList();
+    }
+
+    public Goal getGoalById(UUID id) {
+        return em.find(Goal.class, id);
     }
 }

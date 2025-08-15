@@ -5,13 +5,11 @@ import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
-import org.heigvd.dto.TrainingPlanDto;
+import org.heigvd.dto.TrainingPlanRequestDto;
+import org.heigvd.dto.TrainingPlanResponseDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.FitnessLevel;
 import org.heigvd.entity.Goal;
@@ -56,8 +54,6 @@ public class TrainingPlanResource {
 
         UUID accountId = UUID.fromString(securityContext.getUserPrincipal().getName());
 
-        createNewTrainingPlan(accountId);
-
         Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
 
         if (tp.isEmpty()) {
@@ -65,30 +61,37 @@ public class TrainingPlanResource {
         }
 
         // Assuming the training plan is found, return it
-        return Response.ok(new TrainingPlanDto(tp.get())).build();
+        return Response.ok(new TrainingPlanResponseDto(tp.get())).build();
     }
 
     @Transactional
-    public void createNewTrainingPlan(UUID accountId) {
-        Goal g1 = goalService.getSpecificGoal(Sport.RUNNING, 10.0);
-        List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY);
-        LocalDate endDate = LocalDate.of(2025, 12, 24);
+    @POST
+    public Response createTrainingPlan(SecurityContext securityContext, TrainingPlanRequestDto trainingPlanRequestDto) {
+        UUID accountId = UUID.fromString(securityContext.getUserPrincipal().getName());
 
         Optional<Account> account = accountService.findById(accountId);
+        if (account.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).entity("Account not found").build();
+        }
 
-        // Persist the fitness level
+        List<Goal> goals = goalService.getGoalsByIds(trainingPlanRequestDto.getGoalIds());
+        if (goals.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("No valid goals provided").build();
+        }
 
-        FitnessLevel fitnessLevel = new FitnessLevel(LocalDate.now(), 75);
-        account.get().addFitnessLevel(fitnessLevel);
-        em.merge(account.get());
+        List<DayOfWeek> daysOfWeek = trainingPlanRequestDto.getDaysOfWeek().stream()
+                .map(DayOfWeek::valueOf)
+                .toList();
 
-        TrainingPlan tp = new TrainingPlan(List.of(g1), endDate, days, days, account.get());
+        LocalDate endDate = trainingPlanRequestDto.getEndDate();
 
+        TrainingPlan tp = new TrainingPlan(goals, endDate, daysOfWeek, daysOfWeek, account.get());
         tp.setCurrentPhase(TrainingPlanPhase.BASE);
 
         TrainingPlan newTrainingPlan = trainingGeneratorV1.generateTrainingWorkouts(tp);
 
         trainingPlanService.create(newTrainingPlan);
 
+        return Response.status(Response.Status.CREATED).entity(new TrainingPlanResponseDto(newTrainingPlan)).build();
     }
 }

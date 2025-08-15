@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-public class TrainingPlanDto {
+public class TrainingPlanResponseDto {
 
     private UUID id;
     private LocalDate startDate;
@@ -20,9 +20,9 @@ public class TrainingPlanDto {
 
     // CONSTRUCTORS ---------------------------------------------
 
-    public TrainingPlanDto() {}
+    public TrainingPlanResponseDto() {}
 
-    public TrainingPlanDto(TrainingPlan tp) {
+    public TrainingPlanResponseDto(TrainingPlan tp) {
         this.id = tp.getId();
         this.startDate = tp.getStartDate();
         this.endDate = tp.getEndDate();
