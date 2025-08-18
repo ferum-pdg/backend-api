@@ -29,9 +29,9 @@ public class PlannedDataPoint {
     public PlannedDataPoint() {
     }
 
-    public PlannedDataPoint(OffsetDateTime startTime, OffsetDateTime endTime, Double speedMps, Integer heartRate) {
-        this.startTime = startTime;
-        this.endTime = endTime;
+    public PlannedDataPoint(OffsetDateTime start, OffsetDateTime end, Double speedMps, Integer heartRate) {
+        this.startTime = start;
+        this.endTime = end;
         this.speedMps = speedMps;
         this.heartRate = heartRate;
     }

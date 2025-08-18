@@ -3,6 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 ALTER TABLE goal
     ALTER COLUMN id SET DEFAULT gen_random_uuid();
 
+-- Insertion des comptes utilisateurs
 INSERT INTO Account (id, email, password, first_name, last_name, phone_number, birth_date, weight, height, fcmax) VALUES
   ('550e8400-e29b-41d4-a716-446655440001', 'alice@example.com', '$2a$12$a6G539l7ubH9B/TmvmQBOuWXFrv1BKxl06lNZkPX6x0wdt0WeJ2Ga', 'Alice', 'Martin', '+41 79 123 45 67', '1990-05-15', 65.0, 170.0, 190),
   ('550e8400-e29b-41d4-a716-446655440002', 'bob@example.com', '$2a$10$8dEnpqQxTmQJIZTe7Y21dOEf0jIHnmVghH6fnL5MD6jqPW5Jl7s7G', 'Bob', 'Dupont', '+41 79 987 65 43', '1985-08-22', 80.0, 185.0, 185),
@@ -22,7 +23,6 @@ VALUES
     ('850e8400-e29b-41d4-a716-44665544000a', 'Swimming 1000m', 0, 8, 2, 1.0, 'SWIMMING'),
     ('850e8400-e29b-41d4-a716-44665544000b', 'Swimming 1800m', 0, 10, 3, 1.8, 'SWIMMING'),
     ('850e8400-e29b-41d4-a716-44665544000c', 'Swimming 3900m', 0, 10, 4, 3.9, 'SWIMMING');
-
 
 -- Insertion des workouts
 INSERT INTO Workout (id, account_id, sport, start_time, end_time, duration_sec, distance_meters, calories_kcal, avg_heart_rate, max_heart_rate, average_speed, source, status, workout_type) VALUES

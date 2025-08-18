@@ -8,7 +8,7 @@ public class WorkoutDto {
 
     private UUID id;
 
-    @NotNull(message = "Account ID is required")
+    //@NotNull(message = "Account ID is required")
     private UUID accountId;
 
     private UUID trainingPlanId;
