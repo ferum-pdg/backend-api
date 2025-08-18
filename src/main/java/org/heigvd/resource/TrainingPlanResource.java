@@ -11,20 +11,13 @@ import jakarta.ws.rs.core.SecurityContext;
 import org.heigvd.dto.TrainingPlanRequestDto;
 import org.heigvd.dto.TrainingPlanResponseDto;
 import org.heigvd.entity.Account;
-import org.heigvd.entity.FitnessLevel;
-import org.heigvd.entity.Goal;
-import org.heigvd.entity.Sport;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.Workout.TrainingPlanPhase;
 import org.heigvd.service.AccountService;
 import org.heigvd.service.GoalService;
 import org.heigvd.service.TrainingPlanService;
-import org.heigvd.training_engine.TrainingGeneratorV1;
+import org.heigvd.training_generator.TrainingGeneratorV1;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -74,21 +67,13 @@ public class TrainingPlanResource {
             return Response.status(Response.Status.NOT_FOUND).entity("Account not found").build();
         }
 
-        List<Goal> goals = goalService.getGoalsByIds(trainingPlanRequestDto.getGoalIds());
-        if (goals.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("No valid goals provided").build();
+        TrainingPlan newTrainingPlan = trainingGeneratorV1.generateTrainingPlan(trainingPlanRequestDto, account.get());
+
+        if (newTrainingPlan == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Failed to generate training plan").build();
         }
 
-        List<DayOfWeek> daysOfWeek = trainingPlanRequestDto.getDaysOfWeek().stream()
-                .map(DayOfWeek::valueOf)
-                .toList();
-
-        LocalDate endDate = trainingPlanRequestDto.getEndDate();
-
-        TrainingPlan tp = new TrainingPlan(goals, endDate, daysOfWeek, daysOfWeek, account.get());
-        tp.setCurrentPhase(TrainingPlanPhase.BASE);
-
-        TrainingPlan newTrainingPlan = trainingGeneratorV1.generateTrainingWorkouts(tp);
+        newTrainingPlan = trainingGeneratorV1.generateTrainingWorkouts(newTrainingPlan);
 
         trainingPlanService.create(newTrainingPlan);
 

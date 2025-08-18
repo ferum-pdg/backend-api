@@ -22,6 +22,17 @@ public class TrainingPlanRequestDto {
         this.goals = goals;
     }
 
+    public TrainingPlanRequestDto(LocalDate endDate, List<DayOfWeek> daysOfWeek, List<Goal> goals, boolean isWeird) {
+        this.endDate = endDate;
+        this.daysOfWeek = daysOfWeek.stream()
+                .map(DayOfWeek::name)
+                .toList();
+        this.goals = goals.stream()
+                .map(Goal::getId)
+                .map(UUID::toString)
+                .toList();
+    }
+
     // METHODS --------------------------------------------------
 
     public LocalDate getEndDate() { return endDate; }

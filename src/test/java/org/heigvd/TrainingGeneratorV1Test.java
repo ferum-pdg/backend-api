@@ -2,12 +2,12 @@ package org.heigvd;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.heigvd.dto.TrainingPlanRequestDto;
 import org.heigvd.entity.*;
 import org.heigvd.entity.TrainingPlan.DailyPlan;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.Workout.TrainingPlanPhase;
 import org.heigvd.service.GoalService;
-import org.heigvd.training_engine.TrainingGeneratorV1;
+import org.heigvd.training_generator.TrainingGeneratorV1;
 import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
@@ -35,13 +35,11 @@ public class TrainingGeneratorV1Test {
                 LocalDate.of(1999, 9, 21), 77.0, 176.0, 205);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 75));
 
-        TrainingPlan tp = new TrainingPlan(List.of(g1), endDate, days, days, account);
-
-        tp.setCurrentPhase(TrainingPlanPhase.BASE);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, List.of(g1), true);
+        TrainingPlan tp = trainingGeneratorV1.generateTrainingPlan(dto, account);
 
         trainingGeneratorV1.generateTrainingWorkouts(tp);
-
-        System.out.println("generateTrainingWithOneGoal: \n\n" + tp);
+        System.out.println(tp);
     }
 
     @Test
@@ -55,12 +53,10 @@ public class TrainingGeneratorV1Test {
                 LocalDate.of(1999, 9, 21), 77.0, 176.0, 205);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 80));
 
-        TrainingPlan tp = new TrainingPlan(List.of(g1, g2), endDate, days, days, account);
-
-        tp.setCurrentPhase(TrainingPlanPhase.BASE);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, List.of(g1, g2), true);
+        TrainingPlan tp = trainingGeneratorV1.generateTrainingPlan(dto, account);
 
         trainingGeneratorV1.generateTrainingWorkouts(tp);
-
         System.out.println(tp);
     }
 
@@ -76,12 +72,10 @@ public class TrainingGeneratorV1Test {
                 LocalDate.of(1999, 9, 21), 77.0, 176.0, 205);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 67));
 
-        TrainingPlan tp = new TrainingPlan(List.of(g1, g2, g3), endDate, days, days, account);
-
-        tp.setCurrentPhase(TrainingPlanPhase.BASE);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, List.of(g1, g2, g3), true);
+        TrainingPlan tp = trainingGeneratorV1.generateTrainingPlan(dto, account);
 
         trainingGeneratorV1.generateTrainingWorkouts(tp);
-
         System.out.println(tp);
     }
 
@@ -95,19 +89,19 @@ public class TrainingGeneratorV1Test {
                 LocalDate.of(1990, 1, 1), 70.0, 175.0, 180);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 70));
 
-        TrainingPlan tp = new TrainingPlan(List.of(running), endDate, days, days, account);
-
-        tp.setCurrentPhase(TrainingPlanPhase.BASE);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, List.of(running), true);
+        TrainingPlan tp = trainingGeneratorV1.generateTrainingPlan(dto, account);
 
         trainingGeneratorV1.generateTrainingWorkouts(tp);
 
-        long mondayCount = tp.getPairWeeklyPlans().stream().filter(dp -> dp.getDayOfWeek() == DayOfWeek.MONDAY).count();
-        long wednesdayCount = tp.getPairWeeklyPlans().stream().filter(dp -> dp.getDayOfWeek() == DayOfWeek.FRIDAY).count();
+        long mondayCount = tp.getWeeklyPlans().getFirst().getDailyPlans()
+                .stream().filter(dp -> dp.getDayOfWeek() == DayOfWeek.MONDAY).count();
 
-        System.out.println(tp);
+        long fridayCount = tp.getWeeklyPlans().getFirst().getDailyPlans()
+                .stream().filter(dp -> dp.getDayOfWeek() == DayOfWeek.FRIDAY).count();
 
-        assertEquals(1, mondayCount, "Should have one session on Monday.");
-        assertEquals(1, wednesdayCount, "Should have one session on Wednesday.");
+        assertEquals(1, mondayCount);
+        assertEquals(1, fridayCount);
     }
 
     @Test
@@ -120,17 +114,15 @@ public class TrainingGeneratorV1Test {
                 LocalDate.of(1990, 1, 1), 70.0, 175.0, 180);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 55));
 
-        TrainingPlan tp = new TrainingPlan(List.of(running), endDate, days, days, account);
-
-        tp.setCurrentPhase(TrainingPlanPhase.BASE);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, List.of(running), true);
+        TrainingPlan tp = trainingGeneratorV1.generateTrainingPlan(dto, account);
 
         trainingGeneratorV1.generateTrainingWorkouts(tp);
 
-        long mondayCount = tp.getPairWeeklyPlans().stream().filter(dp -> dp.getDayOfWeek() == DayOfWeek.MONDAY).count();
+        long mondayCount = tp.getWeeklyPlans().getFirst().getDailyPlans()
+                .stream().filter(dp -> dp.getDayOfWeek() == DayOfWeek.MONDAY).count();
 
-        System.out.println(tp);
-
-        assertEquals(1, mondayCount, "Should have one session on Monday.");
+        assertEquals(1, mondayCount);
     }
 
     @Test
@@ -146,27 +138,24 @@ public class TrainingGeneratorV1Test {
                 LocalDate.of(1995, 6, 15), 72.0, 178.0, 185);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 90));
 
-        TrainingPlan tp = new TrainingPlan(List.of(running, cycling, swimming), LocalDate.of(2025, 12, 24), days, days, account);
-
-        tp.setCurrentPhase(TrainingPlanPhase.BASE);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(LocalDate.of(2025, 12, 24), days, List.of(running, cycling, swimming), true);
+        TrainingPlan tp = trainingGeneratorV1.generateTrainingPlan(dto, account);
 
         trainingGeneratorV1.generateTrainingWorkouts(tp);
 
-        System.out.println(tp);
+        assertEquals(6, tp.getWeeklyPlans().getFirst().getDailyPlans().size());
 
-        assertEquals(6, tp.getPairWeeklyPlans().size(), "Expected 6 workouts (2 per sport)");
-
-        for (int i = 1; i < tp.getPairWeeklyPlans().size(); i++) {
-            DailyPlan prev = tp.getPairWeeklyPlans().get(i - 1);
-            DailyPlan curr = tp.getPairWeeklyPlans().get(i);
-            assertNotEquals(prev.getSport(), curr.getSport(), "Same sport on consecutive days");
+        for (int i = 1; i < tp.getWeeklyPlans().getFirst().getDailyPlans().size(); i++) {
+            DailyPlan prev = tp.getWeeklyPlans().getFirst().getDailyPlans().get(i - 1);
+            DailyPlan curr = tp.getWeeklyPlans().getFirst().getDailyPlans().get(i);
+            assertNotEquals(prev.getSport(), curr.getSport());
         }
     }
 
     @Test
     void testTooManyWorkoutsNotEnoughDays() {
-        Goal g1 = goalService.getSpecificGoal(Sport.RUNNING, 42.2); // 4 workouts/week
-        Goal g2 = goalService.getSpecificGoal(Sport.CYCLING, 100.0); // 4 workouts/week
+        Goal g1 = goalService.getSpecificGoal(Sport.RUNNING, 42.2);
+        Goal g2 = goalService.getSpecificGoal(Sport.CYCLING, 100.0);
 
         List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY);
 
@@ -174,11 +163,9 @@ public class TrainingGeneratorV1Test {
                 LocalDate.of(1993, 2, 12), 74.0, 177.0, 180);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 50));
 
-        TrainingPlan tp = new TrainingPlan(List.of(g1, g2), LocalDate.of(2025, 12, 24), days, days, account);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(LocalDate.of(2025, 12, 24), days, List.of(g1, g2), true);
 
-        tp.setCurrentPhase(TrainingPlanPhase.BASE);
-
-        assertThrows(Exception.class, () -> trainingGeneratorV1.generateTrainingWorkouts(tp),
-                "Expected exception due to too many workouts for limited days.");
+        assertThrows(Exception.class, () -> trainingGeneratorV1.generateTrainingPlan(dto, account));
     }
+
 }

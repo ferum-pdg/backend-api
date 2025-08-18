@@ -37,6 +37,8 @@ public class Goal {
     @Column(name = "elevation_gain")
     private Double elevetionGain;
 
+
+
     // CONSTRUCTORS ---------------------------------------------
 
     public Goal() {}

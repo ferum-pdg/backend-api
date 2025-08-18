@@ -3,14 +3,11 @@ package org.heigvd.entity.TrainingPlan;
 import jakarta.persistence.*;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Goal;
-import org.heigvd.entity.Sport;
-import org.heigvd.entity.Workout.TrainingPlanPhase;
 import org.heigvd.entity.Workout.Workout;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Entity
 public class TrainingPlan {
@@ -47,12 +44,7 @@ public class TrainingPlan {
     private List<Workout> workouts;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DailyPlan> pairWeeklyPlans;
-
-    // temporary field for the training generator
-    @Enumerated(EnumType.STRING)
-    @Column(name = "current_phase")
-    private TrainingPlanPhase currentPhase;
+    private List<WeeklyPlan> weeklyPlans = new ArrayList<>();
 
     // CONSTRUCTORS ---------------------------------------------
 
@@ -123,17 +115,8 @@ public class TrainingPlan {
     public List<Workout> getWorkouts() { return workouts; }
     public void setWorkouts(List<Workout> workouts) { this.workouts = workouts; }
 
-    public List<DailyPlan> getPairWeeklyPlans() { return pairWeeklyPlans; }
-    public void setPairWeeklyPlans(List<DailyPlan> pairWeeklyPlans) { this.pairWeeklyPlans = pairWeeklyPlans; }
-    public void addPairWeeklyPlan(DailyPlan dailyPlan) {
-        if (this.pairWeeklyPlans == null) {
-            this.pairWeeklyPlans = new ArrayList<>();
-        }
-        this.pairWeeklyPlans.add(dailyPlan);
-    }
-
-    public TrainingPlanPhase getCurrentPhase() { return currentPhase; }
-    public void setCurrentPhase(TrainingPlanPhase currentPhase) { this.currentPhase = currentPhase; }
+    public List<WeeklyPlan> getWeeklyPlans() { return weeklyPlans; }
+    public void setWeeklyPlans(List<WeeklyPlan> weeklyPlans) { this.weeklyPlans = weeklyPlans; }
 
     @Override
     public String toString() {
@@ -145,7 +128,7 @@ public class TrainingPlan {
                 " daysOfWeek=" + daysOfWeek + " \n" +
                 " longOutgoing=" + longOutgoing + " \n" +
                 " account=" + account.getEmail() + " \n" +
-                " dailyPlans=" + pairWeeklyPlans + " \n" +
+                " weeklyPlans=" + weeklyPlans + " \n" +
                 " workouts=" + workouts + " \n" +
                 "}";
     }
