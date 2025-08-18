@@ -1,4 +1,4 @@
-package org.heigvd.dto;
+package org.heigvd.dto.WorkoutDto;
 
 import jakarta.validation.constraints.*;
 import java.time.OffsetDateTime;

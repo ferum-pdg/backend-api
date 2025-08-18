@@ -6,10 +6,8 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.heigvd.dto.WorkoutDto;
+import org.heigvd.dto.WorkoutDto.WorkoutDto;
+import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
 import org.heigvd.entity.Workout.Workout;
@@ -18,7 +16,7 @@ import org.heigvd.service.WorkoutService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
 import jakarta.persistence.EntityManager;
-import java.time.OffsetDateTime;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -165,6 +163,13 @@ public class WorkoutResource {
                     .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
                     .build();
         }
+    }
+
+    @POST
+    @Transactional
+    public Response insertNewWorkout(@Context SecurityContext context, @Valid WorkoutUploadDto workout) {
+        // TODO: Implémenter cette méthode pour insérer un nouveau workout
+        return null;
     }
 
     @DELETE
