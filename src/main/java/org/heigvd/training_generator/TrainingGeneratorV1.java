@@ -1,12 +1,18 @@
-package org.heigvd.training_engine;
+package org.heigvd.training_generator;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.heigvd.dto.TrainingPlanRequestDto;
+import org.heigvd.dto.TrainingPlanResponseDto;
 import org.heigvd.entity.*;
 import org.heigvd.entity.TrainingPlan.DailyPlan;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
+import org.heigvd.entity.TrainingPlan.TrainingPlanPhase;
+import org.heigvd.entity.TrainingPlan.WeeklyPlan;
 import org.heigvd.entity.Workout.Workout;
 import org.heigvd.entity.Workout.WorkoutStatus;
 import org.heigvd.entity.Workout.WorkoutType;
+import org.heigvd.service.GoalService;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -21,56 +27,85 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class TrainingGeneratorV1 implements TrainingGenerator {
 
+    @Inject
+    GoalService goalService;
+
     /** Indique si plusieurs entraînements par jour sont autorisés (utilisateurs avancés uniquement) */
     private static boolean canHaveMultipleWorkoutsPerDay = false;
 
     /**
-     * Génère l'ensemble des entraînements pour un plan d'entraînement donné.
-     *
-     * @param trainingPlan le plan d'entraînement à compléter avec les workouts et daily plans
-     * @throws IllegalArgumentException si pas assez de jours disponibles pour programmer les entraînements
+     * Permet de générer une plan d'entrainement basé sur les données envoyées par l'utilisateur de l'application
+     * mobile.
+     * @param trainingPlanRequestDto correspond au payload transmis par l'application mobile
+     * @param account correspond au compte de l'utilisateur authentifié
+     * @return un TrainingPlan de base sans les workouts
      */
     @Override
-    public void generateTrainingWorkouts(TrainingPlan trainingPlan) {
-        List<Goal> goals = trainingPlan.getGoals();
-        Account account = trainingPlan.getAccount();
+    public TrainingPlan generateTrainingPlan(TrainingPlanRequestDto trainingPlanRequestDto, Account account) {
+        List<Goal> goals = goalService.getGoalsByIds(trainingPlanRequestDto.getGoalIds());
+        if (goals.isEmpty()) {
+            throw new IllegalArgumentException("No available goals for the training plan.");
+        }
+
+        List<DayOfWeek> daysOfWeek = trainingPlanRequestDto.getDaysOfWeek().stream()
+                .map(DayOfWeek::valueOf)
+                .toList();
+
+        LocalDate endDate = trainingPlanRequestDto.getEndDate();
+
+        TrainingPlan tp = new TrainingPlan(goals, endDate, daysOfWeek, daysOfWeek, account);
 
         // Calculs préliminaires
         int nbWorkoutsPerWeek = calculateNbOfWorkoutsPerWeek(goals, account);
-        int nbTrainingWeeks = calculateNbOfWeeks(trainingPlan);
-        LocalDate startDate = trainingPlan.getEndDate().minusWeeks(nbTrainingWeeks);
+        int nbTrainingWeeks = calculateNbOfWeeks(tp);
+        LocalDate startDate = tp.getEndDate().minusWeeks(nbTrainingWeeks);
+
+        // Start date should be the monday of the week of the start date
+        startDate = startDate.with(DayOfWeek.MONDAY);
 
         // Détermine si plusieurs entraînements par jour sont autorisés (niveau élevé + objectifs multiples)
         canHaveMultipleWorkoutsPerDay = account.getLastFitnessLevel().getFitnessLevel() >= 60 && goals.size() > 1;
 
         // Vérification de faisabilité
-        if (nbWorkoutsPerWeek > trainingPlan.getDaysOfWeek().size() && !canHaveMultipleWorkoutsPerDay) {
+        if (nbWorkoutsPerWeek > tp.getDaysOfWeek().size() && !canHaveMultipleWorkoutsPerDay) {
             throw new IllegalArgumentException("Pas assez de jours disponibles pour programmer tous les entraînements.");
         }
 
         // Distribution des sports sur la semaine
         LinkedHashMap<Sport, Integer> sportDistribution = calculateSportDistribution(nbWorkoutsPerWeek, goals);
-        List<DailyPlan> dailyPlans = generateWeeklyDailyPlans(trainingPlan, sportDistribution);
+        List<DailyPlan> dailyPlans = generateWeeklyDailyPlans(tp, sportDistribution);
 
-        // Configuration du plan d'entraînement
-        trainingPlan.setPairWeeklyPlans(dailyPlans);
-        trainingPlan.setStartDate(startDate);
+        tp.setStartDate(startDate);
+        tp.setWeeklyPlans(generateWeeklyPlans(dailyPlans, nbTrainingWeeks));
 
-        // Génération des entraînements pour la première semaine
-        List<Workout> workouts = generateWorkouts(trainingPlan, dailyPlans);
-        trainingPlan.setWorkouts(workouts);
+        return tp;
+    }
+
+    /**
+     * Génère l'ensemble des entraînements pour un plan d'entraînement donné.
+     *
+     * @param tp le plan d'entraînement à compléter avec les workouts et daily plans
+     * @throws IllegalArgumentException si pas assez de jours disponibles pour programmer les entraînements
+     */
+    @Override
+    public TrainingPlan generateTrainingWorkouts(TrainingPlan tp) {
+        List<Workout> workouts = generateWorkouts(tp);
+        tp.setWorkouts(workouts);
+
+        return tp;
     }
 
     /**
      * Génère la liste des entraînements pour la première semaine.
      *
      * @param trainingPlan le plan d'entraînement contenant les informations utilisateur
-     * @param dailyPlans la liste des plans quotidiens définissant sport et jour pour chaque entraînement
      * @return une liste d'entraînements planifiés pour la première semaine
      */
-    private List<Workout> generateWorkouts(TrainingPlan trainingPlan, List<DailyPlan> dailyPlans) {
+    private List<Workout> generateWorkouts(TrainingPlan trainingPlan) {
         LocalDate today = LocalDate.now();
         LocalDate firstWeekStart = today.isBefore(trainingPlan.getStartDate()) ? trainingPlan.getStartDate() : today;
+
+        List<DailyPlan> dailyPlans = trainingPlan.getWeeklyPlans().getFirst().getDailyPlans();
 
         return dailyPlans.stream()
                 .map(dailyPlan -> {
@@ -116,6 +151,21 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         );
     }
 
+    private List<WeeklyPlan> generateWeeklyPlans(List<DailyPlan> dailyPlans, Integer nbTotalOfWeeks) {
+        List<WeeklyPlan> weeklyPlans = new ArrayList<>();
+        Integer nbCurrentWeek = 1;
+        for(TrainingPlanPhase phase : TrainingPlanPhase.values()) {
+            int nbWeeks = phase.computeWeeks(nbTotalOfWeeks);
+            for(int i = 0; i < nbWeeks; i++) {
+                WeeklyPlan weeklyPlan = new WeeklyPlan(dailyPlans, nbCurrentWeek, phase);
+                weeklyPlans.add(weeklyPlan);
+                nbCurrentWeek++;
+            }
+
+        }
+        return weeklyPlans;
+    }
+
     /**
      * Génère les plans quotidiens en distribuant les sports de manière équilibrée sur la semaine.
      *
@@ -150,6 +200,12 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         return dailyPlans;
     }
 
+
+    /**
+     * Définit le type d'entraînement pour chaque plan quotidien en fonction du sport.
+     * @param tp le plan d'entraînement pour lequel définir les types
+     * @param dps la liste des plans quotidiens à mettre à jour
+     */
     private void defineWorkoutType(TrainingPlan tp, List<DailyPlan> dps) {
 
         for(DailyPlan dp : dps) {

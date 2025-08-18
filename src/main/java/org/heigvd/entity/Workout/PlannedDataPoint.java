@@ -12,11 +12,11 @@ public class PlannedDataPoint {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "end_time")
-    private OffsetDateTime endTime;
-
     @Column(name = "start_time")
     private OffsetDateTime startTime;
+
+    @Column(name = "end_time")
+    private OffsetDateTime endTime;
 
     @Column(name = "speed_mps")
     private Double speedMps;

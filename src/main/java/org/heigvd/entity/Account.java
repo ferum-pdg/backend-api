@@ -49,8 +49,8 @@ public class Account {
     @Column(name = "fcmax")
     private int FCMax;
 
-    @OneToMany
-    private List<FitnessLevel> fitnessLevels  = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FitnessLevel> fitnessLevels = new ArrayList<>();
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
     private List<Workout> workouts;
