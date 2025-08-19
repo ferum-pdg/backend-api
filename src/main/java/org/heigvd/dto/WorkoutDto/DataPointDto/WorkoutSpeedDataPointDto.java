@@ -1,8 +1,8 @@
-package org.heigvd.dto.WorkoutDto;
+package org.heigvd.dto.WorkoutDto.DataPointDto;
 
 import java.time.OffsetDateTime;
 
-public class WorkoutSpeedDataPoint {
+public class WorkoutSpeedDataPointDto {
 
     private OffsetDateTime timestamp;
     private Double kmh;
@@ -10,9 +10,9 @@ public class WorkoutSpeedDataPoint {
 
     // CONSTRUCTORS --------------------------------
 
-    public WorkoutSpeedDataPoint() {}
+    public WorkoutSpeedDataPointDto() {}
 
-    public WorkoutSpeedDataPoint(OffsetDateTime timestamp, Double kmh, Double pace_min_per_km) {
+    public WorkoutSpeedDataPointDto(OffsetDateTime timestamp, Double kmh, Double pace_min_per_km) {
         this.timestamp = timestamp;
         this.kmh = kmh;
         this.pace_min_per_km = pace_min_per_km;

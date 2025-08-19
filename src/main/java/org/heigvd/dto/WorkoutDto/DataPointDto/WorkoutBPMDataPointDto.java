@@ -1,16 +1,16 @@
-package org.heigvd.dto.WorkoutDto;
+package org.heigvd.dto.WorkoutDto.DataPointDto;
 
 import java.time.OffsetDateTime;
 
-public class WorkoutBPMDataPoint {
+public class WorkoutBPMDataPointDto {
     private OffsetDateTime timestamp;
     private Double bpm;
 
     // CONSTRUCTORS --------------------------------
 
-    public WorkoutBPMDataPoint() {}
+    public WorkoutBPMDataPointDto() {}
 
-    public WorkoutBPMDataPoint(OffsetDateTime timestamp, Double bpm) {
+    public WorkoutBPMDataPointDto(OffsetDateTime timestamp, Double bpm) {
         this.timestamp = timestamp;
         this.bpm = bpm;
     }

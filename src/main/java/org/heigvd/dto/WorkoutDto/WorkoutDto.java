@@ -39,7 +39,7 @@ public class WorkoutDto {
     private Integer maxHeartRate;
 
     @DecimalMin(value = "0.0", message = "Speed must be positive")
-    private Double averageSpeed;
+    private Double avgSpeed;
 
     private String source;
 
@@ -52,7 +52,7 @@ public class WorkoutDto {
     public WorkoutDto(UUID id, UUID accountId, UUID trainingPlanId, String sport,
                       OffsetDateTime startTime, OffsetDateTime endTime, Integer durationSec,
                       Double distanceMeters, Double caloriesKcal, Integer avgHeartRate,
-                      Integer maxHeartRate, Double averageSpeed, String source, String status) {
+                      Integer maxHeartRate, Double avgSpeed, String source, String status) {
         this.id = id;
         this.accountId = accountId;
         this.trainingPlanId = trainingPlanId;
@@ -64,7 +64,7 @@ public class WorkoutDto {
         this.caloriesKcal = caloriesKcal;
         this.avgHeartRate = avgHeartRate;
         this.maxHeartRate = maxHeartRate;
-        this.averageSpeed = averageSpeed;
+        this.avgSpeed = avgSpeed;
         this.source = source;
         this.status = status;
     }
@@ -103,8 +103,8 @@ public class WorkoutDto {
     public Integer getMaxHeartRate() { return maxHeartRate; }
     public void setMaxHeartRate(Integer maxHeartRate) { this.maxHeartRate = maxHeartRate; }
 
-    public Double getAverageSpeed() { return averageSpeed; }
-    public void setAverageSpeed(Double averageSpeed) { this.averageSpeed = averageSpeed; }
+    public Double getAvgSpeed() { return avgSpeed; }
+    public void setAvgSpeed(Double avgSpeed) { this.avgSpeed = avgSpeed; }
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }

@@ -4,7 +4,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
+import org.heigvd.entity.Workout.Workout;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
@@ -49,6 +51,11 @@ public class AccountService {
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    @Transactional
+    public void mergeWorkouts(Workout workout, WorkoutUploadDto workoutUploadDto) {
+
     }
 
     @Transactional
