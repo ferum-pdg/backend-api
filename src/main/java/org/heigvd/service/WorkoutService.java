@@ -1,6 +1,7 @@
 package org.heigvd.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -8,11 +9,10 @@ import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.*;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
 import org.heigvd.entity.Workout.Workout;
-import org.heigvd.entity.Workout.WorkoutDetails;
 import org.heigvd.entity.Workout.WorkoutStatus;
-import org.hibernate.jdbc.Work;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +24,10 @@ public class WorkoutService {
     @Inject
     EntityManager em;
 
-    public Optional<Workout> findById(UUID id) {
+    @Inject
+    TrainingPlanService trainingPlanService;
+
+    public Optional<Workout> getWorkoutByID(UUID id) {
         try {
             Workout workout = em.find(Workout.class, id);
             return Optional.ofNullable(workout);
@@ -33,7 +36,58 @@ public class WorkoutService {
         }
     }
 
-    public List<Workout> findByAccountId(UUID accountId) {
+    @Transactional
+    public List<Workout> getCurrentWeekWorkouts(UUID accountId) {
+        OffsetDateTime now = OffsetDateTime.now();
+
+        // On prend le LocalDate courant
+        LocalDate today = now.toLocalDate();
+
+        // Début de semaine = lundi 00:00
+        LocalDateTime startOfWeekLdt = today
+                .with(java.time.DayOfWeek.MONDAY)
+                .atStartOfDay();
+
+        // Fin de semaine = dimanche 23:59:59
+        LocalDateTime endOfWeekLdt = startOfWeekLdt.plusDays(6).withHour(23).withMinute(59).withSecond(59);
+
+        // Conversion en OffsetDateTime avec le même offset que "now"
+        OffsetDateTime startOfWeek = startOfWeekLdt.atOffset(now.getOffset());
+        OffsetDateTime endOfWeek   = endOfWeekLdt.atOffset(now.getOffset());
+
+        return em.createQuery(
+                        "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
+                                "AND w.startTime >= :startOfWeek AND w.startTime <= :endOfWeek " +
+                                "ORDER BY w.startTime DESC",
+                        Workout.class)
+                .setParameter("accountId", accountId)
+                .setParameter("startOfWeek", startOfWeek)
+                .setParameter("endOfWeek", endOfWeek)
+                .getResultList();
+    }
+
+
+    public List<Workout> getNextNWorkouts(UUID accountId) {
+
+        Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
+
+        if(tp.isEmpty()) {
+            return getAllWorkouts(accountId);
+        } else {
+            Integer nbWorkouts = trainingPlanService.getNbWorkoutsPerWeek(accountId);
+            // return the next nbWorkouts for the user based on the current date
+            return em.createQuery(
+                            "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.startTime >= :startTime " +
+                                    "ORDER BY w.startTime ASC",
+                            Workout.class)
+                    .setParameter("accountId", accountId)
+                    .setParameter("startTime", OffsetDateTime.now())
+                    .setMaxResults(nbWorkouts)
+                    .getResultList();
+        }
+    }
+
+    public List<Workout> getAllWorkouts(UUID accountId) {
         return em.createQuery(
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId ORDER BY w.startTime DESC",
                         Workout.class)
@@ -99,6 +153,13 @@ public class WorkoutService {
         newWorkout.setStartTime(workout.getStart());
         newWorkout.setEndTime(workout.getEnd());
         newWorkout.setStatus(WorkoutStatus.COMPLETED);
+        newWorkout.setDistanceMeters(workout.getDistance());
+        newWorkout.setCaloriesKcal(workout.getCaloriesKcal());
+        newWorkout.setAvgHeartRate(workout.getAvgBPM().intValue());
+        newWorkout.setMaxHeartRate(workout.getMaxBPM().intValue());
+        newWorkout.setSource(workout.getSource());
+        newWorkout.setDurationSec((int) (newWorkout.getEndTime().toEpochSecond() - newWorkout.getStartTime().toEpochSecond()));
+        newWorkout.setAvgSpeed(workout.getAvgSpeed());
 
         em.persist(newWorkout);
 
@@ -119,9 +180,7 @@ public class WorkoutService {
         existingWorkout.setDurationSec((int) (existingWorkout.getEndTime().toEpochSecond() - existingWorkout.getStartTime().toEpochSecond()));
         existingWorkout.setAvgSpeed(workout.getAvgSpeed());
 
-        // Update other fields as necessary
-        // For example, if you have a list of data points to update:
-        // existingWorkout.setDataPoints(workout.getDataPoints());
+        // TODO handle workout details if present
 
         em.merge(existingWorkout);
 

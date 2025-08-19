@@ -6,18 +6,14 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
-import org.heigvd.dto.WorkoutDto.WorkoutDto;
 import org.heigvd.dto.WorkoutDto.WorkoutLightDto;
 import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
 import org.heigvd.entity.Workout.Workout;
-import org.heigvd.entity.Workout.WorkoutStatus;
 import org.heigvd.service.AccountService;
 import org.heigvd.service.WorkoutService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
-
-import jakarta.persistence.EntityManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,68 +33,18 @@ public class WorkoutResource {
 
 
     @GET
-    @Path("/{id}")
-    public Response getWorkout(@PathParam("id") UUID id, @Context SecurityContext context){
+    /**
+     * Get the nexts n workouts for the authenticated user.
+     * @param context SecurityContext to get the authenticated user
+     * @return Response containing the list of the nexts n workouts or an error message
+     */
+    public Response getMyNextWorkouts(@Context SecurityContext context) {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
-            Optional<Workout> workoutOpt = workoutService.findById(id);
-
-            if (workoutOpt.isEmpty()) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"error\": \"Workout not found\"}")
-                        .build();
-            }
-
-            Workout workout = workoutOpt.get();
-
-            if (!workout.getAccount().getId().equals(authenticatedAccountId)) {
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity("{\"error\": \"You can only access your own workouts\"}")
-                        .build();
-            }
-
-            return Response.ok(workout).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
-                    .build();
-        }
-    }
-
-    @GET
-    @Path("/my")
-    public Response getMyWorkouts(@Context SecurityContext context) {
-        try {
-            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
-
-            List<Workout> workouts = workoutService.findByAccountId(authenticatedAccountId);
+            List<Workout> workouts = workoutService.getNextNWorkouts(authenticatedAccountId);
 
             return Response.ok(workouts).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
-                    .build();
-        }
-    }
-
-    @GET
-    @Path("/my/sport/{sport}")
-    public Response getMyWorkoutsBySport(
-            @PathParam("sport") String sport,
-            @Context SecurityContext context) {
-        try {
-            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
-
-            try {
-                Sport sportEnum = Sport.valueOf(sport.toUpperCase());
-                List<Workout> workouts = workoutService.findByAccountIdAndSport(authenticatedAccountId, sportEnum);
-                return Response.ok(workouts).build();
-            } catch (IllegalArgumentException e) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("{\"error\": \"Invalid sport: " + sport + "\"}")
-                        .build();
-            }
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
@@ -131,6 +77,62 @@ public class WorkoutResource {
         return Response.ok(new WorkoutLightDto(toReturn)).build();
     }
 
+
+    @GET
+    @Path("/{id}")
+    public Response getWorkout(@PathParam("id") UUID id, @Context SecurityContext context){
+        try {
+            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
+
+            Optional<Workout> workoutOpt = workoutService.getWorkoutByID(id);
+
+            if (workoutOpt.isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("{\"error\": \"Workout not found\"}")
+                        .build();
+            }
+
+            Workout workout = workoutOpt.get();
+
+            if (!workout.getAccount().getId().equals(authenticatedAccountId)) {
+                return Response.status(Response.Status.FORBIDDEN)
+                        .entity("{\"error\": \"You can only access your own workouts\"}")
+                        .build();
+            }
+
+            return Response.ok(workout).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
+
+    @GET
+    @Path("/my/sport/{sport}")
+    public Response getMyWorkoutsBySport(
+            @PathParam("sport") String sport,
+            @Context SecurityContext context) {
+        try {
+            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
+
+            try {
+                Sport sportEnum = Sport.valueOf(sport.toUpperCase());
+                List<Workout> workouts = workoutService.findByAccountIdAndSport(authenticatedAccountId, sportEnum);
+                return Response.ok(workouts).build();
+            } catch (IllegalArgumentException e) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Invalid sport: " + sport + "\"}")
+                        .build();
+            }
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
+
+
     @DELETE
     @Path("/{id}")
     @Transactional
@@ -139,7 +141,7 @@ public class WorkoutResource {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
             // Vérifier que le workout existe et appartient à l'utilisateur
-            Optional<Workout> workoutOpt = workoutService.findById(id);
+            Optional<Workout> workoutOpt = workoutService.getWorkoutByID(id);
             if (workoutOpt.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("{\"error\": \"Workout not found\"}")

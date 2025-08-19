@@ -65,11 +65,6 @@ public class AccountService {
             account.setPassword(hashPassword(account.getPassword()));
         }
 
-        // Génère un ID si pas déjà défini
-        if (account.getId() == null) {
-            account.setId(UUID.randomUUID());
-        }
-
         em.persist(account);
         return account;
     }
