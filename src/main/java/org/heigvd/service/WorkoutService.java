@@ -58,7 +58,7 @@ public class WorkoutService {
         return em.createQuery(
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
                                 "AND w.startTime >= :startOfWeek AND w.startTime <= :endOfWeek " +
-                                "ORDER BY w.startTime DESC",
+                                "ORDER BY w.startTime ASC",
                         Workout.class)
                 .setParameter("accountId", accountId)
                 .setParameter("startOfWeek", startOfWeek)
