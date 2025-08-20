@@ -4,7 +4,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
+import org.heigvd.entity.Workout.Workout;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
@@ -52,15 +54,15 @@ public class AccountService {
     }
 
     @Transactional
+    public void mergeWorkouts(Workout workout, WorkoutUploadDto workoutUploadDto) {
+
+    }
+
+    @Transactional
     public Account create(Account account) {
         // Hash le mot de passe avant de sauvegarder
         if (account.getPassword() != null) {
             account.setPassword(hashPassword(account.getPassword()));
-        }
-
-        // Génère un ID si pas déjà défini
-        if (account.getId() == null) {
-            account.setId(UUID.randomUUID());
         }
 
         em.persist(account);

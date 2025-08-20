@@ -25,14 +25,14 @@ VALUES
     ('850e8400-e29b-41d4-a716-44665544000c', 'Swimming 3900m', 0, 10, 4, 3.9, 'SWIMMING');
 
 -- Insertion des workouts
-INSERT INTO Workout (id, account_id, sport, start_time, end_time, duration_sec, distance_meters, calories_kcal, avg_heart_rate, max_heart_rate, average_speed, source, status, workout_type) VALUES
+INSERT INTO Workout (id, account_id, sport, start_time, end_time, duration_sec, distance_meters, calories_kcal, avg_heart_rate, max_heart_rate, avg_speed, source, status, workout_type) VALUES
      -- Workouts d'Alice (RUNNING)
-     ('650e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-01T07:30:00+02:00', '2024-08-01T08:15:00+02:00', 2700, 5000, 350, 165, 185, 6.67, 'Garmin', 'COMPLETED', 'INTERVAL'),
-     ('650e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-03T18:00:00+02:00', '2024-08-03T18:35:00+02:00', 2100, 4200, 280, 158, 175, 7.20, 'Garmin', 'COMPLETED', 'EF'),
-     ('650e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-05T06:45:00+02:00', '2024-08-05T07:35:00+02:00', 3000, 6000, 420, 170, 190, 7.20, 'Garmin', 'COMPLETED', 'EA'),
-     ('650e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-10T19:00:00+02:00', '2024-08-10T20:00:00+02:00', 3600, 7500, 525, 175, 188, 7.50, 'Garmin', 'COMPLETED', 'LACTATE'),
-     ('650e8400-e29b-41d4-a716-446655440020', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-12T07:00:00+02:00', '2024-08-12T08:30:00+02:00', 5400, 10000, 700, 172, 190, 6.67, 'Garmin', 'COMPLETED', 'EA'),
-     ('650e8400-e29b-41d4-a716-446655440021', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-14T17:30:00+02:00', '2024-08-14T18:15:00+02:00', 2700, 5200, 365, 168, 185, 6.93, 'Garmin', 'COMPLETED', 'INTERVAL'),
+     ('650e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-01T07:30:00+02:00', '2024-08-01T08:15:00+02:00', 2700, 5000, 0, 0, 0, 0, 'TrainingPlan', 'PLANNED', 'INTERVAL'),
+     ('650e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-03T18:00:00+02:00', '2024-08-03T18:35:00+02:00', 2100, 4200, 0, 0, 0, 0, 'TrainingPlan', 'PLANNED', 'EF'),
+     ('650e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-05T06:45:00+02:00', '2024-08-05T07:35:00+02:00', 3000, 6000, 0, 0, 0, 0, 'TrainingPlan', 'PLANNED', 'EA'),
+     ('650e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-10T19:00:00+02:00', '2024-08-10T20:00:00+02:00', 3600, 7500, 0, 0, 0, 0, 'TrainingPlan', 'PLANNED', 'LACTATE'),
+     ('650e8400-e29b-41d4-a716-446655440020', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-12T07:00:00+02:00', '2024-08-12T08:30:00+02:00', 5400, 10000, 0, 0, 0, 0, 'TrainingPlan', 'PLANNED', 'EA'),
+     ('650e8400-e29b-41d4-a716-446655440021', '550e8400-e29b-41d4-a716-446655440001', 'RUNNING', '2024-08-14T17:30:00+02:00', '2024-08-14T18:15:00+02:00', 2700, 5200, 0, 0, 0, 0, 'TrainingPlan', 'PLANNED', 'INTERVAL'),
 
      -- Workouts de Bob (CYCLING)
      ('650e8400-e29b-41d4-a716-446655440005', '550e8400-e29b-41d4-a716-446655440002', 'CYCLING', '2024-08-02T08:00:00+02:00', '2024-08-02T09:30:00+02:00', 5400, 25000, 680, 145, 170, 16.67, 'Strava', 'COMPLETED', 'EF'),
@@ -55,10 +55,6 @@ INSERT INTO Workout (id, account_id, sport, start_time, end_time, duration_sec, 
      -- Workouts annulés (ABORTED au lieu de CANCELLED)
      ('650e8400-e29b-41d4-a716-446655440017', '550e8400-e29b-41d4-a716-446655440002', 'CYCLING', '2024-08-09T08:00:00+02:00', '2024-08-09T08:00:00+02:00', 0, 0, 0, NULL, NULL, NULL, 'Weather', 'ABORTED', 'EF'),
      ('650e8400-e29b-41d4-a716-446655440018', '550e8400-e29b-41d4-a716-446655440003', 'SWIMMING', '2024-08-11T12:00:00+02:00', '2024-08-11T12:00:00+02:00', 0, 0, 0, NULL, NULL, NULL, 'Pool closed', 'ABORTED', 'EF');
-
--- Génération UUID par défaut pour fitnesslevel si pas déjà fait
-ALTER TABLE fitnesslevel
-    ALTER COLUMN id SET DEFAULT gen_random_uuid();
 
 -- Insertion des fitness levels avec UUID explicite
 INSERT INTO fitnesslevel (id, date, fitness_level) VALUES
