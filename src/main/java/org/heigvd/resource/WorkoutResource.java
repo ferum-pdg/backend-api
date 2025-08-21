@@ -54,7 +54,6 @@ public class WorkoutResource {
      *
      * @param id Identifiant du workout
      * @param context Contexte de sécurité
-     * @return 200 avec le workout, 403 si non propriétaire, 404 si introuvable
      */
     @Operation(summary = "Détail d'un workout",
             description = "Retourne un workout par identifiant si celui-ci appartient à l'utilisateur authentifié.")
@@ -103,7 +102,6 @@ public class WorkoutResource {
      * Liste tous les workouts de l'utilisateur authentifié.
      *
      * @param context Contexte de sécurité
-     * @return 200 avec la liste des workouts
      */
     @Operation(summary = "Liste de mes workouts",
             description = "Retourne tous les workouts de l'utilisateur authentifié.")
@@ -134,7 +132,6 @@ public class WorkoutResource {
      *
      * @param sport Sport cible (ex: RUNNING)
      * @param context Contexte de sécurité
-     * @return 200 avec la liste filtrée, 400 si sport invalide
      */
     @Operation(summary = "Mes workouts par sport",
             description = "Retourne les workouts filtrés par sport pour l'utilisateur authentifié.")
@@ -175,7 +172,6 @@ public class WorkoutResource {
      *
      * @param workoutDto Données du workout à créer
      * @param context Contexte de sécurité
-     * @return 201 avec le workout créé, 400 en cas d'entrée invalide
      */
     @Operation(summary = "Créer un workout",
             description = "Crée un nouveau workout pour l'utilisateur authentifié.")
@@ -257,7 +253,6 @@ public class WorkoutResource {
      *
      * @param id Identifiant du workout
      * @param context Contexte de sécurité
-     * @return 204 si supprimé, 403 si accès refusé, 404 si introuvable
      */
     @Operation(summary = "Supprimer un workout",
             description = "Supprime un workout appartenant à l'utilisateur authentifié.")
@@ -311,7 +306,6 @@ public class WorkoutResource {
      *
      * @param planId Identifiant du plan
      * @param context Contexte de sécurité
-     * @return 200 avec la liste des workouts
      */
     @Operation(summary = "Mes workouts par plan d'entraînement",
             description = "Retourne les workouts associés à un plan d'entraînement. (Bientôt disponible)",

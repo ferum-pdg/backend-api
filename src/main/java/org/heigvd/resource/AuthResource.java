@@ -48,7 +48,6 @@ public class AuthResource {
      * Authentifie un utilisateur et retourne un jeton JWT.
      *
      * @param dto Données de connexion (email et mot de passe)
-     * @return 200 avec {@link LoginResponseDto} si succès, sinon code d'erreur approprié
      */
     @Operation(
             summary = "Connexion utilisateur",
@@ -95,7 +94,6 @@ public class AuthResource {
      * Retourne les informations du compte de l'utilisateur authentifié.
      *
      * @param context Contexte de sécurité contenant l'identité JWT
-     * @return 200 avec {@link AccountDto} si trouvé, 404 sinon
      */
     @Operation(
             summary = "Profil utilisateur",
@@ -154,7 +152,6 @@ public class AuthResource {
      *
      * @param context Contexte de sécurité contenant l'identité JWT
      * @param accountDto Nouvelles informations du compte
-     * @return 200 avec le profil mis à jour, 404 si le compte est introuvable
      */
     @Operation(
             summary = "Mise à jour du profil",

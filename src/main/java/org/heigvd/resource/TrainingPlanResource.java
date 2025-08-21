@@ -62,7 +62,6 @@ public class TrainingPlanResource {
      * Récupère le plan d'entraînement de l'utilisateur authentifié.
      *
      * @param securityContext Contexte de sécurité
-     * @return 200 avec {@link TrainingPlanResponseDto} si trouvé, 404 sinon
      */
     @Operation(summary = "Mon plan d'entraînement",
             description = "Retourne le plan d'entraînement de l'utilisateur authentifié s'il existe.")
@@ -93,7 +92,6 @@ public class TrainingPlanResource {
      *
      * @param securityContext Contexte de sécurité
      * @param trainingPlanRequestDto Paramètres de génération du plan
-     * @return 201 avec {@link TrainingPlanResponseDto} si succès, 400/404 sinon
      */
     @Operation(summary = "Créer un plan d'entraînement",
             description = "Génère et crée un plan d'entraînement pour l'utilisateur authentifié.")
