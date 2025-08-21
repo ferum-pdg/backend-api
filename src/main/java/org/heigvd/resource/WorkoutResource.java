@@ -7,7 +7,13 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.heigvd.dto.WorkoutDto;
 import org.heigvd.entity.Account;
@@ -18,15 +24,21 @@ import org.heigvd.service.WorkoutService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
 import jakarta.persistence.EntityManager;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Ressource REST pour la gestion des séances d'entraînement (workouts).
+ *
+ * Permet de consulter, créer et supprimer des workouts pour l'utilisateur authentifié.
+ */
 @Path("/workouts")
 @Authenticated
 @Produces(RestMediaType.APPLICATION_JSON)
 @Consumes(RestMediaType.APPLICATION_JSON)
+@Tag(name = "Workouts", description = "Gestion des séances d'entraînement")
+@SecurityRequirement(name = "bearerAuth")
 public class WorkoutResource {
 
     @Inject
@@ -37,7 +49,27 @@ public class WorkoutResource {
 
     @GET
     @Path("/{id}")
-    public Response getWorkout(@PathParam("id") UUID id, @Context SecurityContext context){
+    /**
+     * Récupère un workout par identifiant.
+     *
+     * @param id Identifiant du workout
+     * @param context Contexte de sécurité
+     * @return 200 avec le workout, 403 si non propriétaire, 404 si introuvable
+     */
+    @Operation(summary = "Détail d'un workout",
+            description = "Retourne un workout par identifiant si celui-ci appartient à l'utilisateur authentifié.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = "200", description = "Workout trouvé",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Workout.class))),
+            @APIResponse(responseCode = "403", description = "Accès refusé"),
+            @APIResponse(responseCode = "404", description = "Workout introuvable"),
+            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
+    public Response getWorkout(
+            @Parameter(description = "Identifiant du workout", required = true)
+            @PathParam("id") UUID id,
+            @Context SecurityContext context){
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
@@ -67,6 +99,20 @@ public class WorkoutResource {
 
     @GET
     @Path("/my")
+    /**
+     * Liste tous les workouts de l'utilisateur authentifié.
+     *
+     * @param context Contexte de sécurité
+     * @return 200 avec la liste des workouts
+     */
+    @Operation(summary = "Liste de mes workouts",
+            description = "Retourne tous les workouts de l'utilisateur authentifié.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = "200", description = "Liste des workouts",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Workout.class))) ,
+            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
     public Response getMyWorkouts(@Context SecurityContext context) {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
@@ -83,7 +129,24 @@ public class WorkoutResource {
 
     @GET
     @Path("/my/sport/{sport}")
+    /**
+     * Liste les workouts de l'utilisateur authentifié filtrés par sport.
+     *
+     * @param sport Sport cible (ex: RUNNING)
+     * @param context Contexte de sécurité
+     * @return 200 avec la liste filtrée, 400 si sport invalide
+     */
+    @Operation(summary = "Mes workouts par sport",
+            description = "Retourne les workouts filtrés par sport pour l'utilisateur authentifié.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = "200", description = "Liste filtrée des workouts",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Workout.class))),
+            @APIResponse(responseCode = "400", description = "Sport invalide"),
+            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
     public Response getMyWorkoutsBySport(
+            @Parameter(description = "Sport (ex: RUNNING, CYCLING)", required = true)
             @PathParam("sport") String sport,
             @Context SecurityContext context) {
         try {
@@ -107,6 +170,25 @@ public class WorkoutResource {
 
     @POST
     @Transactional
+    /**
+     * Crée un nouveau workout pour l'utilisateur authentifié.
+     *
+     * @param workoutDto Données du workout à créer
+     * @param context Contexte de sécurité
+     * @return 201 avec le workout créé, 400 en cas d'entrée invalide
+     */
+    @Operation(summary = "Créer un workout",
+            description = "Crée un nouveau workout pour l'utilisateur authentifié.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = "201", description = "Workout créé",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Workout.class))),
+            @APIResponse(responseCode = "400", description = "Entrée invalide"),
+            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
+    @RequestBody(description = "Données du workout à créer", required = true,
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = WorkoutDto.class)))
     public Response createWorkout(@Valid WorkoutDto workoutDto, @Context SecurityContext context) {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
@@ -170,7 +252,25 @@ public class WorkoutResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    public Response deleteWorkout(@PathParam("id") UUID id, @Context SecurityContext context) {
+    /**
+     * Supprime un workout appartenant à l'utilisateur authentifié.
+     *
+     * @param id Identifiant du workout
+     * @param context Contexte de sécurité
+     * @return 204 si supprimé, 403 si accès refusé, 404 si introuvable
+     */
+    @Operation(summary = "Supprimer un workout",
+            description = "Supprime un workout appartenant à l'utilisateur authentifié.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = "204", description = "Supprimé avec succès"),
+            @APIResponse(responseCode = "403", description = "Accès refusé"),
+            @APIResponse(responseCode = "404", description = "Workout introuvable"),
+            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
+    public Response deleteWorkout(
+            @Parameter(description = "Identifiant du workout", required = true)
+            @PathParam("id") UUID id,
+            @Context SecurityContext context) {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
@@ -206,12 +306,27 @@ public class WorkoutResource {
 
     @GET
     @Path("/my/training-plan/{planId}")
+    /**
+     * (Déprécié) Liste les workouts associés à un plan d'entraînement.
+     *
+     * @param planId Identifiant du plan
+     * @param context Contexte de sécurité
+     * @return 200 avec la liste des workouts
+     */
+    @Operation(summary = "Mes workouts par plan d'entraînement",
+            description = "Retourne les workouts associés à un plan d'entraînement. (Bientôt disponible)",
+            deprecated = true)
+    @APIResponses(value = {
+            @APIResponse(responseCode = "200", description = "Liste des workouts",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Workout.class))),
+            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
     public Response getMyWorkoutsByTrainingPlan(
+            @Parameter(description = "Identifiant du plan d'entraînement", required = true)
             @PathParam("planId") UUID planId,
             @Context SecurityContext context) {
         try {
-            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
-
             // TODO: Implémenter cette méthode quand elle sera disponible dans le service
             //List<Workout> workouts = workoutService.findByTrainingPlan(authenticatedAccountId, planId);
             List<Workout> workouts = null;
