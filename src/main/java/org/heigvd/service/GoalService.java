@@ -31,4 +31,15 @@ public class GoalService {
     public Goal getGoalById(UUID id) {
         return em.find(Goal.class, id);
     }
+
+    public List<Goal> getGoalsBySport(Sport sport) {
+        return em.createQuery("SELECT g FROM Goal g WHERE g.sport IN :sport", Goal.class)
+                .setParameter("sport", sport)
+                .getResultList();
+    }
+
+    public List<Goal> getAllGoals() {
+        return em.createQuery("SELECT g FROM Goal g", Goal.class)
+                .getResultList();
+    }
 }
