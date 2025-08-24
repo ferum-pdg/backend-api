@@ -131,7 +131,7 @@ public class WorkoutService {
         // Find workouts that are the same day, sport
         OffsetDateTime startOfDay = workout.getStart().toLocalDate().atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
         OffsetDateTime endOfDay = workout.getEnd().toLocalDate().atTime(23, 59, 59).atOffset(OffsetDateTime.now().getOffset());
-        return em.createQuery(
+        Optional<Workout> getWorkout = em.createQuery(
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.sport = :sport " +
                                 "AND w.startTime >= :startOfDay AND w.endTime <= :endOfDay " +
                                 "ORDER BY w.startTime DESC",
@@ -143,6 +143,8 @@ public class WorkoutService {
                 .setMaxResults(1)
                 .getResultStream()
                 .findFirst();
+
+        return getWorkout;
     }
 
     @Transactional
@@ -160,6 +162,9 @@ public class WorkoutService {
         newWorkout.setSource(workout.getSource());
         newWorkout.setDurationSec((int) (newWorkout.getEndTime().toEpochSecond() - newWorkout.getStartTime().toEpochSecond()));
         newWorkout.setAvgSpeed(workout.getAvgSpeed());
+
+        newWorkout.setActualBPMDataPoints(workout.getBpmDataPoints());
+        newWorkout.setActualSpeedDataPoints(workout.getSpeedDataPoints());
 
         em.persist(newWorkout);
 
@@ -180,7 +185,8 @@ public class WorkoutService {
         existingWorkout.setDurationSec((int) (existingWorkout.getEndTime().toEpochSecond() - existingWorkout.getStartTime().toEpochSecond()));
         existingWorkout.setAvgSpeed(workout.getAvgSpeed());
 
-        // TODO handle workout details if present
+        existingWorkout.setActualBPMDataPoints(workout.getBpmDataPoints());
+        existingWorkout.setActualSpeedDataPoints(workout.getSpeedDataPoints());
 
         em.merge(existingWorkout);
 

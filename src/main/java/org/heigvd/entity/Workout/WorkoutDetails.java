@@ -67,7 +67,7 @@ public class WorkoutDetails {
     }
     public void setActualBPMDataPointsFromDto(WorkoutUploadDto workoutUploadDto) {
         this.actualBPMDataPoints = workoutUploadDto.getBpmDataPoints().stream()
-                .map(dto -> new BPMDataPoint(dto.getTimestamp(), dto.getBpm()))
+                .map(dto -> new BPMDataPoint(dto.getTs(), dto.getBpm()))
                 .toList();
     }
 
@@ -77,7 +77,7 @@ public class WorkoutDetails {
     }
     public void setActualSpeedDataPointsFromDto(WorkoutUploadDto workoutUploadDto) {
         this.actualSpeedDataPoints = workoutUploadDto.getSpeedDataPoints().stream()
-                .map(dto -> new SpeedDataPoint(dto.getTimestamp(), dto.getKmh(), dto.getPaceMinPerKm()))
+                .map(dto -> new SpeedDataPoint(dto.getTs(), dto.getKmh(), dto.getPaceMinPerKm()))
                 .toList();
     }
 }

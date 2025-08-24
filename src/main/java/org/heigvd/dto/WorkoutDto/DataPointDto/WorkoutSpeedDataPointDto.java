@@ -1,27 +1,31 @@
 package org.heigvd.dto.WorkoutDto.DataPointDto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.OffsetDateTime;
 
 public class WorkoutSpeedDataPointDto {
 
-    private OffsetDateTime timestamp;
+    private OffsetDateTime ts;
     private Double kmh;
+
+    @JsonProperty("pace_min_per_km")
     private Double pace_min_per_km;
 
     // CONSTRUCTORS --------------------------------
 
     public WorkoutSpeedDataPointDto() {}
 
-    public WorkoutSpeedDataPointDto(OffsetDateTime timestamp, Double kmh, Double pace_min_per_km) {
-        this.timestamp = timestamp;
+    public WorkoutSpeedDataPointDto(OffsetDateTime ts, Double kmh, Double pace_min_per_km) {
+        this.ts = ts;
         this.kmh = kmh;
         this.pace_min_per_km = pace_min_per_km;
     }
 
     // GETTERS AND SETTERS --------------------------
 
-    public OffsetDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(OffsetDateTime timestamp) { this.timestamp = timestamp; }
+    public OffsetDateTime getTs() { return ts; }
+    public void setTs(OffsetDateTime ts) { this.ts = ts; }
 
     public Double getKmh() { return kmh; }
     public void setKmh(Double kmh) { this.kmh = kmh; }

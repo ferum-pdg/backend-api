@@ -3,22 +3,22 @@ package org.heigvd.dto.WorkoutDto.DataPointDto;
 import java.time.OffsetDateTime;
 
 public class WorkoutBPMDataPointDto {
-    private OffsetDateTime timestamp;
+    private OffsetDateTime ts;
     private Double bpm;
 
     // CONSTRUCTORS --------------------------------
 
     public WorkoutBPMDataPointDto() {}
 
-    public WorkoutBPMDataPointDto(OffsetDateTime timestamp, Double bpm) {
-        this.timestamp = timestamp;
+    public WorkoutBPMDataPointDto(OffsetDateTime ts, Double bpm) {
+        this.ts = ts;
         this.bpm = bpm;
     }
 
     // GETTERS AND SETTERS --------------------------
 
-    public OffsetDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(OffsetDateTime timestamp) { this.timestamp = timestamp; }
+    public OffsetDateTime getTs() { return ts; }
+    public void setTs(OffsetDateTime ts) { this.ts = ts; }
 
     public Double getBpm() { return bpm; }
     public void setBpm(Double bpm) { this.bpm = bpm; }

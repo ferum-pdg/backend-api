@@ -1,10 +1,13 @@
 package org.heigvd.entity.Workout;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import org.heigvd.dto.WorkoutDto.DataPointDto.WorkoutBPMDataPointDto;
+import org.heigvd.dto.WorkoutDto.DataPointDto.WorkoutSpeedDataPointDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
+import org.heigvd.entity.Workout.DataPoint.BPMDataPoint;
+import org.heigvd.entity.Workout.DataPoint.SpeedDataPoint;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -55,9 +58,11 @@ public class Workout {
     @Enumerated(EnumType.STRING)
     private WorkoutStatus status;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "workout_details_id")
-    private WorkoutDetails workoutDetails;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BPMDataPoint> actualBPMDataPoints = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SpeedDataPoint> actualSpeedDataPoints = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "workout_type")
@@ -118,14 +123,34 @@ public class Workout {
     public WorkoutStatus getStatus() { return status; }
     public void setStatus(WorkoutStatus status) { this.status = status; }
 
-    public WorkoutDetails getWorkoutDetails() { return workoutDetails; }
-    public void setWorkoutDetails(WorkoutDetails workoutDetails) { this.workoutDetails = workoutDetails; }
-
     public WorkoutType getWorkoutType() { return workoutType; }
     public void setWorkoutType(WorkoutType workoutType) { this.workoutType = workoutType; }
 
     public Double getAvgSpeed() { return avgSpeed; }
     public void setAvgSpeed(Double avgSpeed) { this.avgSpeed = avgSpeed; }
+
+    public List<BPMDataPoint> getActualBPMDataPoints() { return actualBPMDataPoints; }
+    public void setActualBPMDataPoints(List<WorkoutBPMDataPointDto> bpmDataPoints) {
+        this.actualBPMDataPoints.clear();
+        for (WorkoutBPMDataPointDto dto : bpmDataPoints) {
+            BPMDataPoint dataPoint = new BPMDataPoint();
+            dataPoint.setTimestamp(dto.getTs());
+            dataPoint.setBpm(dto.getBpm());
+            this.actualBPMDataPoints.add(dataPoint);
+        }
+    }
+
+    public List<SpeedDataPoint> getActualSpeedDataPoints() { return actualSpeedDataPoints; }
+    public void setActualSpeedDataPoints(List<WorkoutSpeedDataPointDto> speedDataPoints) {
+        this.actualSpeedDataPoints.clear();
+        for (WorkoutSpeedDataPointDto dto : speedDataPoints) {
+            SpeedDataPoint dataPoint = new SpeedDataPoint();
+            dataPoint.setTimestamp(dto.getTs());
+            dataPoint.setKmh(dto.getKmh());
+            dataPoint.setPaceMinPerKm(dto.getPaceMinPerKm());
+            this.actualSpeedDataPoints.add(dataPoint);
+        }
+    }
 
     @Override
     public String toString() {

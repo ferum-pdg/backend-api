@@ -44,7 +44,11 @@ public class WorkoutResource {
 
             List<Workout> workouts = workoutService.getNextNWorkouts(authenticatedAccountId);
 
-            return Response.ok(workouts).build();
+            List<WorkoutLightDto> workoutDtos = workouts.stream()
+                    .map(WorkoutLightDto::new)
+                    .toList();
+
+            return Response.ok(workoutDtos).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
@@ -69,8 +73,10 @@ public class WorkoutResource {
         Workout toReturn;
 
         if (w.isEmpty()) {
+            System.out.println("Creating new workout");
             toReturn = workoutService.createWorkoutOutOfTP(a.get(), workout);
         } else {
+            System.out.println("Merging with existing workout");
             toReturn = workoutService.mergeWorkoutWithExisting(w.get(), workout);
         }
 
