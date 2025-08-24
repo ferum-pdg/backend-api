@@ -3,8 +3,9 @@ package org.heigvd.training_generator;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.heigvd.dto.TrainingPlanRequestDto;
-import org.heigvd.dto.TrainingPlanResponseDto;
-import org.heigvd.entity.*;
+import org.heigvd.entity.Account;
+import org.heigvd.entity.Goal;
+import org.heigvd.entity.Sport;
 import org.heigvd.entity.TrainingPlan.DailyPlan;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
 import org.heigvd.entity.TrainingPlan.TrainingPlanPhase;
@@ -13,6 +14,7 @@ import org.heigvd.entity.Workout.Workout;
 import org.heigvd.entity.Workout.WorkoutStatus;
 import org.heigvd.entity.Workout.WorkoutType;
 import org.heigvd.service.GoalService;
+import org.hibernate.jdbc.Work;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -96,7 +98,7 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
     }
 
     /**
-     * Génère la liste des entraînements pour la première semaine.
+     * Génère la liste de tous les entrainements de manière statiques
      *
      * @param trainingPlan le plan d'entraînement contenant les informations utilisateur
      * @return une liste d'entraînements planifiés pour la première semaine
@@ -105,14 +107,18 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         LocalDate today = LocalDate.now();
         LocalDate firstWeekStart = today.isBefore(trainingPlan.getStartDate()) ? trainingPlan.getStartDate() : today;
 
-        List<DailyPlan> dailyPlans = trainingPlan.getWeeklyPlans().getFirst().getDailyPlans();
+        List<Workout> generatedWorkouts = new ArrayList<>();
 
-        return dailyPlans.stream()
-                .map(dailyPlan -> {
-                    LocalDate workoutDate = firstWeekStart.with(dailyPlan.getDayOfWeek());
-                    return generateWorkout(trainingPlan, workoutDate, dailyPlan.getSport());
-                })
-                .collect(Collectors.toList());
+        for(int i = 0 ; i < trainingPlan.getWeeklyPlans().size(); i++) {
+            WeeklyPlan wp = trainingPlan.getWeeklyPlans().get(i);
+            for(DailyPlan dp : wp.getDailyPlans()) {
+                LocalDate workoutDate = firstWeekStart.plusWeeks(i).with(dp.getDayOfWeek());
+                Workout workout = generateWorkout(trainingPlan, workoutDate, dp.getSport());
+                generatedWorkouts.add(workout);
+            }
+        }
+
+        return generatedWorkouts;
     }
 
     /**
@@ -144,7 +150,7 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
                 sport,
                 start,
                 end,
-                "AUTO_GENERATED_V1",
+                "GENERATED_V1",
                 WorkoutStatus.PLANNED,
                 WorkoutType.EF
         );
@@ -160,7 +166,6 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
                 weeklyPlans.add(weeklyPlan);
                 nbCurrentWeek++;
             }
-
         }
         return weeklyPlans;
     }
