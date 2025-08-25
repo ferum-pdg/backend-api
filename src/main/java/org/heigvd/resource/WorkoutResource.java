@@ -1,11 +1,14 @@
 package org.heigvd.resource;
 
 import io.quarkus.security.Authenticated;
+
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
+import jakarta.persistence.EntityManager;
+
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -15,15 +18,18 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
 import org.heigvd.dto.WorkoutDto;
+import org.heigvd.dto.WorkoutDto.WorkoutLightDto;
+import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
 import org.heigvd.entity.Workout.Workout;
-import org.heigvd.entity.Workout.WorkoutStatus;
+import org.heigvd.service.AccountService;
 import org.heigvd.service.WorkoutService;
+
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
-import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,7 +51,60 @@ public class WorkoutResource {
     WorkoutService workoutService;
 
     @Inject
-    EntityManager em;
+    AccountService accountService;
+
+
+    @GET
+    /**
+     * Get the nexts n workouts for the authenticated user.
+     * @param context SecurityContext to get the authenticated user
+     * @return Response containing the list of the nexts n workouts or an error message
+     */
+    public Response getMyNextWorkouts(@Context SecurityContext context) {
+        try {
+            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
+
+            List<Workout> workouts = workoutService.getNextNWorkouts(authenticatedAccountId);
+
+            List<WorkoutLightDto> workoutDtos = workouts.stream()
+                    .map(WorkoutLightDto::new)
+                    .toList();
+
+            return Response.ok(workoutDtos).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
+
+    @POST
+    @Transactional
+    public Response insertNewRecordedWorkout(@Context SecurityContext context, @Valid WorkoutUploadDto workout) {
+        UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
+        Optional<Account> a = accountService.findById(authenticatedAccountId);
+
+        if(a.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("{\"error\": \"Account not found\"}")
+                    .build();
+        }
+
+        Optional<Workout> w = workoutService.findClosestWorkout(workout, a.get());
+
+        Workout toReturn;
+
+        if (w.isEmpty()) {
+            System.out.println("Creating new workout");
+            toReturn = workoutService.createWorkoutOutOfTP(a.get(), workout);
+        } else {
+            System.out.println("Merging with existing workout");
+            toReturn = workoutService.mergeWorkoutWithExisting(w.get(), workout);
+        }
+
+        return Response.ok(new WorkoutLightDto(toReturn)).build();
+    }
+
 
     @GET
     @Path("/{id}")
@@ -72,7 +131,7 @@ public class WorkoutResource {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
-            Optional<Workout> workoutOpt = workoutService.findById(id);
+            Optional<Workout> workoutOpt = workoutService.getWorkoutByID(id);
 
             if (workoutOpt.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -89,35 +148,6 @@ public class WorkoutResource {
             }
 
             return Response.ok(workout).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
-                    .build();
-        }
-    }
-
-    @GET
-    @Path("/my")
-    /**
-     * Liste tous les workouts de l'utilisateur authentifié.
-     *
-     * @param context Contexte de sécurité
-     */
-    @Operation(summary = "Liste de mes workouts",
-            description = "Retourne tous les workouts de l'utilisateur authentifié.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = "200", description = "Liste des workouts",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Workout.class))) ,
-            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
-    })
-    public Response getMyWorkouts(@Context SecurityContext context) {
-        try {
-            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
-
-            List<Workout> workouts = workoutService.findByAccountId(authenticatedAccountId);
-
-            return Response.ok(workouts).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
@@ -165,86 +195,6 @@ public class WorkoutResource {
         }
     }
 
-    @POST
-    @Transactional
-    /**
-     * Crée un nouveau workout pour l'utilisateur authentifié.
-     *
-     * @param workoutDto Données du workout à créer
-     * @param context Contexte de sécurité
-     */
-    @Operation(summary = "Créer un workout",
-            description = "Crée un nouveau workout pour l'utilisateur authentifié.")
-    @APIResponses(value = {
-            @APIResponse(responseCode = "201", description = "Workout créé",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Workout.class))),
-            @APIResponse(responseCode = "400", description = "Entrée invalide"),
-            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
-    })
-    @RequestBody(description = "Données du workout à créer", required = true,
-            content = @Content(mediaType = "application/json",
-                    schema = @Schema(implementation = WorkoutDto.class)))
-    public Response createWorkout(@Valid WorkoutDto workoutDto, @Context SecurityContext context) {
-        try {
-            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
-
-            // S'assurer que le workout est créé pour le compte authentifié
-            workoutDto.setAccountId(authenticatedAccountId);
-
-            // Récupérer le compte
-            Account account = em.find(Account.class, authenticatedAccountId);
-            if (account == null) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("{\"error\": \"Account not found\"}")
-                        .build();
-            }
-
-            // Créer le workout
-            Workout workout = new Workout(
-                    account,
-                    Sport.valueOf(workoutDto.getSport().toUpperCase()),
-                    workoutDto.getStartTime(),
-                    workoutDto.getEndTime(),
-                    workoutDto.getSource(),
-                    WorkoutStatus.valueOf(workoutDto.getStatus().toUpperCase()),
-                    null, // plannedDataPoints
-                    null  // workoutType
-            );
-
-            // Définir les autres propriétés
-            if (workoutDto.getDurationSec() != null) {
-                workout.setDurationSec((int) workoutDto.getDurationSec().longValue());
-            }
-            if (workoutDto.getDistanceMeters() != null) {
-                workout.setDistanceMeters(workoutDto.getDistanceMeters());
-            }
-            if (workoutDto.getCaloriesKcal() != null) {
-                workout.setCaloriesKcal(workoutDto.getCaloriesKcal().intValue());
-            }
-            if (workoutDto.getAvgHeartRate() != null) {
-                workout.setAvgHeartRate(workoutDto.getAvgHeartRate());
-            }
-            if (workoutDto.getMaxHeartRate() != null) {
-                workout.setMaxHeartRate(workoutDto.getMaxHeartRate());
-            }
-            if (workoutDto.getAverageSpeed() != null) {
-                workout.setAverageSpeed(workoutDto.getAverageSpeed());
-            }
-
-            Workout createdWorkout = workoutService.create(workout);
-            return Response.status(Response.Status.CREATED).entity(createdWorkout).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"Invalid input: " + e.getMessage() + "\"}")
-                    .build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
-                    .build();
-        }
-    }
-
     @DELETE
     @Path("/{id}")
     @Transactional
@@ -270,7 +220,7 @@ public class WorkoutResource {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
             // Vérifier que le workout existe et appartient à l'utilisateur
-            Optional<Workout> workoutOpt = workoutService.findById(id);
+            Optional<Workout> workoutOpt = workoutService.getWorkoutByID(id);
             if (workoutOpt.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("{\"error\": \"Workout not found\"}")

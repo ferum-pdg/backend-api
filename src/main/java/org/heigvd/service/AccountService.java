@@ -4,7 +4,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
+import org.heigvd.entity.Workout.Workout;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
@@ -77,6 +79,10 @@ public class AccountService {
     }
 
     @Transactional
+    public void mergeWorkouts(Workout workout, WorkoutUploadDto workoutUploadDto) {
+    }
+
+    @Transactional
     /**
      * Crée un compte, en hachant le mot de passe et en générant un UUID si nécessaire.
      * @param account entité compte à créer
@@ -87,12 +93,6 @@ public class AccountService {
         if (account.getPassword() != null) {
             account.setPassword(hashPassword(account.getPassword()));
         }
-
-        // Génère un ID si pas déjà défini
-        if (account.getId() == null) {
-            account.setId(UUID.randomUUID());
-        }
-
         em.persist(account);
         return account;
     }

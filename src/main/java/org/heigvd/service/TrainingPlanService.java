@@ -3,11 +3,13 @@ package org.heigvd.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import net.bytebuddy.asm.Advice;
 import org.heigvd.dto.TrainingPlanRequestDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.TrainingPlan.TrainingPlan;
 import org.heigvd.training_generator.TrainingGeneratorV1;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -59,5 +61,45 @@ public class TrainingPlanService {
                 .setParameter("accountId", accountId)
                 .getResultStream()
                 .findFirst();
+    }
+
+    public Integer getCurrentWeekNb(TrainingPlan tp) {
+        if (tp.getStartDate() == null || tp.getEndDate() == null) {
+            return null; // Training plan dates are not set
+        }
+        if (tp.getStartDate().isAfter(tp.getEndDate())) {
+            return null; // Invalid training plan dates
+        }
+
+        LocalDate currentDate = LocalDate.now();
+        long weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(tp.getStartDate(), currentDate);
+        return (int) weeksBetween + 1; // +1 to count the first week as week 1
+    }
+
+    public Integer getNbWorkoutsPerWeek(UUID accountId) {
+        Optional<TrainingPlan> tp = getMyTrainingPlan(accountId);
+        // Check if current date is within the training plan period
+        if (tp.isEmpty()) {
+            return null; // No training plan found for the user
+        }
+        if (tp.get().getStartDate() == null || tp.get().getEndDate() == null) {
+            return null; // Training plan dates are not set
+        }
+        if (tp.get().getStartDate().isAfter(tp.get().getEndDate())) {
+            return null; // Invalid training plan dates
+        }
+
+        // If the current date is before the start date of the training plan, return the nb
+        // of training from the first week
+        if(LocalDate.now().isBefore(tp.get().getStartDate())) {
+            return tp.get().getWeeklyPlans().getFirst().getDailyPlans().size();
+        } else if(LocalDate.now().isBefore(tp.get().getEndDate()) && LocalDate.now().isAfter(tp.get().getStartDate())) {
+            // Find the correct week based on the current date
+            int indexCurrentWeeklyPlan = getCurrentWeekNb(tp.get()) - 1;
+            return tp.get().getWeeklyPlans().get(indexCurrentWeeklyPlan).getDailyPlans().size();
+        } else {
+            throw new IllegalStateException("We can't get the number of workouts.");
+        }
+
     }
 }

@@ -146,8 +146,7 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
                 end,
                 "AUTO_GENERATED_V1",
                 WorkoutStatus.PLANNED,
-                new ArrayList<>(), // PlannedDataPoints vides pour la V1
-                WorkoutType.EF     // Type par défaut : Endurance Fondamentale
+                WorkoutType.EF
         );
     }
 

@@ -1,58 +1,46 @@
-package org.heigvd.dto;
+package org.heigvd.dto.WorkoutDto;
 
 import jakarta.validation.constraints.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public class WorkoutDto {
+public class WorkoutFullDto {
 
     private UUID id;
 
-    //@NotNull(message = "Account ID is required")
     private UUID accountId;
 
     private UUID trainingPlanId;
 
-    @NotNull(message = "Sport is required")
     private String sport;
 
-    @NotNull(message = "Start time is required")
     private OffsetDateTime startTime;
 
     private OffsetDateTime endTime;
 
-    @Min(value = 0, message = "Duration must be positive")
     private Integer durationSec;
 
-    @DecimalMin(value = "0.0", message = "Distance must be positive")
     private Double distanceMeters;
 
-    @DecimalMin(value = "0.0", message = "Calories must be positive")
     private Double caloriesKcal;
 
-    @Min(value = 0, message = "Heart rate must be positive")
-    @Max(value = 220, message = "Heart rate cannot exceed 220")
     private Integer avgHeartRate;
 
-    @Min(value = 0, message = "Heart rate must be positive")
-    @Max(value = 220, message = "Heart rate cannot exceed 220")
     private Integer maxHeartRate;
 
-    @DecimalMin(value = "0.0", message = "Speed must be positive")
-    private Double averageSpeed;
+    private Double avgSpeed;
 
     private String source;
 
-    @NotNull(message = "Status is required")
     private String status;
 
     // CONSTRUCTORS
-    public WorkoutDto() {}
+    public WorkoutFullDto() {}
 
-    public WorkoutDto(UUID id, UUID accountId, UUID trainingPlanId, String sport,
-                      OffsetDateTime startTime, OffsetDateTime endTime, Integer durationSec,
-                      Double distanceMeters, Double caloriesKcal, Integer avgHeartRate,
-                      Integer maxHeartRate, Double averageSpeed, String source, String status) {
+    public WorkoutFullDto(UUID id, UUID accountId, UUID trainingPlanId, String sport,
+                          OffsetDateTime startTime, OffsetDateTime endTime, Integer durationSec,
+                          Double distanceMeters, Double caloriesKcal, Integer avgHeartRate,
+                          Integer maxHeartRate, Double avgSpeed, String source, String status) {
         this.id = id;
         this.accountId = accountId;
         this.trainingPlanId = trainingPlanId;
@@ -64,7 +52,7 @@ public class WorkoutDto {
         this.caloriesKcal = caloriesKcal;
         this.avgHeartRate = avgHeartRate;
         this.maxHeartRate = maxHeartRate;
-        this.averageSpeed = averageSpeed;
+        this.avgSpeed = avgSpeed;
         this.source = source;
         this.status = status;
     }
@@ -103,8 +91,8 @@ public class WorkoutDto {
     public Integer getMaxHeartRate() { return maxHeartRate; }
     public void setMaxHeartRate(Integer maxHeartRate) { this.maxHeartRate = maxHeartRate; }
 
-    public Double getAverageSpeed() { return averageSpeed; }
-    public void setAverageSpeed(Double averageSpeed) { this.averageSpeed = averageSpeed; }
+    public Double getAvgSpeed() { return avgSpeed; }
+    public void setAvgSpeed(Double avgSpeed) { this.avgSpeed = avgSpeed; }
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }
