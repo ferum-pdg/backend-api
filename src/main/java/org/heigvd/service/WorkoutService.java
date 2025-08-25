@@ -1,17 +1,14 @@
 package org.heigvd.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-
-import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
+import org.heigvd.dto.workout_dto.WorkoutUploadDto;
 import org.heigvd.entity.*;
-import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.Workout.Workout;
-import org.heigvd.entity.Workout.WorkoutStatus;
-
+import org.heigvd.entity.training_plan.TrainingPlan;
+import org.heigvd.entity.workout.Workout;
+import org.heigvd.entity.workout.WorkoutStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -86,7 +83,29 @@ public class WorkoutService {
                 .setParameter("endOfWeek", endOfWeek)
                 .getResultList();
     }
-  
+
+    public List<Workout> getWorkoutForWeek(UUID accountId, int weekNumber) {
+        Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
+        if(tp.isEmpty()) {
+            return List.of();
+        } else {
+            LocalDate planStartDate = tp.get().getStartDate();
+            LocalDate startOfWeek = planStartDate.plusWeeks(weekNumber - 1).with(java.time.DayOfWeek.MONDAY);
+            LocalDate endOfWeek = startOfWeek.plusDays(6);
+
+            OffsetDateTime startOfWeekOdt = startOfWeek.atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
+            OffsetDateTime endOfWeekOdt = endOfWeek.atTime(23, 59, 59).atOffset(OffsetDateTime.now().getOffset());
+
+            return em.createQuery(
+                            "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
+                                    "AND w.startTime >= :startOfWeek AND w.startTime <= :endOfWeek " +
+                                    "ORDER BY w.startTime ASC",
+                            Workout.class)
+                    .setParameter("accountId", accountId)
+                    .setParameter("startOfWeek", startOfWeekOdt)
+                    .setParameter("endOfWeek", endOfWeekOdt)
+                    .getResultList();
+        }
     /**
      * Liste les workouts d'un utilisateur pour un sport donné.
      * @param accountId identifiant du compte
@@ -126,6 +145,27 @@ public class WorkoutService {
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId ORDER BY w.startTime DESC",
                         Workout.class)
                 .setParameter("accountId", accountId)
+                .getResultList();
+    }
+
+    public List<Workout> findByAccountIdAndSport(UUID accountId, Sport sport) {
+        return em.createQuery(
+                        "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.sport = :sport ORDER BY w.startTime DESC",
+                        Workout.class)
+                .setParameter("accountId", accountId)
+                .setParameter("sport", sport)
+                .getResultList();
+    }
+
+    public List<Workout> getWorkoutsBetweenDates(UUID accountId, OffsetDateTime start, OffsetDateTime end) {
+        return em.createQuery(
+                        "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
+                                "AND w.startTime >= :start AND w.endTime <= :end " +
+                                "ORDER BY w.startTime ASC",
+                        Workout.class)
+                .setParameter("accountId", accountId)
+                .setParameter("start", start)
+                .setParameter("end", end)
                 .getResultList();
     }
 

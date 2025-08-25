@@ -1,6 +1,6 @@
-package org.heigvd.entity.Workout;
+package org.heigvd.entity.workout;
 
-import static org.heigvd.entity.Workout.IntensityZone.*;
+import static org.heigvd.entity.workout.IntensityZone.*;
 
 public enum WorkoutType {
     EF(RECOVERY, ENDURANCE, "Endurance Fondamentale", "Développer la base aérobie, soutenir un effort long."),

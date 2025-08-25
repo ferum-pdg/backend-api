@@ -1,12 +1,11 @@
-package org.heigvd.dto.WorkoutDto;
+package org.heigvd.dto.workout_dto;
 
 import jakarta.validation.constraints.NotNull;
-import org.heigvd.dto.WorkoutDto.DataPointDto.WorkoutBPMDataPointDto;
-import org.heigvd.dto.WorkoutDto.DataPointDto.WorkoutSpeedDataPointDto;
+import org.heigvd.dto.workout_dto.data_point_dto.WorkoutBPMDataPointDto;
+import org.heigvd.dto.workout_dto.data_point_dto.WorkoutSpeedDataPointDto;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.UUID;
 
 public class WorkoutUploadDto {
 

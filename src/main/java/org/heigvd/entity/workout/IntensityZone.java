@@ -1,4 +1,4 @@
-package org.heigvd.entity.Workout;
+package org.heigvd.entity.workout;
 
 public enum IntensityZone {
     RECOVERY(1, "Récupération", 50, 59),

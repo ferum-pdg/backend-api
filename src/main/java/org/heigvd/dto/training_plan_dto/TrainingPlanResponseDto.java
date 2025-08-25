@@ -1,10 +1,9 @@
-package org.heigvd.dto;
+package org.heigvd.dto.training_plan_dto;
 
 import org.heigvd.entity.Goal;
-import org.heigvd.entity.TrainingPlan.DailyPlan;
-import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.TrainingPlan.TrainingPlanPhase;
-import org.heigvd.entity.TrainingPlan.WeeklyPlan;
+import org.heigvd.entity.training_plan.TrainingPlan;
+import org.heigvd.entity.training_plan.TrainingPlanPhase;
+import org.heigvd.entity.training_plan.WeeklyPlan;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;

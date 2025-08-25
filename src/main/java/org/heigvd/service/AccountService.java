@@ -4,9 +4,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
+import org.heigvd.dto.workout_dto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
-import org.heigvd.entity.Workout.Workout;
+import org.heigvd.entity.workout.Workout;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package org.heigvd.dto;
+package org.heigvd.dto.training_plan_dto;
 
 import org.heigvd.entity.Goal;
 

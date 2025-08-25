@@ -8,6 +8,9 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import org.heigvd.dto.training_plan_dto.TrainingPlanLightDto;
+import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
+import org.heigvd.dto.training_plan_dto.TrainingPlanResponseDto;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -15,11 +18,8 @@ import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.heigvd.dto.TrainingPlanRequestDto;
-import org.heigvd.dto.TrainingPlanResponseDto;
 import org.heigvd.entity.Account;
-import org.heigvd.entity.TrainingPlan.TrainingPlan;
+import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.service.AccountService;
 import org.heigvd.service.GoalService;
 import org.heigvd.service.TrainingPlanService;
@@ -81,8 +81,17 @@ public class TrainingPlanResource {
             return Response.status(Response.Status.NOT_FOUND).entity("Training plan not found").build();
         }
 
+        TrainingPlanLightDto trainingPlanLightDto = new TrainingPlanLightDto(
+                tp.get().getId(),
+                trainingPlanService.getCurrentWeekNb(tp.get()),
+                tp.get().getWeeklyPlans().size(),
+                tp.get().getWorkouts().size(),
+                tp.get().getWeeklyPlans().stream().mapToInt(wp -> wp.getDailyPlans().size()).sum(),
+                tp.get().getWeeklyPlans().get(trainingPlanService.getCurrentWeekNb(tp.get())-1)
+        );
+
         // Assuming the training plan is found, return it
-        return Response.ok(new TrainingPlanResponseDto(tp.get())).build();
+        return Response.ok(trainingPlanLightDto).build();
     }
 
     @Transactional
@@ -119,7 +128,7 @@ public class TrainingPlanResource {
             return Response.status(Response.Status.BAD_REQUEST).entity("Failed to generate training plan").build();
         }
 
-        newTrainingPlan = trainingGeneratorV1.generateTrainingWorkouts(newTrainingPlan);
+        //newTrainingPlan = trainingGeneratorV1.generateTrainingWorkouts(newTrainingPlan);
 
         trainingPlanService.create(newTrainingPlan);
 
