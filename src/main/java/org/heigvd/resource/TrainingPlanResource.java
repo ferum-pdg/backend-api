@@ -8,6 +8,14 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.heigvd.dto.TrainingPlanRequestDto;
 import org.heigvd.dto.TrainingPlanResponseDto;
 import org.heigvd.entity.Account;
@@ -21,10 +29,17 @@ import org.jboss.resteasy.reactive.common.util.RestMediaType;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Ressource REST pour la gestion des plans d'entraînement.
+ *
+ * Permet de récupérer le plan en cours et d'en générer un nouveau.
+ */
 @Path("/training-plan")
 @Produces(RestMediaType.APPLICATION_JSON)
 @Consumes(RestMediaType.APPLICATION_JSON)
 @Authenticated
+@Tag(name = "Training Plans", description = "Gestion des plans d'entraînement")
+@SecurityRequirement(name = "bearerAuth")
 public class TrainingPlanResource {
 
     @Inject
@@ -43,6 +58,19 @@ public class TrainingPlanResource {
     EntityManager em;
 
     @GET
+    /**
+     * Récupère le plan d'entraînement de l'utilisateur authentifié.
+     *
+     * @param securityContext Contexte de sécurité
+     */
+    @Operation(summary = "Mon plan d'entraînement",
+            description = "Retourne le plan d'entraînement de l'utilisateur authentifié s'il existe.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = "200", description = "Plan trouvé",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = TrainingPlanResponseDto.class))),
+            @APIResponse(responseCode = "404", description = "Plan introuvable")
+    })
     public Response getMyTrainingPlan(SecurityContext securityContext) {
 
         UUID accountId = UUID.fromString(securityContext.getUserPrincipal().getName());
@@ -59,6 +87,24 @@ public class TrainingPlanResource {
 
     @Transactional
     @POST
+    /**
+     * Génère et crée un plan d'entraînement pour l'utilisateur authentifié.
+     *
+     * @param securityContext Contexte de sécurité
+     * @param trainingPlanRequestDto Paramètres de génération du plan
+     */
+    @Operation(summary = "Créer un plan d'entraînement",
+            description = "Génère et crée un plan d'entraînement pour l'utilisateur authentifié.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = "201", description = "Plan créé",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = TrainingPlanResponseDto.class))),
+            @APIResponse(responseCode = "400", description = "Paramètres invalides"),
+            @APIResponse(responseCode = "404", description = "Compte introuvable")
+    })
+    @RequestBody(description = "Paramètres de génération du plan", required = true,
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = TrainingPlanRequestDto.class)))
     public Response createTrainingPlan(SecurityContext securityContext, TrainingPlanRequestDto trainingPlanRequestDto) {
         UUID accountId = UUID.fromString(securityContext.getUserPrincipal().getName());
 
