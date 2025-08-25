@@ -10,12 +10,17 @@ import org.heigvd.dto.WorkoutDto.WorkoutLightDto;
 import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
+import org.heigvd.entity.TrainingPlan.TrainingPlan;
+import org.heigvd.entity.TrainingPlan.WeeklyPlan;
 import org.heigvd.entity.Workout.Workout;
 import org.heigvd.service.AccountService;
 import org.heigvd.service.TrainingPlanService;
 import org.heigvd.service.WorkoutService;
+import org.hibernate.jdbc.Work;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,26 +41,63 @@ public class WorkoutResource {
     TrainingPlanService trainingPlanService;
 
     /**
-     * Get the nexts n workouts for the authenticated user.
+     * Get the current and next week workouts for the authenticated user
      * @param context SecurityContext to get the authenticated user
      * @return Response containing the list of the nexts n workouts or an error message
      */
     @GET
     public Response getMyNextWorkouts(@Context SecurityContext context) {
         try {
-            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
+            UUID accountId = UUID.fromString(context.getUserPrincipal().getName());
 
-            Integer currentWeek = trainingPlanService.getCurrentWeekNbForUser(authenticatedAccountId);
+            List<WorkoutLightDto> workoutDtos = new ArrayList<>();
 
-            List<Workout> currentWeekWorkouts = workoutService.getCurrentWeekWorkouts(authenticatedAccountId);
+            Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
 
-            List<Workout> workouts = workoutService.getNextNWorkouts(authenticatedAccountId);
+            // If no training plan, return all workouts
+            if(tp.isEmpty()) {
+                List<Workout> allWorkouts = workoutService.getAllWorkouts(accountId);
+                for(Workout w : allWorkouts) {
+                    workoutDtos.add(new WorkoutLightDto(w));
+                }
+                return Response.ok(workoutDtos).build();
+            }
 
-            List<WorkoutLightDto> workoutDtos = workouts.stream()
-                    .map(WorkoutLightDto::new)
-                    .toList();
+            List<OffsetDateTime> nextWorkoutsDates = trainingPlanService.getDatesForNextWorkouts(accountId);
+
+            List<Workout> nextWorkouts = workoutService.getWorkoutsBetweenDates(
+                    accountId,
+                    nextWorkoutsDates.getFirst(),
+                    nextWorkoutsDates.getLast());
+
+            workoutDtos.addAll(nextWorkouts.stream().map(w -> {
+                Integer weekNumber = trainingPlanService.getWeekNumberForDate(tp.get(), w.getStartTime().toLocalDate());
+                return new WorkoutLightDto(w, weekNumber);
+            }).toList());
 
             return Response.ok(workoutDtos).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
+
+    @GET
+    @Path("/all")
+    public Response getAllMyWorkouts(@Context SecurityContext context) {
+        try {
+            UUID accountId = UUID.fromString(context.getUserPrincipal().getName());
+
+            List<WorkoutLightDto> workoutDtos = new ArrayList<>();
+
+            List<Workout> allWorkouts = workoutService.getAllWorkouts(accountId);
+            for(Workout w : allWorkouts) {
+                workoutDtos.add(new WorkoutLightDto(w));
+            }
+            return Response.ok(workoutDtos).build();
+
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")

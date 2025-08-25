@@ -73,7 +73,7 @@ public class TrainingPlanResource {
             return Response.status(Response.Status.BAD_REQUEST).entity("Failed to generate training plan").build();
         }
 
-        newTrainingPlan = trainingGeneratorV1.generateTrainingWorkouts(newTrainingPlan);
+        //newTrainingPlan = trainingGeneratorV1.generateTrainingWorkouts(newTrainingPlan);
 
         trainingPlanService.create(newTrainingPlan);
 

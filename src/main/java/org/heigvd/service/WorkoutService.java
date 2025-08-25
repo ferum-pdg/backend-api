@@ -127,6 +127,18 @@ public class WorkoutService {
                 .getResultList();
     }
 
+    public List<Workout> getWorkoutsBetweenDates(UUID accountId, OffsetDateTime start, OffsetDateTime end) {
+        return em.createQuery(
+                        "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
+                                "AND w.startTime >= :start AND w.endTime <= :end " +
+                                "ORDER BY w.startTime ASC",
+                        Workout.class)
+                .setParameter("accountId", accountId)
+                .setParameter("start", start)
+                .setParameter("end", end)
+                .getResultList();
+    }
+
     @Transactional
     public Workout create(Workout workout) {
 
