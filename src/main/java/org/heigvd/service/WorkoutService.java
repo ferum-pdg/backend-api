@@ -86,7 +86,7 @@ public class WorkoutService {
 
     public List<Workout> getWorkoutForWeek(UUID accountId, int weekNumber) {
         Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
-        if(tp.isEmpty()) {
+        if (tp.isEmpty()) {
             return List.of();
         } else {
             LocalDate planStartDate = tp.get().getStartDate();
@@ -106,6 +106,8 @@ public class WorkoutService {
                     .setParameter("endOfWeek", endOfWeekOdt)
                     .getResultList();
         }
+    }
+
     /**
      * Liste les workouts d'un utilisateur pour un sport donné.
      * @param accountId identifiant du compte
@@ -115,7 +117,7 @@ public class WorkoutService {
     public List<Workout> findByAccountIdAndSport(UUID accountId, Sport sport) {
         return em.createQuery(
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.sport = :sport " +
-                                "ORDER BY w.startTime DESC",
+                                "ORDER BY w.startTime ASC",
                         Workout.class)
                 .setParameter("accountId", accountId)
                 .setParameter("sport", sport)
@@ -145,15 +147,6 @@ public class WorkoutService {
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId ORDER BY w.startTime DESC",
                         Workout.class)
                 .setParameter("accountId", accountId)
-                .getResultList();
-    }
-
-    public List<Workout> findByAccountIdAndSport(UUID accountId, Sport sport) {
-        return em.createQuery(
-                        "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.sport = :sport ORDER BY w.startTime DESC",
-                        Workout.class)
-                .setParameter("accountId", accountId)
-                .setParameter("sport", sport)
                 .getResultList();
     }
 
