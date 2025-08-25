@@ -1,8 +1,8 @@
 package org.heigvd.training_generator;
 
-import org.heigvd.dto.TrainingPlanRequestDto;
+import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
 import org.heigvd.entity.Account;
-import org.heigvd.entity.TrainingPlan.TrainingPlan;
+import org.heigvd.entity.training_plan.TrainingPlan;
 
 public interface TrainingGenerator {
 

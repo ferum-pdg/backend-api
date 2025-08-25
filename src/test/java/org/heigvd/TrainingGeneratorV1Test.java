@@ -2,10 +2,10 @@ package org.heigvd;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.heigvd.dto.TrainingPlanRequestDto;
+import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
 import org.heigvd.entity.*;
-import org.heigvd.entity.TrainingPlan.DailyPlan;
-import org.heigvd.entity.TrainingPlan.TrainingPlan;
+import org.heigvd.entity.training_plan.DailyPlan;
+import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.service.GoalService;
 import org.heigvd.training_generator.TrainingGeneratorV1;
 import org.junit.jupiter.api.Test;

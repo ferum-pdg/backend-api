@@ -1,9 +1,9 @@
-package org.heigvd.entity.Workout;
+package org.heigvd.entity.workout;
 
 import jakarta.persistence.*;
-import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
-import org.heigvd.entity.Workout.DataPoint.BPMDataPoint;
-import org.heigvd.entity.Workout.DataPoint.SpeedDataPoint;
+import org.heigvd.dto.workout_dto.WorkoutUploadDto;
+import org.heigvd.entity.workout.data_point.BPMDataPoint;
+import org.heigvd.entity.workout.data_point.SpeedDataPoint;
 
 import java.util.List;
 import java.util.UUID;

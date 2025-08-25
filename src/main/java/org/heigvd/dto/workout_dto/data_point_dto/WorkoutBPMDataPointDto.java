@@ -1,4 +1,4 @@
-package org.heigvd.dto.WorkoutDto.DataPointDto;
+package org.heigvd.dto.workout_dto.data_point_dto;
 
 import java.time.OffsetDateTime;
 

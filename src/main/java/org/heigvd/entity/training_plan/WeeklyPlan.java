@@ -1,4 +1,4 @@
-package org.heigvd.entity.TrainingPlan;
+package org.heigvd.entity.training_plan;
 
 import jakarta.persistence.*;
 

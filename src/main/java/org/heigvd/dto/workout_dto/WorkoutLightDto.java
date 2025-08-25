@@ -1,9 +1,9 @@
-package org.heigvd.dto.WorkoutDto;
+package org.heigvd.dto.workout_dto;
 
 import org.heigvd.entity.Sport;
-import org.heigvd.entity.Workout.Workout;
-import org.heigvd.entity.Workout.WorkoutStatus;
-import org.heigvd.entity.Workout.WorkoutType;
+import org.heigvd.entity.workout.Workout;
+import org.heigvd.entity.workout.WorkoutStatus;
+import org.heigvd.entity.workout.WorkoutType;
 
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;

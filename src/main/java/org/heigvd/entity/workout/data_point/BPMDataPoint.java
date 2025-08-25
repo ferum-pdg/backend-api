@@ -1,4 +1,4 @@
-package org.heigvd.entity.Workout.DataPoint;
+package org.heigvd.entity.workout.data_point;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

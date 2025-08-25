@@ -1,13 +1,13 @@
-package org.heigvd.entity.Workout;
+package org.heigvd.entity.workout;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import org.heigvd.dto.WorkoutDto.DataPointDto.WorkoutBPMDataPointDto;
-import org.heigvd.dto.WorkoutDto.DataPointDto.WorkoutSpeedDataPointDto;
+import org.heigvd.dto.workout_dto.data_point_dto.WorkoutBPMDataPointDto;
+import org.heigvd.dto.workout_dto.data_point_dto.WorkoutSpeedDataPointDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
-import org.heigvd.entity.Workout.DataPoint.BPMDataPoint;
-import org.heigvd.entity.Workout.DataPoint.SpeedDataPoint;
+import org.heigvd.entity.workout.data_point.BPMDataPoint;
+import org.heigvd.entity.workout.data_point.SpeedDataPoint;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;

@@ -1,15 +1,14 @@
 package org.heigvd.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
+import org.heigvd.dto.workout_dto.WorkoutUploadDto;
 import org.heigvd.entity.*;
-import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.Workout.Workout;
-import org.heigvd.entity.Workout.WorkoutStatus;
+import org.heigvd.entity.training_plan.TrainingPlan;
+import org.heigvd.entity.workout.Workout;
+import org.heigvd.entity.workout.WorkoutStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

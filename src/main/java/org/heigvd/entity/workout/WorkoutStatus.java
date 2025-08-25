@@ -1,4 +1,4 @@
-package org.heigvd.entity.Workout;
+package org.heigvd.entity.workout;
 
 public enum WorkoutStatus {
     PLANNED,

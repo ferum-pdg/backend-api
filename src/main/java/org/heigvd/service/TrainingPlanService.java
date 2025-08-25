@@ -3,18 +3,15 @@ package org.heigvd.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import net.bytebuddy.asm.Advice;
-import org.heigvd.dto.TrainingPlanRequestDto;
+import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
 import org.heigvd.entity.Account;
-import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.Workout.Workout;
+import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.training_generator.TrainingGeneratorV1;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
-import java.time.temporal.TemporalAdjuster;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -149,6 +146,5 @@ public class TrainingPlanService {
         } else {
             throw new IllegalStateException("We can't get the number of workouts.");
         }
-
     }
 }

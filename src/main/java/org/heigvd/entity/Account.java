@@ -2,7 +2,7 @@ package org.heigvd.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import org.heigvd.entity.Workout.Workout;
+import org.heigvd.entity.workout.Workout;
 
 import java.time.LocalDate;
 import java.util.List;

@@ -2,19 +2,18 @@ package org.heigvd.training_generator;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.heigvd.dto.TrainingPlanRequestDto;
+import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Goal;
 import org.heigvd.entity.Sport;
-import org.heigvd.entity.TrainingPlan.DailyPlan;
-import org.heigvd.entity.TrainingPlan.TrainingPlan;
-import org.heigvd.entity.TrainingPlan.TrainingPlanPhase;
-import org.heigvd.entity.TrainingPlan.WeeklyPlan;
-import org.heigvd.entity.Workout.Workout;
-import org.heigvd.entity.Workout.WorkoutStatus;
-import org.heigvd.entity.Workout.WorkoutType;
+import org.heigvd.entity.training_plan.DailyPlan;
+import org.heigvd.entity.training_plan.TrainingPlan;
+import org.heigvd.entity.training_plan.TrainingPlanPhase;
+import org.heigvd.entity.training_plan.WeeklyPlan;
+import org.heigvd.entity.workout.Workout;
+import org.heigvd.entity.workout.WorkoutStatus;
+import org.heigvd.entity.workout.WorkoutType;
 import org.heigvd.service.GoalService;
-import org.hibernate.jdbc.Work;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;

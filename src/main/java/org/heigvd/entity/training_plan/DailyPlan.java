@@ -1,8 +1,8 @@
-package org.heigvd.entity.TrainingPlan;
+package org.heigvd.entity.training_plan;
 
 import jakarta.persistence.*;
 import org.heigvd.entity.Sport;
-import org.heigvd.entity.Workout.WorkoutType;
+import org.heigvd.entity.workout.WorkoutType;
 
 import java.time.DayOfWeek;
 import java.util.UUID;

@@ -1,18 +1,14 @@
-package org.heigvd.training_generator.generatorV1;
+package org.heigvd.training_generator.generator_V1;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.heigvd.dto.TrainingPlanRequestDto;
+import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Goal;
-import org.heigvd.entity.Sport;
-import org.heigvd.entity.TrainingPlan.TrainingPlan;
+import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.service.GoalService;
-import org.heigvd.training_generator.tools.SportNbTraining;
 
 import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
