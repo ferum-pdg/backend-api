@@ -8,7 +8,9 @@ import jakarta.transaction.Transactional;
 
 import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.*;
+import org.heigvd.entity.TrainingPlan.TrainingPlan;
 import org.heigvd.entity.Workout.Workout;
+import org.heigvd.entity.Workout.WorkoutStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -124,15 +126,6 @@ public class WorkoutService {
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId ORDER BY w.startTime DESC",
                         Workout.class)
                 .setParameter("accountId", accountId)
-                .getResultList();
-    }
-
-    public List<Workout> findByAccountIdAndSport(UUID accountId, Sport sport) {
-        return em.createQuery(
-                        "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.sport = :sport ORDER BY w.startTime DESC",
-                        Workout.class)
-                .setParameter("accountId", accountId)
-                .setParameter("sport", sport)
                 .getResultList();
     }
 

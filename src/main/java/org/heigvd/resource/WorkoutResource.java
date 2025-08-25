@@ -19,7 +19,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
-import org.heigvd.dto.WorkoutDto;
 import org.heigvd.dto.WorkoutDto.WorkoutLightDto;
 import org.heigvd.dto.WorkoutDto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
