@@ -10,11 +10,20 @@ import java.util.List;
 import java.util.UUID;
 
 @ApplicationScoped
+/**
+ * Service d'accès aux objectifs d'entraînement (Goals).
+ */
 public class GoalService {
 
     @Inject
     EntityManager em;
 
+    /**
+     * Récupère un objectif pour un sport et une distance cible donnée.
+     * @param sport sport visé
+     * @param targetDistance distance cible
+     * @return objectif correspondant
+     */
     public Goal getSpecificGoal(Sport sport, Double targetDistance) {
         return em.createQuery("SELECT g FROM Goal g WHERE g.sport = :sport AND g.targetDistance = :targetDistance", Goal.class)
                 .setParameter("sport", sport)
@@ -22,13 +31,34 @@ public class GoalService {
                 .getSingleResult();
     }
 
+    /**
+     * Récupère une liste d'objectifs par identifiants.
+     * @param goalIds identifiants des objectifs
+     * @return liste des objectifs
+     */
     public List<Goal> getGoalsByIds(List<UUID> goalIds) {
         return em.createQuery("SELECT g FROM Goal g WHERE g.id IN :goalIds", Goal.class)
                 .setParameter("goalIds", goalIds)
                 .getResultList();
     }
 
+    /**
+     * Récupère un objectif par identifiant.
+     * @param id identifiant de l'objectif
+     * @return objectif
+     */
     public Goal getGoalById(UUID id) {
         return em.find(Goal.class, id);
+    }
+
+    public List<Goal> getGoalsBySport(Sport sport) {
+        return em.createQuery("SELECT g FROM Goal g WHERE g.sport IN :sport", Goal.class)
+                .setParameter("sport", sport)
+                .getResultList();
+    }
+
+    public List<Goal> getAllGoals() {
+        return em.createQuery("SELECT g FROM Goal g", Goal.class)
+                .getResultList();
     }
 }

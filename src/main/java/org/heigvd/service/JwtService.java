@@ -7,8 +7,17 @@ import java.util.Set;
 import java.util.UUID;
 
 @ApplicationScoped
+/**
+ * Service utilitaire pour la génération de jetons JWT.
+ */
 public class JwtService {
 
+    /**
+     * Génère un jeton JWT signé pour un utilisateur.
+     *
+     * @param userId identifiant de l'utilisateur
+     * @return jeton JWT signé
+     */
     public String generateToken(UUID userId) {
         return Jwt
                 .issuer("ferum")
