@@ -12,6 +12,7 @@ import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
 import org.heigvd.entity.Workout.Workout;
 import org.heigvd.service.AccountService;
+import org.heigvd.service.TrainingPlanService;
 import org.heigvd.service.WorkoutService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
@@ -31,16 +32,22 @@ public class WorkoutResource {
     @Inject
     AccountService accountService;
 
+    @Inject
+    TrainingPlanService trainingPlanService;
 
-    @GET
     /**
      * Get the nexts n workouts for the authenticated user.
      * @param context SecurityContext to get the authenticated user
      * @return Response containing the list of the nexts n workouts or an error message
      */
+    @GET
     public Response getMyNextWorkouts(@Context SecurityContext context) {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
+
+            Integer currentWeek = trainingPlanService.getCurrentWeekNbForUser(authenticatedAccountId);
+
+            List<Workout> currentWeekWorkouts = workoutService.getCurrentWeekWorkouts(authenticatedAccountId);
 
             List<Workout> workouts = workoutService.getNextNWorkouts(authenticatedAccountId);
 

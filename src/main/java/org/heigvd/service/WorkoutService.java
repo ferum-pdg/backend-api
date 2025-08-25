@@ -66,6 +66,29 @@ public class WorkoutService {
                 .getResultList();
     }
 
+    public List<Workout> getWorkoutForWeek(UUID accountId, int weekNumber) {
+        Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
+        if(tp.isEmpty()) {
+            return List.of();
+        } else {
+            LocalDate planStartDate = tp.get().getStartDate();
+            LocalDate startOfWeek = planStartDate.plusWeeks(weekNumber - 1).with(java.time.DayOfWeek.MONDAY);
+            LocalDate endOfWeek = startOfWeek.plusDays(6);
+
+            OffsetDateTime startOfWeekOdt = startOfWeek.atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
+            OffsetDateTime endOfWeekOdt = endOfWeek.atTime(23, 59, 59).atOffset(OffsetDateTime.now().getOffset());
+
+            return em.createQuery(
+                            "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
+                                    "AND w.startTime >= :startOfWeek AND w.startTime <= :endOfWeek " +
+                                    "ORDER BY w.startTime ASC",
+                            Workout.class)
+                    .setParameter("accountId", accountId)
+                    .setParameter("startOfWeek", startOfWeekOdt)
+                    .setParameter("endOfWeek", endOfWeekOdt)
+                    .getResultList();
+        }
+    }
 
     public List<Workout> getNextNWorkouts(UUID accountId) {
 

@@ -58,15 +58,14 @@ public class Workout {
     @Enumerated(EnumType.STRING)
     private WorkoutStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private WorkoutType type;
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BPMDataPoint> actualBPMDataPoints = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SpeedDataPoint> actualSpeedDataPoints = new ArrayList<>();
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "workout_type")
-    private WorkoutType workoutType;
 
     // CONSTRUCTORS ---------------------------------------------
 
@@ -74,14 +73,14 @@ public class Workout {
 
     public Workout(Account account, Sport sport, OffsetDateTime startTime,
                    OffsetDateTime endTime, String source, WorkoutStatus status,
-                   WorkoutType workoutType) {
+                   WorkoutType type) {
         this.account = account;
         this.sport = sport;
         this.startTime = startTime;
         this.endTime = endTime;
         this.source = source;
         this.status = status;
-        this.workoutType = workoutType;
+        this.type = type;
         this.durationSec = (int) (endTime.toEpochSecond() - startTime.toEpochSecond());
     }
 
@@ -123,8 +122,8 @@ public class Workout {
     public WorkoutStatus getStatus() { return status; }
     public void setStatus(WorkoutStatus status) { this.status = status; }
 
-    public WorkoutType getWorkoutType() { return workoutType; }
-    public void setWorkoutType(WorkoutType workoutType) { this.workoutType = workoutType; }
+    public WorkoutType getWorkoutType() { return type; }
+    public void setWorkoutType(WorkoutType type) { this.type = type; }
 
     public Double getAvgSpeed() { return avgSpeed; }
     public void setAvgSpeed(Double avgSpeed) { this.avgSpeed = avgSpeed; }

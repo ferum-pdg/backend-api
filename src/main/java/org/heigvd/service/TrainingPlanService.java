@@ -56,6 +56,11 @@ public class TrainingPlanService {
         return (int) weeksBetween + 1; // +1 to count the first week as week 1
     }
 
+    public Integer getCurrentWeekNbForUser(UUID accountId) {
+        Optional<TrainingPlan> tp = getMyTrainingPlan(accountId);
+        return tp.map(this::getCurrentWeekNb).orElse(null);
+    }
+
     public Integer getNbWorkoutsPerWeek(UUID accountId) {
         Optional<TrainingPlan> tp = getMyTrainingPlan(accountId);
         // Check if current date is within the training plan period

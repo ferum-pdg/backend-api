@@ -9,7 +9,7 @@ public class SportNbTraining {
 
     public SportNbTraining(Sport sport, int nbTraining) {
         this.sport = sport;
-        this.nbTraining = nbTraining;s
+        this.nbTraining = nbTraining;
     }
 
 }
