@@ -192,33 +192,11 @@ public class TrainingGeneratorV1 implements TrainingGenerator {
         avoidConsecutiveSameSports(assignments, usedDays, totalDays);
 
         // Construction des plans quotidiens triés par jour de semaine
-        List<DailyPlan> dailyPlans = assignments.entrySet().stream()
+
+        return assignments.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .map(entry -> new DailyPlan(daysOfWeek.get(entry.getKey()), entry.getValue(), WorkoutType.EF))
+                .map(entry -> new DailyPlan(daysOfWeek.get(entry.getKey()), entry.getValue()))
                 .toList();
-
-        // Définit le type d'entraînement pour chaque plan quotidien
-        defineWorkoutType(trainingPlan, dailyPlans);
-
-        return dailyPlans;
-    }
-
-
-    /**
-     * Définit le type d'entraînement pour chaque plan quotidien en fonction du sport.
-     * @param tp le plan d'entraînement pour lequel définir les types
-     * @param dps la liste des plans quotidiens à mettre à jour
-     */
-    private void defineWorkoutType(TrainingPlan tp, List<DailyPlan> dps) {
-
-        for(DailyPlan dp : dps) {
-            switch(dp.getSport()) {
-                case RUNNING -> dp.setWorkoutType(WorkoutType.EF);
-                case CYCLING -> dp.setWorkoutType(WorkoutType.EF);
-                case SWIMMING -> dp.setWorkoutType(WorkoutType.TECHNIC);
-                default -> dp.setWorkoutType(WorkoutType.EF);
-            }
-        }
     }
 
     /**
