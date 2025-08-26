@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.heigvd.dto.training_plan_dto.TrainingPlanLightDto;
 import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
 import org.heigvd.dto.training_plan_dto.TrainingPlanResponseDto;
