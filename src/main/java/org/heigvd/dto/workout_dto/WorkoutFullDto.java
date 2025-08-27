@@ -1,82 +1,97 @@
 package org.heigvd.dto.workout_dto;
 
+import org.heigvd.dto.workout_dto.data_point_dto.WorkoutPerfDetailsDto;
+import org.heigvd.entity.Sport;
+import org.heigvd.entity.workout.WorkoutStatus;
+import org.heigvd.entity.workout.WorkoutType;
+
+import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class WorkoutFullDto {
 
     private UUID id;
-
-    private UUID accountId;
-
-    private UUID trainingPlanId;
-
-    private String sport;
-
-    private OffsetDateTime startTime;
-
-    private OffsetDateTime endTime;
-
-    private Integer durationSec;
-
+    private Sport sport;
+    private WorkoutType type;
+    private WorkoutStatus status;
+    private OffsetDateTime start;
+    private OffsetDateTime end;
+    private DayOfWeek day;
+    private int durationSec;
+    private int avgHeartRate;
     private Double distanceMeters;
-
     private Double caloriesKcal;
+    private Double grade;
+    private String aiReview;
+    private List<WorkoutPlanDto> plan;
+    private List<WorkoutPerfDetailsDto> performanceDetails;
 
-    private Integer avgHeartRate;
+    // CONSTRUCTORS ----------------------
 
-    private Integer maxHeartRate;
-
-    private Double avgSpeed;
-
-    private String source;
-
-    private String status;
-
-    // CONSTRUCTORS
     public WorkoutFullDto() {}
 
-    public WorkoutFullDto(UUID id, UUID accountId, UUID trainingPlanId, String sport,
-                          OffsetDateTime startTime, OffsetDateTime endTime, Integer durationSec,
-                          Double distanceMeters, Double caloriesKcal, Integer avgHeartRate,
-                          Integer maxHeartRate, Double avgSpeed, String source, String status) {
+    public WorkoutFullDto(UUID id, Sport sport, WorkoutType type, WorkoutStatus status,
+                          OffsetDateTime start, OffsetDateTime end, DayOfWeek day, int durationSec,
+                          int avgHeartRate, Double distanceMeters, Double caloriesKcal, Double grade,
+                          String aiReview, List<WorkoutPlanDto> plan, List<WorkoutPerfDetailsDto> performanceDetails) {
         this.id = id;
-        this.accountId = accountId;
-        this.trainingPlanId = trainingPlanId;
         this.sport = sport;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.type = type;
+        this.status = status;
+        this.start = start;
+        this.end = end;
+        this.day = day;
         this.durationSec = durationSec;
+        this.avgHeartRate = avgHeartRate;
         this.distanceMeters = distanceMeters;
         this.caloriesKcal = caloriesKcal;
-        this.avgHeartRate = avgHeartRate;
-        this.maxHeartRate = maxHeartRate;
-        this.avgSpeed = avgSpeed;
-        this.source = source;
-        this.status = status;
+        this.grade = grade;
+        this.aiReview = aiReview;
+        this.plan = plan;
+        this.performanceDetails = performanceDetails;
     }
 
-    // GETTERS & SETTERS
+    public WorkoutFullDto(UUID id, Sport sport, WorkoutType type, WorkoutStatus status,
+                          DayOfWeek day, int durationSec, List<WorkoutPlanDto> plan) {
+        this.id = id;
+        this.sport = sport;
+        this.type = type;
+        this.status = status;
+        this.day = day;
+        this.durationSec = durationSec;
+        this.plan = plan;
+    }
+
+    // GETTERS & SETTERS ----------------------
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
-    public UUID getAccountId() { return accountId; }
-    public void setAccountId(UUID accountId) { this.accountId = accountId; }
+    public Sport getSport() { return sport; }
+    public void setSport(Sport sport) { this.sport = sport; }
 
-    public UUID getTrainingPlanId() { return trainingPlanId; }
-    public void setTrainingPlanId(UUID trainingPlanId) { this.trainingPlanId = trainingPlanId; }
+    public WorkoutType getType() { return type; }
+    public void setType(WorkoutType type) { this.type = type; }
 
-    public String getSport() { return sport; }
-    public void setSport(String sport) { this.sport = sport; }
+    public WorkoutStatus getStatus() { return status; }
+    public void setStatus(WorkoutStatus status) { this.status = status; }
 
-    public OffsetDateTime getStartTime() { return startTime; }
-    public void setStartTime(OffsetDateTime startTime) { this.startTime = startTime; }
+    public OffsetDateTime getStart() { return start; }
+    public void setStart(OffsetDateTime start) { this.start = start; }
 
-    public OffsetDateTime getEndTime() { return endTime; }
-    public void setEndTime(OffsetDateTime endTime) { this.endTime = endTime; }
+    public OffsetDateTime getEnd() { return end; }
+    public void setEnd(OffsetDateTime end) { this.end = end; }
 
-    public Integer getDurationSec() { return durationSec; }
-    public void setDurationSec(Integer durationSec) { this.durationSec = durationSec; }
+    public DayOfWeek getDay() { return day; }
+    public void setDay(DayOfWeek day) { this.day = day; }
+
+    public int getDurationSec() { return durationSec; }
+    public void setDurationSec(int durationSec) { this.durationSec = durationSec; }
+
+    public int getAvgHeartRate() { return avgHeartRate; }
+    public void setAvgHeartRate(int avgHeartRate) { this.avgHeartRate = avgHeartRate; }
 
     public Double getDistanceMeters() { return distanceMeters; }
     public void setDistanceMeters(Double distanceMeters) { this.distanceMeters = distanceMeters; }
@@ -84,18 +99,15 @@ public class WorkoutFullDto {
     public Double getCaloriesKcal() { return caloriesKcal; }
     public void setCaloriesKcal(Double caloriesKcal) { this.caloriesKcal = caloriesKcal; }
 
-    public Integer getAvgHeartRate() { return avgHeartRate; }
-    public void setAvgHeartRate(Integer avgHeartRate) { this.avgHeartRate = avgHeartRate; }
+    public Double getGrade() { return grade; }
+    public void setGrade(Double grade) { this.grade = grade; }
 
-    public Integer getMaxHeartRate() { return maxHeartRate; }
-    public void setMaxHeartRate(Integer maxHeartRate) { this.maxHeartRate = maxHeartRate; }
+    public String getAiReview() { return aiReview; }
+    public void setAiReview(String aiReview) { this.aiReview = aiReview; }
 
-    public Double getAvgSpeed() { return avgSpeed; }
-    public void setAvgSpeed(Double avgSpeed) { this.avgSpeed = avgSpeed; }
+    public List<WorkoutPlanDto> getPlan() { return plan; }
+    public void setPlan(List<WorkoutPlanDto> plan) { this.plan = plan; }
 
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public List<WorkoutPerfDetailsDto> getPerformanceDetails() { return performanceDetails; }
+    public void setPerformanceDetails(List<WorkoutPerfDetailsDto> performanceDetails) { this.performanceDetails = performanceDetails; }
 }

@@ -6,7 +6,8 @@ import jakarta.persistence.EntityManager;
 import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.training_plan.TrainingPlan;
-import org.heigvd.training_generator.TrainingGeneratorV1;
+import org.heigvd.entity.training_plan.WeeklyPlan;
+import org.heigvd.training_generator.generator_V1.TrainingPlanGeneratorV1;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -30,7 +31,7 @@ public class TrainingPlanService {
     EntityManager em;
 
     @Inject
-    TrainingGeneratorV1 trainingGeneratorV1;
+    TrainingPlanGeneratorV1 trainingGeneratorV1;
 
     /**
      * Crée un plan d'entraînement après vérification d'unicité pour l'utilisateur.
@@ -46,14 +47,8 @@ public class TrainingPlanService {
         em.persist(tp);
     }
 
-    /**
-     * Génère et crée un plan d'entraînement à partir des paramètres et du compte.
-     * @param trainingPlanRequestDto paramètres de génération
-     * @param account compte utilisateur
-     */
-    public void create(TrainingPlanRequestDto trainingPlanRequestDto, Account account) {
-        TrainingPlan tp = trainingGeneratorV1.generateTrainingPlan(trainingPlanRequestDto, account);
-        create(tp);
+    public void merge(TrainingPlan tp) {
+        em.merge(tp);
     }
 
     /**
@@ -114,6 +109,18 @@ public class TrainingPlanService {
 
         long weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(tp.getStartDate(), date);
         return (int) weeksBetween + 1; // +1 to count the first week as week 1
+    }
+
+    public WeeklyPlan getWeeklyPlanForDate(UUID accountId, LocalDate date) {
+        Optional<TrainingPlan> tp = getMyTrainingPlan(accountId);
+        if (tp.isEmpty()) {
+            return null;
+        }
+        Integer weekNumber = getWeekNumberForDate(tp.get(), date);
+        if (weekNumber == null || weekNumber < 1 || weekNumber > tp.get().getWeeklyPlans().size()) {
+            return null; // Invalid week number
+        }
+        return tp.get().getWeeklyPlans().get(weekNumber - 1); // -1 for zero-based index
     }
 
     public List<OffsetDateTime> getDatesForNextWorkouts(UUID accountId) {

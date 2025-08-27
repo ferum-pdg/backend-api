@@ -14,16 +14,16 @@ VALUES
     ('850e8400-e29b-41d4-a716-446655440001', '5km', 50, 8, 2, 5, 'RUNNING'),
     ('850e8400-e29b-41d4-a716-446655440002', '10km', 100, 8, 2, 10, 'RUNNING'),
     ('850e8400-e29b-41d4-a716-446655440003', 'Half-marathon', 150, 12, 3, 21.1, 'RUNNING'),
-    ('850e8400-e29b-41d4-a716-446655440004', 'Marathon', 200, 20, 4, 42.2, 'RUNNING'),
+    ('850e8400-e29b-41d4-a716-446655440004', 'Marathon', 200, 20, 3, 42.2, 'RUNNING'),
     ('850e8400-e29b-41d4-a716-446655440005', 'Cycling 20km', 300, 8, 2, 20, 'CYCLING'),
     ('850e8400-e29b-41d4-a716-446655440006', 'Cycling 40km', 600, 8, 2, 40, 'CYCLING'),
-    ('850e8400-e29b-41d4-a716-446655440007', 'Cycling 100km', 1000, 12, 4, 100, 'CYCLING'),
-    ('850e8400-e29b-41d4-a716-446655440008', 'Cycling 180km', 1500, 16, 5, 180, 'CYCLING'),
+    ('850e8400-e29b-41d4-a716-446655440007', 'Cycling 100km', 1000, 12, 3, 100, 'CYCLING'),
+    ('850e8400-e29b-41d4-a716-446655440008', 'Cycling 180km', 1500, 16, 3, 180, 'CYCLING'),
     ('850e8400-e29b-41d4-a716-446655440009', 'Swimming 500m', 0, 8, 2, 0.5, 'SWIMMING'),
     ('850e8400-e29b-41d4-a716-44665544000a', 'Swimming 1000m', 0, 8, 2, 1.0, 'SWIMMING'),
     ('850e8400-e29b-41d4-a716-44665544000b', 'Swimming 1800m', 0, 10, 3, 1.8, 'SWIMMING'),
-    ('850e8400-e29b-41d4-a716-44665544000c', 'Swimming 3900m', 0, 10, 4, 3.9, 'SWIMMING');
-
+    ('850e8400-e29b-41d4-a716-44665544000c', 'Swimming 3900m', 0, 10, 3, 3.9, 'SWIMMING');
+/*
 -- Insertion des workouts (25 août 2025 -> 14 septembre 2025)
 INSERT INTO Workout (id, account_id, sport, start_time, end_time, duration_sec, distance_meters, calories_kcal, avg_heart_rate, max_heart_rate, avg_speed, source, status, type) VALUES
      -- Workouts d'Alice (RUNNING)
@@ -56,7 +56,7 @@ INSERT INTO Workout (id, account_id, sport, start_time, end_time, duration_sec, 
      -- Workouts annulés
      ('650e8400-e29b-41d4-a716-446655440017', '550e8400-e29b-41d4-a716-446655440002', 'CYCLING', '2025-09-06T08:00:00+02:00', '2025-09-06T08:00:00+02:00', 0, 0, 0, NULL, NULL, NULL, 'Weather', 'ABORTED', 'EF'),
      ('650e8400-e29b-41d4-a716-446655440018', '550e8400-e29b-41d4-a716-446655440003', 'SWIMMING', '2025-09-09T12:00:00+02:00', '2025-09-09T12:00:00+02:00', 0, 0, 0, NULL, NULL, NULL, 'Pool closed', 'ABORTED', 'EF');
-
+*/
 
 -- Insertion des fitness levels avec UUID explicite
 INSERT INTO fitnesslevel (id, date, fitness_level) VALUES
