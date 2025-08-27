@@ -37,8 +37,20 @@ public class TrainingPlanGeneratorV1 {
                 .map(DayOfWeek::valueOf)
                 .toList();
 
-        int nbWeeksOfTraining = calculateNbWeeksOfTraining(goals);
+        int nbWeeksOfTraining;
+
+        if(tpDto.startNow()) {
+            nbWeeksOfTraining = (int) (tpDto.getEndDate().toEpochDay() - LocalDate.now().toEpochDay()) / 7;
+        } else {
+            nbWeeksOfTraining = calculateNbWeeksOfTraining(goals);
+        }
+
         int nbOfWorkoutsPerWeek = calculateNbOfWorkoutsPerWeek(goals);
+
+        //check if the end week is after the start week
+        if(tpDto.getEndDate().isBefore(LocalDate.now().plusWeeks(nbWeeksOfTraining))) {
+            throw new IllegalArgumentException("The end date is too soon for the number of weeks of training. In this case it should be at least " + nbWeeksOfTraining + " weeks from now. So the end date should be at least " + LocalDate.now().plusWeeks(nbWeeksOfTraining) + ".");
+        }
 
         if(nbWeeksOfTraining == 0 || nbOfWorkoutsPerWeek == 0) {
             throw new IllegalArgumentException("The provided goals are not valid.");
@@ -51,7 +63,7 @@ public class TrainingPlanGeneratorV1 {
                 availableDays.size()
         );
 
-        if(!multipleWorkoutsPerDay && nbOfWorkoutsPerWeek > availableDays.size()) {
+        if(multipleWorkoutsPerDay || nbOfWorkoutsPerWeek > availableDays.size()) {
             throw new IllegalArgumentException("Not enough available days for the number of workouts per week.");
         }
 

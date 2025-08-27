@@ -7,17 +7,14 @@ import org.heigvd.entity.Account;
 import org.heigvd.entity.FitnessLevel;
 import org.heigvd.entity.Goal;
 import org.heigvd.entity.Sport;
-import org.heigvd.entity.training_plan.DailyPlan;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.service.GoalService;
 import org.heigvd.service.TrainingPlanService;
-import org.heigvd.training_generator.TrainingGeneratorV1;
 import org.heigvd.training_generator.generator_V1.TrainingPlanGeneratorV1;
 import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,9 +26,6 @@ public class TrainingPlanGeneratorV1Test {
 
     @Inject
     TrainingPlanGeneratorV1 tpGen;
-
-    @Inject
-    TrainingGeneratorV1 tgV1;
 
     @Inject
     TrainingPlanService tpService;

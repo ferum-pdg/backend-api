@@ -12,6 +12,8 @@ public class TrainingPlanRequestDto {
     private LocalDate endDate;
     private List<String> daysOfWeek;
     private List<String> goals;
+    // Could be used in the future to start the plan later
+    private final boolean startNow = true;
 
     // CONSTRUCTORS ---------------------------------------------
     public TrainingPlanRequestDto() {}
@@ -48,4 +50,6 @@ public class TrainingPlanRequestDto {
                 .toList();
     }
     public void setGoals(List<String> goals) { this.goals = goals; }
+
+    public boolean startNow() { return startNow; }
 }
