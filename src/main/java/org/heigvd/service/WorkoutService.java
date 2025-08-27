@@ -107,6 +107,7 @@ public class WorkoutService {
                     .getResultList();
         }
     }
+
     /**
      * Liste les workouts d'un utilisateur pour un sport donné.
      * @param accountId identifiant du compte
@@ -116,7 +117,7 @@ public class WorkoutService {
     public List<Workout> findByAccountIdAndSport(UUID accountId, Sport sport) {
         return em.createQuery(
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.sport = :sport " +
-                                "ORDER BY w.startTime DESC",
+                                "ORDER BY w.startTime ASC",
                         Workout.class)
                 .setParameter("accountId", accountId)
                 .setParameter("sport", sport)
