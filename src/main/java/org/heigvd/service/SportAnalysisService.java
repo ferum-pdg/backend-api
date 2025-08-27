@@ -74,12 +74,8 @@ public class SportAnalysisService {
                 **Instructions :**
                 1. Adapte l'analyse selon le sport détecté dans le champ "sport"
                 2. Compare les performances réelles aux objectifs planifiés pour chaque bloc
-                3. Calcule les métriques appropriées selon le sport :
-                   - **RUNNING** : Allure (min/km) = (durationSec/60) ÷ (distanceMeters/1000)
-                   - **CYCLING** : Vitesse (km/h) = (distanceMeters/1000) ÷ (durationSec/3600)
-                   - **SWIMMING** : Allure (min/100m) = (durationSec/60) ÷ (distanceMeters/100)
-                4. Évalue la conformité aux zones de FC : parfait (±5 bpm), bon (±10 bpm), à ajuster (>10 bpm)
-                5. Fournis d'abord un aperçu rapide, puis propose une analyse détaillée
+                3. Évalue la conformité aux zones de FC : parfait (±2 bpm), bon (±5 bpm), à ajuster (>5 bpm)
+                4. Fournis d'abord un aperçu rapide, puis propose une analyse détaillée
                 
                 **Format de réponse :**
                 
@@ -89,11 +85,7 @@ public class SportAnalysisService {
                 Séance [qualificatif] en [durée formatée] sur [distance][unité]. [Métrique selon sport]. FC moyenne [avgHeartRate] bpm. [Bref commentaire sur la conformité au plan]
                 
                 **Conseil express :**
-                [Une phrase de recommandation principale adaptée au sport]                   
-                
-                **Performance détaillée :**
-                • Durée: [durée] | Distance: [distance][unité] | Calories: [calories] kcal
-                • [Métrique sport]: [calcul] | FC moyenne: [avgHeartRate] bpm
+                [Une phrase motivante de recommandation principale adaptée au sport]                   
                 
                 **Analyse par bloc :**
                 • Bloc 1 - [intensityZone] ([durée]): FC [actualBPMMean] vs cible [plannedBPMMin-plannedBPMMax] → [évaluation détaillée]
@@ -102,9 +94,6 @@ public class SportAnalysisService {
                 
                 **Analyse technique :**
                 [Points forts, faiblesses, progression observée - adaptés au sport]
-                
-                **Recommandations spécifiques :**
-                [Conseils détaillés pour optimiser les prochaines séances selon le sport pratiqué]
                 
                 **Spécificités par sport :**
                 - **RUNNING** : Focus sur allure, foulée, gestion du dénivelé
