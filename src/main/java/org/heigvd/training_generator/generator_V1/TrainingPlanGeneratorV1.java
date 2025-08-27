@@ -63,7 +63,7 @@ public class TrainingPlanGeneratorV1 {
                 availableDays.size()
         );
 
-        if(multipleWorkoutsPerDay || nbOfWorkoutsPerWeek > availableDays.size()) {
+        if(!multipleWorkoutsPerDay && nbOfWorkoutsPerWeek > availableDays.size()) {
             throw new IllegalArgumentException("Not enough available days for the number of workouts per week.");
         }
 

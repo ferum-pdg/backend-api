@@ -33,6 +33,11 @@ public class TrainingPlanGeneratorV1Test {
     @Inject
     GoalService goalService;
 
+    private LocalDate computeEndDate(List<Goal> goals) {
+        int totalWeeks = goals.stream().mapToInt(Goal::getNbOfWeek).sum();
+        return LocalDate.now().plusWeeks(totalWeeks);
+    }
+
     @Test
     void testCalculateTrivialWeekRepartition() {
         // Cas 1 : 4 jours disponibles, 2 séances
@@ -95,14 +100,16 @@ public class TrainingPlanGeneratorV1Test {
     @Test
     void testTrivialTPGenerator() {
         Goal running = goalService.getSpecificGoal(Sport.RUNNING, 10.0);
+        List<Goal> goals = List.of(running);
+
+        LocalDate endDate = computeEndDate(goals);
         List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.FRIDAY);
-        LocalDate endDate = LocalDate.of(2025, 12, 24);
 
         Account account = new Account("runner@etik.com", "Test", "Runner",
                 LocalDate.of(1990, 1, 1), 70.0, 175.0, 180);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 70));
 
-        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, List.of(running), true);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, goals, true);
         TrainingPlan tp = tpGen.generate(dto, account);
 
         System.out.println(tp);
@@ -112,14 +119,16 @@ public class TrainingPlanGeneratorV1Test {
     void testComplexTPGenerator() {
         Goal running = goalService.getSpecificGoal(Sport.RUNNING, 10.0);
         Goal cycling = goalService.getSpecificGoal(Sport.CYCLING, 40.0);
+        List<Goal> goals = List.of(running, cycling);
+
+        LocalDate endDate = computeEndDate(goals);
         List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
-        LocalDate endDate = LocalDate.of(2025, 12, 24);
 
         Account account = new Account("runner@etik.com", "Test", "Runner",
                 LocalDate.of(1990, 1, 1), 70.0, 175.0, 180);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 70));
 
-        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, List.of(running, cycling), true);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, goals, true);
         TrainingPlan tp = tpGen.generate(dto, account);
 
         System.out.println(tp);
@@ -130,7 +139,9 @@ public class TrainingPlanGeneratorV1Test {
         Goal running = goalService.getSpecificGoal(Sport.RUNNING, 10.0);
         Goal cycling = goalService.getSpecificGoal(Sport.CYCLING, 20.0);
         Goal swimming = goalService.getSpecificGoal(Sport.SWIMMING, 1.0);
+        List<Goal> goals = List.of(running, cycling, swimming);
 
+        LocalDate endDate = computeEndDate(goals);
         List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
                 DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
 
@@ -138,7 +149,7 @@ public class TrainingPlanGeneratorV1Test {
                 LocalDate.of(1995, 6, 15), 72.0, 178.0, 185);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 90));
 
-        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(LocalDate.of(2025, 12, 24), days, List.of(running, cycling, swimming), true);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, goals, true);
         TrainingPlan tp = tpGen.generate(dto, account);
 
         System.out.println(tp);
@@ -148,7 +159,9 @@ public class TrainingPlanGeneratorV1Test {
     void testTwoSportBalancedDistribution() {
         Goal running = goalService.getSpecificGoal(Sport.RUNNING, 10.0);
         Goal swimming = goalService.getSpecificGoal(Sport.SWIMMING, 1.0);
+        List<Goal> goals = List.of(running, swimming);
 
+        LocalDate endDate = computeEndDate(goals);
         List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
                 DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
 
@@ -156,7 +169,7 @@ public class TrainingPlanGeneratorV1Test {
                 LocalDate.of(1995, 6, 15), 72.0, 178.0, 185);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 90));
 
-        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(LocalDate.of(2025, 12, 24), days, List.of(running, swimming), true);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, goals, true);
         TrainingPlan tp = tpGen.generate(dto, account);
 
         System.out.println(tp);
@@ -165,8 +178,10 @@ public class TrainingPlanGeneratorV1Test {
     @Test
     void testTwoSportOnMultipleWorkoutPerDay() {
         Goal running = goalService.getSpecificGoal(Sport.RUNNING, 42.2);
-        Goal cycling = goalService.getSpecificGoal(Sport.SWIMMING, 3.9);
+        Goal swimming = goalService.getSpecificGoal(Sport.SWIMMING, 3.9);
+        List<Goal> goals = List.of(running, swimming);
 
+        LocalDate endDate = computeEndDate(goals);
         List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY,
                 DayOfWeek.THURSDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
 
@@ -174,7 +189,7 @@ public class TrainingPlanGeneratorV1Test {
                 LocalDate.of(1995, 6, 15), 72.0, 178.0, 185);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 90));
 
-        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(LocalDate.of(2025, 12, 24), days, List.of(running, cycling), true);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, goals, true);
         TrainingPlan tp = tpGen.generate(dto, account);
 
         System.out.println(tp);
@@ -185,7 +200,9 @@ public class TrainingPlanGeneratorV1Test {
         Goal running = goalService.getSpecificGoal(Sport.RUNNING, 42.2);
         Goal cycling = goalService.getSpecificGoal(Sport.CYCLING, 180.0);
         Goal swimming = goalService.getSpecificGoal(Sport.SWIMMING, 3.9);
+        List<Goal> goals = List.of(running, cycling, swimming);
 
+        LocalDate endDate = computeEndDate(goals);
         List<DayOfWeek> days = List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
                 DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
 
@@ -193,7 +210,7 @@ public class TrainingPlanGeneratorV1Test {
                 LocalDate.of(1995, 6, 15), 72.0, 178.0, 185);
         account.addFitnessLevel(new FitnessLevel(LocalDate.now(), 90));
 
-        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(LocalDate.of(2025, 12, 24), days, List.of(running, cycling, swimming), true);
+        TrainingPlanRequestDto dto = new TrainingPlanRequestDto(endDate, days, goals, true);
         TrainingPlan tp = tpGen.generate(dto, account);
 
         System.out.println(tp);
