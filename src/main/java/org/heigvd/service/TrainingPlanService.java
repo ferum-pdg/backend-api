@@ -3,6 +3,7 @@ package org.heigvd.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.training_plan.TrainingPlan;
@@ -38,6 +39,7 @@ public class TrainingPlanService {
      * @param tp plan d'entraînement à créer
      * @throws IllegalStateException si un plan existe déjà pour l'utilisateur
      */
+    @Transactional
     public void create(TrainingPlan tp) {
         // we need to check if the user already has a training plan
         Optional<TrainingPlan> existingPlan = getMyTrainingPlan(tp.getAccount().getId());
@@ -121,6 +123,14 @@ public class TrainingPlanService {
             return null; // Invalid week number
         }
         return tp.get().getWeeklyPlans().get(weekNumber - 1); // -1 for zero-based index
+    }
+
+    public WeeklyPlan getWeeklyPlanForDate(TrainingPlan tp, UUID accountId, LocalDate date) {
+        Integer weekNumber = getWeekNumberForDate(tp, date);
+        if (weekNumber == null || weekNumber < 1 || weekNumber > tp.getWeeklyPlans().size()) {
+            return null; // Invalid week number
+        }
+        return tp.getWeeklyPlans().get(weekNumber - 1); // -1 for zero-based index
     }
 
     public List<OffsetDateTime> getDatesForNextWorkouts(UUID accountId) {
