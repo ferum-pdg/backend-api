@@ -1,6 +1,7 @@
 package org.heigvd.entity.workout.details;
 
 import jakarta.persistence.*;
+import org.heigvd.dto.workout_dto.WorkoutPlanDetailsDto;
 import org.heigvd.dto.workout_dto.WorkoutPlanDto;
 import org.heigvd.entity.workout.WorkoutType;
 

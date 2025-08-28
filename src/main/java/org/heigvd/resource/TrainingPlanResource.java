@@ -25,8 +25,10 @@ import org.heigvd.entity.workout.Workout;
 import org.heigvd.service.AccountService;
 import org.heigvd.service.GoalService;
 import org.heigvd.service.TrainingPlanService;
+import org.heigvd.service.WorkoutService;
 import org.heigvd.training_generator.generator_V1.TrainingPlanGeneratorV1;
 import org.heigvd.training_generator.generator_V1.TrainingWorkoutsGeneratorV1;
+import org.heigvd.training_generator.generator_V2.TrainingWorkoutsGeneratorV2;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
 import java.time.LocalDate;
@@ -60,10 +62,12 @@ public class TrainingPlanResource {
     TrainingPlanGeneratorV1 trainingGeneratorV1;
 
     @Inject
-    TrainingWorkoutsGeneratorV1 trainingWorkoutsGeneratorV1;
+    TrainingWorkoutsGeneratorV2 trainingWorkoutsGeneratorV2;
 
     @Inject
     EntityManager em;
+    @Inject
+    WorkoutService workoutService;
 
     @GET
     /**
@@ -138,11 +142,7 @@ public class TrainingPlanResource {
 
         trainingPlanService.create(newTrainingPlan);
 
-        List<Workout> firstWorkouts = trainingWorkoutsGeneratorV1.generate(newTrainingPlan, LocalDate.now());
-
-        newTrainingPlan.setWorkouts(firstWorkouts);
-
-        trainingPlanService.merge(newTrainingPlan);
+        workoutService.generateWorkout(newTrainingPlan, LocalDate.now());
 
         return Response.status(Response.Status.CREATED).entity(new TrainingPlanResponseDto(newTrainingPlan)).build();
     }

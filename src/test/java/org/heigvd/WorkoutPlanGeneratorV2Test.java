@@ -48,7 +48,7 @@ public class WorkoutPlanGeneratorV2Test {
 
     @Test
     void genereateWorkoutPlan() {
-        List<WorkoutPlan> plans = wpGen.generateWorkout(
+        List<WorkoutPlan> plans = wpGen.generate(
                 Sport.RUNNING,
                 WorkoutType.INTERVAL,
                 50,

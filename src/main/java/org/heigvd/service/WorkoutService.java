@@ -9,6 +9,9 @@ import org.heigvd.entity.*;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.workout.Workout;
 import org.heigvd.entity.workout.WorkoutStatus;
+import org.heigvd.training_generator.generator_V2.TrainingWorkoutsGeneratorV2;
+import org.heigvd.training_generator.generator_V2.WorkoutPlanGeneratorV2;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -29,6 +32,9 @@ public class WorkoutService {
 
     @Inject
     TrainingPlanService trainingPlanService;
+
+    @Inject
+    TrainingWorkoutsGeneratorV2 trainingWorkoutsGeneratorV2;
 
     /**
      * Recherche un workout par identifiant.
@@ -213,6 +219,14 @@ public class WorkoutService {
                 .findFirst();
 
         return getWorkout;
+    }
+
+    public void generateWorkout(TrainingPlan trainingPlan, LocalDate date) {
+        List<Workout> workouts = trainingWorkoutsGeneratorV2.generate(trainingPlan, date);
+
+        for (Workout w : workouts) {
+            em.persist(w);
+        }
     }
 
     @Transactional

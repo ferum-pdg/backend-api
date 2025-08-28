@@ -11,7 +11,7 @@ import java.util.List;
 @ApplicationScoped
 public class WorkoutPlanGeneratorV2 {
 
-    public List<WorkoutPlan> generateWorkout(
+    public List<WorkoutPlan> generate(
             Sport sport,
             WorkoutType workoutType,
             int fitnessLevel,           // 1-100

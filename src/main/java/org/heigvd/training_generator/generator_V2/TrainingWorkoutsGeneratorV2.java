@@ -91,7 +91,7 @@ public class TrainingWorkoutsGeneratorV2 {
                     .atOffset(OffsetDateTime.now().getOffset());
 
             // Générer les WorkoutPlans détaillés
-            List<WorkoutPlan> workoutPlans = workoutPlanGenerator.generateWorkout(
+            List<WorkoutPlan> workoutPlans = workoutPlanGenerator.generate(
                     dp.getSport(),
                     workoutType,
                     account.getLastFitnessLevel().getFitnessLevel(),
