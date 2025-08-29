@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-public class TrainingWorkoutsGeneratorV1 implements TrainingWorkoutGenerator {
+public class WorkoutGeneratorV1 implements TrainingWorkoutGenerator {
 
     @Inject
     TrainingPlanService trainingPlanService;
@@ -62,7 +62,6 @@ public class TrainingWorkoutsGeneratorV1 implements TrainingWorkoutGenerator {
         List<Workout> workouts = new ArrayList<>();
 
         for(DailyPlan dp : dailyPlans) {
-            // First create the offsetDateTime for the day at 18:00
             OffsetDateTime startTime = monday
                     .plusDays(dp.getDayOfWeek().getValue() - 1)
                     .atTime(18, 0)

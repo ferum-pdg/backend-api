@@ -15,7 +15,7 @@ import org.heigvd.entity.workout.details.WorkoutPlan;
 import org.heigvd.service.GoalService;
 import org.heigvd.service.TrainingPlanService;
 import org.heigvd.training_generator.generator_V1.TrainingPlanGeneratorV1;
-import org.heigvd.training_generator.generator_V2.TrainingWorkoutsGeneratorV2;
+import org.heigvd.training_generator.generator_V2.WorkoutGeneratorV2;
 import org.heigvd.training_generator.generator_V2.WorkoutPlanGeneratorV2;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +36,7 @@ public class WorkoutPlanGeneratorV2Test {
     TrainingPlanGeneratorV1 tpGen;
 
     @Inject
-    TrainingWorkoutsGeneratorV2 twGen;
+    WorkoutGeneratorV2 twGen;
 
     @Inject
     WorkoutPlanGeneratorV2 wpGen;

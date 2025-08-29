@@ -9,23 +9,18 @@ import org.heigvd.training_generator.interfaces.WorkoutPlanGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @ApplicationScoped
 public class WorkoutPlanGeneratorV2 implements WorkoutPlanGenerator {
-
     @Override
     public String getVersion() {
         return "V2";
     }
 
     @Override
-    public List<WorkoutPlan> generate(
-            Sport sport,
-            WorkoutType workoutType,
-            int fitnessLevel,           // 1-100
-            double progressionPercent,  // 0.0-1.0 (% dans le plan)
-            TrainingPlanPhase phase
-    ) {
+    public List<WorkoutPlan> generate(Sport sport, WorkoutType workoutType, int fitnessLevel,
+                                      double progressionPercent, TrainingPlanPhase phase) {
         return switch (workoutType) {
             case EF -> generateEnduranceFondamentale(sport, fitnessLevel, progressionPercent, phase);
             case EA -> generateEnduranceActive(sport, fitnessLevel, progressionPercent, phase);
@@ -33,410 +28,376 @@ public class WorkoutPlanGeneratorV2 implements WorkoutPlanGenerator {
             case INTERVAL -> generateInterval(sport, fitnessLevel, progressionPercent, phase);
             case TECHNIC -> generateTechnic(sport, fitnessLevel, progressionPercent, phase);
             case RA -> generateRecuperationActive(sport, fitnessLevel, progressionPercent, phase);
-            default -> throw new IllegalArgumentException("Type d'entraînement non supporté");
+            default -> throw new IllegalArgumentException("Type d'entraînement non supporté: " + workoutType);
         };
     }
 
-    private List<WorkoutPlan> generateEnduranceFondamentale(Sport sport, int level, double progression, TrainingPlanPhase phase) {
-        int baseDuration = getBaseDuration(sport, WorkoutType.EF);
+    /**
+     * Génère un plan d'endurance fondamentale avec structure 10-80-10%
+     * @param sport Sport concerné
+     * @param level Niveau de forme (1-100)
+     * @param progression Progression dans le plan (0.0-1.0)
+     * @param phase Phase d'entraînement
+     * @return Liste des blocs de l'entraînement
+     */
+    private List<WorkoutPlan> generateEnduranceFondamentale(Sport sport, int level,
+                                                            double progression, TrainingPlanPhase phase) {
+        int totalDuration = calculateTotalDuration(sport, WorkoutType.EF, level, progression, phase);
 
-        double levelCoeff = calculateLevelCoefficient(level);
-        double phaseCoeff = calculatePhaseCoefficient(phase, WorkoutType.EF);
-        double progressionCoeff = calculateProgressionCoefficient(progression);
-
-        int totalDuration = (int) (baseDuration * levelCoeff * phaseCoeff * progressionCoeff);
-
-        List<WorkoutPlan> workoutPlans = new ArrayList<>();
-
-        // 1. Phase Échauffement
-        WorkoutPlan warmupPlan = new WorkoutPlan();
-        warmupPlan.setBlocId(1);
-        warmupPlan.setRepetitionCount(1);
-        warmupPlan.setWorkoutType(WorkoutType.EF);
-
-        List<WorkoutPlanDetails> warmupDetails = new ArrayList<>();
-        warmupDetails.add(createSegment(1, (int)(totalDuration * 0.1), IntensityZone.RECOVERY));
-        warmupPlan.setDetails(warmupDetails);
-        workoutPlans.add(warmupPlan);
-
-        // 2. Phase Principale
-        WorkoutPlan mainPlan = new WorkoutPlan();
-        mainPlan.setBlocId(2);
-        mainPlan.setRepetitionCount(1);
-        mainPlan.setWorkoutType(WorkoutType.EF);
-
-        List<WorkoutPlanDetails> mainDetails = new ArrayList<>();
-        mainDetails.add(createSegment(1, (int)(totalDuration * 0.8), IntensityZone.ENDURANCE));
-        mainPlan.setDetails(mainDetails);
-        workoutPlans.add(mainPlan);
-
-        // 3. Phase Récupération
-        WorkoutPlan cooldownPlan = new WorkoutPlan();
-        cooldownPlan.setBlocId(3);
-        cooldownPlan.setRepetitionCount(1);
-        cooldownPlan.setWorkoutType(WorkoutType.EF);
-
-        List<WorkoutPlanDetails> cooldownDetails = new ArrayList<>();
-        cooldownDetails.add(createSegment(1, (int)(totalDuration * 0.1), IntensityZone.RECOVERY));
-        cooldownPlan.setDetails(cooldownDetails);
-        workoutPlans.add(cooldownPlan);
-
-        return workoutPlans;
+        return List.of(
+                createWorkoutPlan(1, 1, WorkoutType.EF, List.of(
+                        createSegment(1, (int)(totalDuration * 0.1), IntensityZone.RECOVERY)
+                )),
+                createWorkoutPlan(2, 1, WorkoutType.EF, List.of(
+                        createSegment(1, (int)(totalDuration * 0.8), IntensityZone.ENDURANCE)
+                )),
+                createWorkoutPlan(3, 1, WorkoutType.EF, List.of(
+                        createSegment(1, (int)(totalDuration * 0.1), IntensityZone.RECOVERY)
+                ))
+        );
     }
 
+    /**
+     * Génère un plan d'intervalles adaptatif selon la phase et le niveau
+     * @param sport Sport concerné
+     * @param level Niveau de forme (1-100)
+     * @param progression Progression dans le plan (0.0-1.0)
+     * @param phase Phase d'entraînement
+     * @return Liste des blocs de l'entraînement
+     */
     private List<WorkoutPlan> generateInterval(Sport sport, int level, double progression, TrainingPlanPhase phase) {
-        int baseDuration = getBaseDuration(sport, WorkoutType.INTERVAL);
+        int totalDuration = calculateTotalDuration(sport, WorkoutType.INTERVAL, level, progression, phase);
+        IntervalParams params = calculateIntervalParams(phase, level, sport, progression);
 
-        double levelCoeff = calculateLevelCoefficient(level);
-        double phaseCoeff = calculatePhaseCoefficient(phase, WorkoutType.INTERVAL);
-        double progressionCoeff = calculateProgressionCoefficient(progression);
+        int warmupDuration = (int)(totalDuration * 0.25);
+        int mainWorkDuration = (params.effortDuration + params.recoveryDuration) * params.repetitions;
+        int cooldownDuration = Math.max(300, totalDuration - warmupDuration - mainWorkDuration);
 
-        int totalDuration = (int) (baseDuration * levelCoeff * phaseCoeff * progressionCoeff);
-
-        IntervalParams params = getIntervalParams(phase, level, sport);
-
-        List<WorkoutPlan> workoutPlans = new ArrayList<>();
-
-        // 1. Phase Échauffement
-        WorkoutPlan warmupPlan = new WorkoutPlan();
-        warmupPlan.setBlocId(1);
-        warmupPlan.setRepetitionCount(1);
-        warmupPlan.setWorkoutType(WorkoutType.INTERVAL);
-
-        List<WorkoutPlanDetails> warmupDetails = new ArrayList<>();
-        warmupDetails.add(createSegment(1, (int)(totalDuration * 0.25), IntensityZone.ENDURANCE));
-        warmupPlan.setDetails(warmupDetails);
-        workoutPlans.add(warmupPlan);
-
-        // 2. Phase Principale (Intervalles)
-        WorkoutPlan mainPlan = new WorkoutPlan();
-        mainPlan.setBlocId(2);
-        mainPlan.setRepetitionCount(params.repetitions);
-        mainPlan.setWorkoutType(WorkoutType.INTERVAL);
-
-        List<WorkoutPlanDetails> mainDetails = new ArrayList<>();
-        // Effort
-        mainDetails.add(createSegment(1, params.effortDuration, params.effortZone));
-        // Récupération
-        mainDetails.add(createSegment(2, params.recoveryDuration, IntensityZone.ENDURANCE));
-
-        mainPlan.setDetails(mainDetails);
-        workoutPlans.add(mainPlan);
-
-        // 3. Phase Récupération
-        WorkoutPlan cooldownPlan = new WorkoutPlan();
-        cooldownPlan.setBlocId(3);
-        cooldownPlan.setRepetitionCount(1);
-        cooldownPlan.setWorkoutType(WorkoutType.INTERVAL);
-
-        List<WorkoutPlanDetails> cooldownDetails = new ArrayList<>();
-        int cooldownDuration = totalDuration - (int)(totalDuration * 0.25) - (params.effortDuration + params.recoveryDuration) * params.repetitions;
-        cooldownDetails.add(createSegment(1, Math.max(300, cooldownDuration), IntensityZone.RECOVERY));
-        cooldownPlan.setDetails(cooldownDetails);
-        workoutPlans.add(cooldownPlan);
-
-        return workoutPlans;
+        return List.of(
+                createWorkoutPlan(1, 1, WorkoutType.INTERVAL, List.of(
+                        createSegment(1, warmupDuration, IntensityZone.ENDURANCE)
+                )),
+                createWorkoutPlan(2, params.repetitions, WorkoutType.INTERVAL, List.of(
+                        createSegment(1, params.effortDuration, params.effortZone),
+                        createSegment(2, params.recoveryDuration, IntensityZone.ENDURANCE)
+                )),
+                createWorkoutPlan(3, 1, WorkoutType.INTERVAL, List.of(
+                        createSegment(1, cooldownDuration, IntensityZone.RECOVERY)
+                ))
+        );
     }
 
+    /**
+     * Génère un plan de travail au seuil lactique
+     * @param sport Sport concerné
+     * @param level Niveau de forme (1-100)
+     * @param progression Progression dans le plan (0.0-1.0)
+     * @param phase Phase d'entraînement
+     * @return Liste des blocs de l'entraînement
+     */
     private List<WorkoutPlan> generateLactate(Sport sport, int level, double progression, TrainingPlanPhase phase) {
-        int baseDuration = getBaseDuration(sport, WorkoutType.LACTATE);
+        int totalDuration = calculateTotalDuration(sport, WorkoutType.LACTATE, level, progression, phase);
+        LactateParams params = calculateLactateParams(phase, level, sport, progression);
 
-        double levelCoeff = calculateLevelCoefficient(level);
-        double phaseCoeff = calculatePhaseCoefficient(phase, WorkoutType.LACTATE);
-        double progressionCoeff = calculateProgressionCoefficient(progression);
+        int warmupDuration = (int)(totalDuration * 0.2);
+        int mainWorkDuration = (params.effortDuration + params.recoveryDuration) * params.repetitions;
+        int cooldownDuration = Math.max(300, totalDuration - warmupDuration - mainWorkDuration);
 
-        int totalDuration = (int) (baseDuration * levelCoeff * phaseCoeff * progressionCoeff);
-
-        LactateParams params = getLactateParams(phase, level, sport);
-
-        List<WorkoutPlan> workoutPlans = new ArrayList<>();
-
-        // 1. Phase Échauffement
-        WorkoutPlan warmupPlan = new WorkoutPlan();
-        warmupPlan.setBlocId(1);
-        warmupPlan.setRepetitionCount(1);
-        warmupPlan.setWorkoutType(WorkoutType.LACTATE);
-
-        List<WorkoutPlanDetails> warmupDetails = new ArrayList<>();
-        warmupDetails.add(createSegment(1, (int)(totalDuration * 0.2), IntensityZone.ENDURANCE));
-        warmupPlan.setDetails(warmupDetails);
-        workoutPlans.add(warmupPlan);
-
-        // 2. Phase Principale (Seuil)
-        WorkoutPlan mainPlan = new WorkoutPlan();
-        mainPlan.setBlocId(2);
-        mainPlan.setRepetitionCount(params.repetitions);
-        mainPlan.setWorkoutType(WorkoutType.LACTATE);
-
-        List<WorkoutPlanDetails> mainDetails = new ArrayList<>();
-        // Effort seuil
-        mainDetails.add(createSegment(1, params.effortDuration, IntensityZone.THRESHOLD));
-        // Récupération
-        mainDetails.add(createSegment(2, params.recoveryDuration, IntensityZone.ENDURANCE));
-
-        mainPlan.setDetails(mainDetails);
-        workoutPlans.add(mainPlan);
-
-        // 3. Phase Récupération
-        WorkoutPlan cooldownPlan = new WorkoutPlan();
-        cooldownPlan.setBlocId(3);
-        cooldownPlan.setRepetitionCount(1);
-        cooldownPlan.setWorkoutType(WorkoutType.LACTATE);
-
-        List<WorkoutPlanDetails> cooldownDetails = new ArrayList<>();
-        int cooldownDuration = totalDuration - (int)(totalDuration * 0.2) - (params.effortDuration + params.recoveryDuration) * params.repetitions;
-        cooldownDetails.add(createSegment(1, Math.max(300, cooldownDuration), IntensityZone.RECOVERY));
-        cooldownPlan.setDetails(cooldownDetails);
-        workoutPlans.add(cooldownPlan);
-
-        return workoutPlans;
+        return List.of(
+                createWorkoutPlan(1, 1, WorkoutType.LACTATE, List.of(
+                        createSegment(1, warmupDuration, IntensityZone.ENDURANCE)
+                )),
+                createWorkoutPlan(2, params.repetitions, WorkoutType.LACTATE, List.of(
+                        createSegment(1, params.effortDuration, IntensityZone.THRESHOLD),
+                        createSegment(2, params.recoveryDuration, IntensityZone.ENDURANCE)
+                )),
+                createWorkoutPlan(3, 1, WorkoutType.LACTATE, List.of(
+                        createSegment(1, cooldownDuration, IntensityZone.RECOVERY)
+                ))
+        );
     }
 
+    /**
+     * Génère un plan d'endurance active (tempo)
+     * @param sport Sport concerné
+     * @param level Niveau de forme (1-100)
+     * @param progression Progression dans le plan (0.0-1.0)
+     * @param phase Phase d'entraînement
+     * @return Liste des blocs de l'entraînement
+     */
     private List<WorkoutPlan> generateEnduranceActive(Sport sport, int level, double progression, TrainingPlanPhase phase) {
-        int baseDuration = getBaseDuration(sport, WorkoutType.EA);
+        int totalDuration = calculateTotalDuration(sport, WorkoutType.EA, level, progression, phase);
 
-        double levelCoeff = calculateLevelCoefficient(level);
-        double phaseCoeff = calculatePhaseCoefficient(phase, WorkoutType.EA);
-        double progressionCoeff = calculateProgressionCoefficient(progression);
+        // Paramètres adaptatifs selon le niveau et la progression
+        int repetitions = calculateEARepetitions(level, progression);
+        int effortDuration = calculateEAEffortDuration(sport, level);
+        int recoveryDuration = calculateEARecoveryDuration(effortDuration);
 
-        int totalDuration = (int) (baseDuration * levelCoeff * phaseCoeff * progressionCoeff);
+        int warmupDuration = (int)(totalDuration * 0.2);
+        int mainWorkDuration = (effortDuration + recoveryDuration) * repetitions;
+        int cooldownDuration = Math.max(300, totalDuration - warmupDuration - mainWorkDuration);
 
-        int repetitions = Math.max(3, level / 20);
-        int effortDuration = 480; // 8 min
-        int recoveryDuration = 120; // 2 min
-
-        List<WorkoutPlan> workoutPlans = new ArrayList<>();
-
-        // 1. Phase Échauffement
-        WorkoutPlan warmupPlan = new WorkoutPlan();
-        warmupPlan.setBlocId(1);
-        warmupPlan.setRepetitionCount(1);
-        warmupPlan.setWorkoutType(WorkoutType.EA);
-
-        List<WorkoutPlanDetails> warmupDetails = new ArrayList<>();
-        warmupDetails.add(createSegment(1, (int)(totalDuration * 0.2), IntensityZone.ENDURANCE));
-        warmupPlan.setDetails(warmupDetails);
-        workoutPlans.add(warmupPlan);
-
-        // 2. Phase Principale (Tempo)
-        WorkoutPlan mainPlan = new WorkoutPlan();
-        mainPlan.setBlocId(2);
-        mainPlan.setRepetitionCount(repetitions);
-        mainPlan.setWorkoutType(WorkoutType.EA);
-
-        List<WorkoutPlanDetails> mainDetails = new ArrayList<>();
-        // Effort tempo
-        mainDetails.add(createSegment(1, effortDuration, IntensityZone.TEMPO));
-        // Récupération
-        mainDetails.add(createSegment(2, recoveryDuration, IntensityZone.ENDURANCE));
-
-        mainPlan.setDetails(mainDetails);
-        workoutPlans.add(mainPlan);
-
-        // 3. Phase Récupération
-        WorkoutPlan cooldownPlan = new WorkoutPlan();
-        cooldownPlan.setBlocId(3);
-        cooldownPlan.setRepetitionCount(1);
-        cooldownPlan.setWorkoutType(WorkoutType.EA);
-
-        List<WorkoutPlanDetails> cooldownDetails = new ArrayList<>();
-        int cooldownDuration = totalDuration - (int)(totalDuration * 0.2) - (effortDuration + recoveryDuration) * repetitions;
-        cooldownDetails.add(createSegment(1, Math.max(300, cooldownDuration), IntensityZone.RECOVERY));
-        cooldownPlan.setDetails(cooldownDetails);
-        workoutPlans.add(cooldownPlan);
-
-        return workoutPlans;
+        return List.of(
+                createWorkoutPlan(1, 1, WorkoutType.EA, List.of(
+                        createSegment(1, warmupDuration, IntensityZone.ENDURANCE)
+                )),
+                createWorkoutPlan(2, repetitions, WorkoutType.EA, List.of(
+                        createSegment(1, effortDuration, IntensityZone.TEMPO),
+                        createSegment(2, recoveryDuration, IntensityZone.ENDURANCE)
+                )),
+                createWorkoutPlan(3, 1, WorkoutType.EA, List.of(
+                        createSegment(1, cooldownDuration, IntensityZone.RECOVERY)
+                ))
+        );
     }
 
+    /**
+     * Génère un plan technique adapté au sport
+     * @param sport Sport concerné
+     * @param level Niveau de forme (1-100)
+     * @param progression Progression dans le plan (0.0-1.0)
+     * @param phase Phase d'entraînement
+     * @return Liste des blocs de l'entraînement
+     */
     private List<WorkoutPlan> generateTechnic(Sport sport, int level, double progression, TrainingPlanPhase phase) {
-        int baseDuration = getBaseDuration(sport, WorkoutType.TECHNIC);
+        int totalDuration = calculateTotalDuration(sport, WorkoutType.TECHNIC, level, progression, phase);
 
-        double levelCoeff = calculateLevelCoefficient(level);
-        double progressionCoeff = calculateProgressionCoefficient(progression);
-
-        int totalDuration = (int) (baseDuration * levelCoeff * progressionCoeff);
-
-        List<WorkoutPlan> workoutPlans = new ArrayList<>();
-
-        // 1. Phase Échauffement
-        WorkoutPlan warmupPlan = new WorkoutPlan();
-        warmupPlan.setBlocId(1);
-        warmupPlan.setRepetitionCount(1);
-        warmupPlan.setWorkoutType(WorkoutType.TECHNIC);
-
-        List<WorkoutPlanDetails> warmupDetails = new ArrayList<>();
-        warmupDetails.add(createSegment(1, (int)(totalDuration * 0.15), IntensityZone.RECOVERY));
-        warmupPlan.setDetails(warmupDetails);
-        workoutPlans.add(warmupPlan);
-
-        // 2. Phase Technique
-        WorkoutPlan mainPlan = new WorkoutPlan();
-        mainPlan.setBlocId(2);
-        mainPlan.setRepetitionCount(1);
-        mainPlan.setWorkoutType(WorkoutType.TECHNIC);
-
-        List<WorkoutPlanDetails> mainDetails = new ArrayList<>();
-        mainDetails.add(createSegment(1, (int)(totalDuration * 0.7), IntensityZone.RECOVERY));
-        mainPlan.setDetails(mainDetails);
-        workoutPlans.add(mainPlan);
-
-        // 3. Phase Récupération
-        WorkoutPlan cooldownPlan = new WorkoutPlan();
-        cooldownPlan.setBlocId(3);
-        cooldownPlan.setRepetitionCount(1);
-        cooldownPlan.setWorkoutType(WorkoutType.TECHNIC);
-
-        List<WorkoutPlanDetails> cooldownDetails = new ArrayList<>();
-        cooldownDetails.add(createSegment(1, (int)(totalDuration * 0.15), IntensityZone.RECOVERY));
-        cooldownPlan.setDetails(cooldownDetails);
-        workoutPlans.add(cooldownPlan);
-
-        return workoutPlans;
+        // Structure adaptée au sport
+        if (sport == Sport.SWIMMING) {
+            return generateSwimmingTechnic(totalDuration, level);
+        } else {
+            return generateGeneralTechnic(totalDuration);
+        }
     }
 
+    /**
+     * Génère un plan de récupération active
+     * @param sport Sport concerné
+     * @param level Niveau de forme (1-100)
+     * @param progression Progression dans le plan (0.0-1.0)
+     * @param phase Phase d'entraînement
+     * @return Liste des blocs de l'entraînement
+     */
     private List<WorkoutPlan> generateRecuperationActive(Sport sport, int level, double progression, TrainingPlanPhase phase) {
-        int baseDuration = getBaseDuration(sport, WorkoutType.RA);
+        int totalDuration = calculateTotalDuration(sport, WorkoutType.RA, level, progression, phase);
+
+        return List.of(
+                createWorkoutPlan(1, 1, WorkoutType.RA, List.of(
+                        createSegment(1, totalDuration, IntensityZone.RECOVERY)
+                ))
+        );
+    }
+
+    /**
+     * Calcule la durée totale avec tous les facteurs d'ajustement
+     * @param sport Sport concerné
+     * @param type Type d'entraînement
+     * @param level Niveau (1-100)
+     * @param progression Progression (0.0-1.0)
+     * @param phase Phase d'entraînement
+     * @return Durée totale en secondes
+     */
+    private int calculateTotalDuration(Sport sport, WorkoutType type, int level, double progression, TrainingPlanPhase phase) {
+        int baseDuration = BASE_DURATIONS.get(sport).get(type);
 
         double levelCoeff = calculateLevelCoefficient(level);
+        double phaseCoeff = calculatePhaseCoefficient(phase, type);
         double progressionCoeff = calculateProgressionCoefficient(progression);
 
-        int totalDuration = (int) (baseDuration * levelCoeff * progressionCoeff);
-
-        List<WorkoutPlan> workoutPlans = new ArrayList<>();
-
-        // Une seule phase : récupération active continue
-        WorkoutPlan recoveryPlan = new WorkoutPlan();
-        recoveryPlan.setBlocId(1);
-        recoveryPlan.setRepetitionCount(1);
-        recoveryPlan.setWorkoutType(WorkoutType.RA);
-
-        List<WorkoutPlanDetails> recoveryDetails = new ArrayList<>();
-        recoveryDetails.add(createSegment(1, totalDuration, IntensityZone.RECOVERY));
-        recoveryPlan.setDetails(recoveryDetails);
-        workoutPlans.add(recoveryPlan);
-
-        return workoutPlans;
+        return (int) (baseDuration * levelCoeff * phaseCoeff * progressionCoeff);
     }
 
-    // Toutes les méthodes utilitaires restent identiques...
-
-    private int getBaseDuration(Sport sport, WorkoutType type) {
-        switch (sport) {
-            case RUNNING:
-                switch (type) {
-                    case EF: return 2700; // 45 min
-                    case INTERVAL: return 2400; // 40 min
-                    case LACTATE: return 3000; // 50 min
-                    case EA: return 2100; // 35 min
-                    case TECHNIC: return 1500; // 25 min
-                    case RA: return 1200; // 20 min
-                }
-                break;
-            case CYCLING:
-                switch (type) {
-                    case EF: return 5400; // 90 min
-                    case INTERVAL: return 3600; // 60 min
-                    case LACTATE: return 4200; // 70 min
-                    case EA: return 2700; // 45 min
-                    case TECHNIC: return 1800; // 30 min
-                    case RA: return 2400; // 40 min
-                }
-                break;
-            case SWIMMING:
-                switch (type) {
-                    case EF: return 2400; // 40 min
-                    case INTERVAL: return 1800; // 30 min
-                    case LACTATE: return 2100; // 35 min
-                    case EA: return 1800; // 30 min
-                    case TECHNIC: return 1500; // 25 min
-                    case RA: return 1200; // 20 min
-                }
-                break;
-        }
-        return 1800; // Défaut 30 min
-    }
-
-    private double calculateLevelCoefficient(int level) {
-        return 0.3 + (level - 1) * (2.0 - 0.3) / 99.0;
-    }
-
-    private double calculatePhaseCoefficient(TrainingPlanPhase phase, WorkoutType type) {
-        switch (phase) {
-            case BASE:
-                return type == WorkoutType.EF ? 1.2 : 0.8;
-            case SPECIFIC:
-                return 1.0;
-            case SHARPENING:
-                return type == WorkoutType.EF ? 0.7 : 0.9;
-            default:
-                return 1.0;
-        }
-    }
-
-    private double calculateProgressionCoefficient(double progression) {
-        return 0.8 + progression * 0.4;
-    }
-
-    private IntervalParams getIntervalParams(TrainingPlanPhase phase, int level, Sport sport) {
+    /**
+     * Calcule les paramètres d'intervalles adaptatifs
+     * @param phase Phase d'entraînement
+     * @param level Niveau (1-100)
+     * @param sport Sport concerné
+     * @param progression Progression (0.0-1.0)
+     * @return Paramètres d'intervalles optimisés
+     */
+    private IntervalParams calculateIntervalParams(TrainingPlanPhase phase, int level, Sport sport, double progression) {
         IntervalParams params = new IntervalParams();
 
+        // Adaptation selon la phase
         switch (phase) {
-            case BASE:
-                params.repetitions = Math.max(4, level / 20);
-                params.effortDuration = 300; // 5 min
-                params.recoveryDuration = 180; // 3 min
+            case BASE -> {
+                params.repetitions = Math.max(4, (int)(level / 20.0 * (1 + progression * 0.3)));
+                params.effortDuration = sport == Sport.SWIMMING ? 240 : 300; // 4-5 min
+                params.recoveryDuration = (int)(params.effortDuration * 0.6); // Récup 60%
                 params.effortZone = IntensityZone.TEMPO;
-                break;
-            case SPECIFIC:
-                params.repetitions = Math.max(6, level / 15);
-                params.effortDuration = 240; // 4 min
-                params.recoveryDuration = 120; // 2 min
+            }
+            case SPECIFIC -> {
+                params.repetitions = Math.max(6, (int)(level / 15.0 * (1 + progression * 0.2)));
+                params.effortDuration = sport == Sport.SWIMMING ? 180 : 240; // 3-4 min
+                params.recoveryDuration = (int)(params.effortDuration * 0.5); // Récup 50%
                 params.effortZone = IntensityZone.THRESHOLD;
-                break;
-            case SHARPENING:
-                params.repetitions = Math.max(8, level / 10);
-                params.effortDuration = 120; // 2 min
-                params.recoveryDuration = 60; // 1 min
+            }
+            case SHARPENING -> {
+                params.repetitions = Math.max(8, (int)(level / 10.0 * (1 + progression * 0.1)));
+                params.effortDuration = sport == Sport.SWIMMING ? 90 : 120; // 1.5-2 min
+                params.recoveryDuration = params.effortDuration; // Récup 100%
                 params.effortZone = IntensityZone.VO2_MAX;
-                break;
+            }
         }
 
         return params;
     }
 
-    private LactateParams getLactateParams(TrainingPlanPhase phase, int level, Sport sport) {
+    /**
+     * Calcule les paramètres de travail au seuil adaptatifs
+     * @param phase Phase d'entraînement
+     * @param level Niveau (1-100)
+     * @param sport Sport concerné
+     * @param progression Progression (0.0-1.0)
+     * @return Paramètres de seuil optimisés
+     */
+    private LactateParams calculateLactateParams(TrainingPlanPhase phase, int level, Sport sport, double progression) {
         LactateParams params = new LactateParams();
 
         switch (phase) {
-            case BASE:
-                params.repetitions = Math.max(2, level / 25);
-                params.effortDuration = 720; // 12 min
-                params.recoveryDuration = 300; // 5 min
-                break;
-            case SPECIFIC:
-                params.repetitions = Math.max(3, level / 20);
-                params.effortDuration = 600; // 10 min
-                params.recoveryDuration = 240; // 4 min
-                break;
-            case SHARPENING:
-                params.repetitions = Math.max(4, level / 15);
-                params.effortDuration = 480; // 8 min
-                params.recoveryDuration = 180; // 3 min
-                break;
+            case BASE -> {
+                params.repetitions = Math.max(2, level / 30);
+                params.effortDuration = sport == Sport.SWIMMING ? 600 : 720; // 10-12 min
+                params.recoveryDuration = (int)(params.effortDuration * 0.4); // Récup 40%
+            }
+            case SPECIFIC -> {
+                params.repetitions = Math.max(3, (int)(level / 25.0 * (1 + progression * 0.2)));
+                params.effortDuration = sport == Sport.SWIMMING ? 480 : 600; // 8-10 min
+                params.recoveryDuration = (int)(params.effortDuration * 0.35); // Récup 35%
+            }
+            case SHARPENING -> {
+                params.repetitions = Math.max(4, (int)(level / 20.0 * (1 + progression * 0.1)));
+                params.effortDuration = sport == Sport.SWIMMING ? 360 : 480; // 6-8 min
+                params.recoveryDuration = (int)(params.effortDuration * 0.3); // Récup 30%
+            }
         }
 
         return params;
+    }
+
+    /**
+     * Structure technique spécialisée pour la natation
+     * @param totalDuration Durée totale
+     * @param level Niveau de forme
+     * @return Plan technique natation
+     */
+    private List<WorkoutPlan> generateSwimmingTechnic(int totalDuration, int level) {
+        int drillSegments = Math.max(3, level / 25); // Plus de variété pour niveaux élevés
+        int segmentDuration = (int)(totalDuration * 0.7 / drillSegments);
+
+        List<WorkoutPlanDetails> mainDetails = new ArrayList<>();
+        for (int i = 0; i < drillSegments; i++) {
+            mainDetails.add(createSegment(i + 1, segmentDuration, IntensityZone.RECOVERY));
+        }
+
+        return List.of(
+                createWorkoutPlan(1, 1, WorkoutType.TECHNIC, List.of(
+                        createSegment(1, (int)(totalDuration * 0.15), IntensityZone.RECOVERY)
+                )),
+                createWorkoutPlan(2, 1, WorkoutType.TECHNIC, mainDetails),
+                createWorkoutPlan(3, 1, WorkoutType.TECHNIC, List.of(
+                        createSegment(1, (int)(totalDuration * 0.15), IntensityZone.RECOVERY)
+                ))
+        );
+    }
+
+    /**
+     * Structure technique générale
+     * @param totalDuration Durée totale
+     * @return Plan technique standard
+     */
+    private List<WorkoutPlan> generateGeneralTechnic(int totalDuration) {
+        return List.of(
+                createWorkoutPlan(1, 1, WorkoutType.TECHNIC, List.of(
+                        createSegment(1, (int)(totalDuration * 0.15), IntensityZone.RECOVERY)
+                )),
+                createWorkoutPlan(2, 1, WorkoutType.TECHNIC, List.of(
+                        createSegment(1, (int)(totalDuration * 0.7), IntensityZone.RECOVERY)
+                )),
+                createWorkoutPlan(3, 1, WorkoutType.TECHNIC, List.of(
+                        createSegment(1, (int)(totalDuration * 0.15), IntensityZone.RECOVERY)
+                ))
+        );
+    }
+
+    // Calculs EA adaptatifs
+    private int calculateEARepetitions(int level, double progression) {
+        return Math.max(3, (int)(level / 20.0 * (1 + progression * 0.2)));
+    }
+
+    private int calculateEAEffortDuration(Sport sport, int level) {
+        int baseDuration = sport == Sport.SWIMMING ? 360 : 480; // 6-8 min
+        return (int)(baseDuration * (0.8 + level / 500.0)); // Ajustement selon niveau
+    }
+
+    private int calculateEARecoveryDuration(int effortDuration) {
+        return Math.max(60, effortDuration / 4); // Récup 25% minimum 1min
+    }
+
+    // Factory methods pour éviter la répétition de code
+    private WorkoutPlan createWorkoutPlan(int blocId, int repetitions, WorkoutType type, List<WorkoutPlanDetails> details) {
+        WorkoutPlan plan = new WorkoutPlan();
+        plan.setBlocId(blocId);
+        plan.setRepetitionCount(repetitions);
+        plan.setWorkoutType(type);
+        plan.setDetails(details);
+        return plan;
     }
 
     private WorkoutPlanDetails createSegment(int id, int duration, IntensityZone zone) {
         WorkoutPlanDetails detail = new WorkoutPlanDetails();
         detail.setBlocDetailId(id);
-        detail.setDurationSec(duration);
+        detail.setDurationSec(Math.max(30, duration)); // Minimum 30 secondes
         detail.setIntensityZone(zone);
         return detail;
     }
 
-    // Classes internes pour les paramètres
+    // Méthodes de calcul des coefficients (inchangées mais documentées)
+    private double calculateLevelCoefficient(int level) {
+        return 0.3 + (level - 1) * (2.0 - 0.3) / 99.0; // Facteur 0.3 à 2.0
+    }
+
+    private double calculatePhaseCoefficient(TrainingPlanPhase phase, WorkoutType type) {
+        return switch (phase) {
+            case BASE -> type == WorkoutType.EF ? 1.2 : 0.8;
+            case SPECIFIC -> 1.0;
+            case SHARPENING -> type == WorkoutType.EF ? 0.7 : 0.9;
+        };
+    }
+
+    private double calculateProgressionCoefficient(double progression) {
+        return 0.8 + progression * 0.4; // Facteur 0.8 à 1.2
+    }
+
+    // Configuration centralisée des durées de base (en secondes)
+    private static final Map<Sport, Map<WorkoutType, Integer>> BASE_DURATIONS = Map.of(
+            Sport.RUNNING, Map.of(
+                    WorkoutType.EF, 2700,      // 45 min
+                    WorkoutType.INTERVAL, 2400, // 40 min
+                    WorkoutType.LACTATE, 3000,  // 50 min
+                    WorkoutType.EA, 2100,       // 35 min
+                    WorkoutType.TECHNIC, 1500,  // 25 min
+                    WorkoutType.RA, 1200        // 20 min
+            ),
+            Sport.CYCLING, Map.of(
+                    WorkoutType.EF, 5400,       // 90 min
+                    WorkoutType.INTERVAL, 3600, // 60 min
+                    WorkoutType.LACTATE, 4200,  // 70 min
+                    WorkoutType.EA, 2700,       // 45 min
+                    WorkoutType.TECHNIC, 1800,  // 30 min
+                    WorkoutType.RA, 2400        // 40 min
+            ),
+            Sport.SWIMMING, Map.of(
+                    WorkoutType.EF, 2400,       // 40 min
+                    WorkoutType.INTERVAL, 1800, // 30 min
+                    WorkoutType.LACTATE, 2100,  // 35 min
+                    WorkoutType.EA, 1800,       // 30 min
+                    WorkoutType.TECHNIC, 1500,  // 25 min
+                    WorkoutType.RA, 1200        // 20 min
+            )
+    );
+
+    // Classes internes améliorées
     private static class IntervalParams {
         int repetitions;
         int effortDuration;

@@ -3,10 +3,10 @@ package org.heigvd.training_generator;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.heigvd.training_generator.generator_V1.TrainingPlanGeneratorV1;
-import org.heigvd.training_generator.generator_V1.TrainingWorkoutsGeneratorV1;
+import org.heigvd.training_generator.generator_V1.WorkoutGeneratorV1;
 import org.heigvd.training_generator.generator_V1.WorkoutPlanGeneratorV1;
 import org.heigvd.training_generator.generator_V2.TrainingPlanGeneratorV2;
-import org.heigvd.training_generator.generator_V2.TrainingWorkoutsGeneratorV2;
+import org.heigvd.training_generator.generator_V2.WorkoutGeneratorV2;
 import org.heigvd.training_generator.generator_V2.WorkoutPlanGeneratorV2;
 import org.heigvd.training_generator.interfaces.TrainingPlanGenerator;
 import org.heigvd.training_generator.interfaces.TrainingWorkoutGenerator;
@@ -19,7 +19,7 @@ public class GeneratorFactory {
     @Inject
     TrainingPlanGeneratorV1 trainingPlanGeneratorV1;
     @Inject
-    TrainingWorkoutsGeneratorV1 trainingWorkoutsGeneratorV1;
+    WorkoutGeneratorV1 workoutGeneratorV1;
     @Inject
     WorkoutPlanGeneratorV1 workoutPlanGeneratorV1;
 
@@ -27,7 +27,7 @@ public class GeneratorFactory {
     @Inject
     TrainingPlanGeneratorV2 trainingPlanGeneratorV2;
     @Inject
-    TrainingWorkoutsGeneratorV2 trainingWorkoutsGeneratorV2;
+    WorkoutGeneratorV2 workoutGeneratorV2;
     @Inject
     WorkoutPlanGeneratorV2 workoutPlanGeneratorV2;
 
@@ -46,8 +46,8 @@ public class GeneratorFactory {
 
     public TrainingWorkoutGenerator getTrainingWorkoutGenerator() {
         return switch (config.getGlobalVersion()) {
-            case "V1" -> trainingWorkoutsGeneratorV1;
-            case "V2" -> trainingWorkoutsGeneratorV2;
+            case "V1" -> workoutGeneratorV1;
+            case "V2" -> workoutGeneratorV2;
             default -> throw new IllegalStateException("Unknown version: " + config.getGlobalVersion());
         };
     }
