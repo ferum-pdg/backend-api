@@ -12,7 +12,9 @@ import org.heigvd.entity.workout.Workout;
 import org.heigvd.entity.workout.WorkoutStatus;
 import org.heigvd.entity.workout.WorkoutType;
 import org.heigvd.entity.workout.details.WorkoutPlan;
+import org.heigvd.service.TrainingGeneratorService;
 import org.heigvd.service.TrainingPlanService;
+import org.heigvd.training_generator.interfaces.TrainingWorkoutGenerator;
 
 
 import java.time.LocalDate;
@@ -23,14 +25,20 @@ import java.util.List;
 import java.util.Map;
 
 @ApplicationScoped
-public class TrainingWorkoutsGeneratorV2 {
+public class TrainingWorkoutsGeneratorV2 implements TrainingWorkoutGenerator {
 
     @Inject
     TrainingPlanService trainingPlanService;
 
     @Inject
-    WorkoutPlanGeneratorV2 workoutPlanGenerator;
+    TrainingGeneratorService tgs;
 
+    @Override
+    public String getVersion() {
+        return "V2";
+    }
+
+    @Override
     public List<Workout> generate(TrainingPlan trainingPlan, LocalDate actualDate) {
         Account account = trainingPlan.getAccount();
 
@@ -91,7 +99,7 @@ public class TrainingWorkoutsGeneratorV2 {
                     .atOffset(OffsetDateTime.now().getOffset());
 
             // Générer les WorkoutPlans détaillés
-            List<WorkoutPlan> workoutPlans = workoutPlanGenerator.generate(
+            List<WorkoutPlan> workoutPlans = tgs.generate(
                     dp.getSport(),
                     workoutType,
                     account.getLastFitnessLevel().getFitnessLevel(),

@@ -34,7 +34,7 @@ public class WorkoutService {
     TrainingPlanService trainingPlanService;
 
     @Inject
-    TrainingWorkoutsGeneratorV2 trainingWorkoutsGeneratorV2;
+    TrainingGeneratorService tgs;
 
     /**
      * Recherche un workout par identifiant.
@@ -222,7 +222,7 @@ public class WorkoutService {
     }
 
     public void generateWorkout(TrainingPlan trainingPlan, LocalDate date) {
-        List<Workout> workouts = trainingWorkoutsGeneratorV2.generate(trainingPlan, date);
+        List<Workout> workouts = tgs.generate(trainingPlan, date);
 
         for (Workout w : workouts) {
             em.persist(w);

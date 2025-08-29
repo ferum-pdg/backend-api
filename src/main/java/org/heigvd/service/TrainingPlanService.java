@@ -8,7 +8,6 @@ import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.training_plan.WeeklyPlan;
-import org.heigvd.training_generator.generator_V1.TrainingPlanGeneratorV1;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -21,18 +20,24 @@ import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
-/**
- * Service de gestion des plans d'entraînement.
- *
- * Permet la création de plans et la récupération du plan d'un utilisateur.
- */
 public class TrainingPlanService {
 
     @Inject
     EntityManager em;
 
     @Inject
-    TrainingPlanGeneratorV1 trainingGeneratorV1;
+    TrainingGeneratorService tgs;
+
+    /**
+     * Génère un nouveau plan d'entraînement pour l'utilisateur.
+     * @param request DTO contenant les paramètres de génération
+     * @param account compte utilisateur
+     * @return TrainingPlan généré
+     */
+    @Transactional
+    public TrainingPlan generateTrainingPlan(TrainingPlanRequestDto request, Account account) {
+        return tgs.generate(request, account);
+    }
 
     /**
      * Crée un plan d'entraînement après vérification d'unicité pour l'utilisateur.
@@ -49,8 +54,52 @@ public class TrainingPlanService {
         em.persist(tp);
     }
 
+    /**
+     * Génère et persiste un nouveau plan d'entraînement pour l'utilisateur.
+     * @param request DTO contenant les paramètres de génération
+     * @param account compte utilisateur
+     * @return TrainingPlan créé et persisté
+     * @throws IllegalStateException si un plan existe déjà pour l'utilisateur
+     */
+    @Transactional
+    public TrainingPlan generateAndCreate(TrainingPlanRequestDto request, Account account) {
+        // Vérifier qu'aucun plan n'existe déjà
+        Optional<TrainingPlan> existingPlan = getMyTrainingPlan(account.getId());
+        if (existingPlan.isPresent()) {
+            throw new IllegalStateException("User already has a training plan.");
+        }
+
+        // Générer le nouveau plan
+        TrainingPlan newPlan = tgs.generate(request, account);
+
+        // Persister le plan
+        em.persist(newPlan);
+
+        return newPlan;
+    }
+
+    @Transactional
     public void merge(TrainingPlan tp) {
         em.merge(tp);
+    }
+
+    /**
+     * Remplace le plan d'entraînement existant par un nouveau.
+     * @param request DTO contenant les paramètres de génération
+     * @param account compte utilisateur
+     * @return TrainingPlan nouveau plan créé
+     */
+    @Transactional
+    public TrainingPlan replaceTrainingPlan(TrainingPlanRequestDto request, Account account) {
+        // Supprimer l'ancien plan s'il existe
+        Optional<TrainingPlan> existingPlan = getMyTrainingPlan(account.getId());
+        existingPlan.ifPresent(plan -> em.remove(plan));
+
+        // Générer et persister le nouveau plan
+        TrainingPlan newPlan = tgs.generate(request, account);
+        em.persist(newPlan);
+
+        return newPlan;
     }
 
     /**

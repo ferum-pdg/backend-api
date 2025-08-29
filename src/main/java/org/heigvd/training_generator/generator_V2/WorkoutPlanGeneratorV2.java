@@ -5,12 +5,20 @@ import org.heigvd.entity.Sport;
 import org.heigvd.entity.workout.*;
 import org.heigvd.entity.workout.details.*;
 import org.heigvd.entity.training_plan.TrainingPlanPhase;
+import org.heigvd.training_generator.interfaces.WorkoutPlanGenerator;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-public class WorkoutPlanGeneratorV2 {
+public class WorkoutPlanGeneratorV2 implements WorkoutPlanGenerator {
 
+    @Override
+    public String getVersion() {
+        return "V2";
+    }
+
+    @Override
     public List<WorkoutPlan> generate(
             Sport sport,
             WorkoutType workoutType,
