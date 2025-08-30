@@ -8,10 +8,12 @@ import org.heigvd.dto.workout_dto.WorkoutFullDto;
 import org.heigvd.dto.workout_dto.WorkoutPlanDetailsDto;
 import org.heigvd.dto.workout_dto.WorkoutPlanDto;
 import org.heigvd.dto.workout_dto.WorkoutUploadDto;
+import org.heigvd.dto.workout_dto.data_point_dto.WorkoutPerfDetailsDto;
 import org.heigvd.entity.*;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.workout.Workout;
 import org.heigvd.entity.workout.WorkoutStatus;
+import org.heigvd.entity.workout.data_point.BPMDataPoint;
 import org.heigvd.entity.workout.details.WorkoutPlan;
 
 import java.time.LocalDate;
@@ -171,6 +173,7 @@ public class WorkoutService {
         dto.setEnd(workout.getEndTime());
         dto.setDurationSec(workout.getDurationSec());
         dto.setDay(workout.getStartTime().getDayOfWeek());
+        dto.setGrade(workout.getGrade());
 
         // Métriques de performance
         dto.setAvgHeartRate(workout.getAvgHeartRate());
@@ -181,11 +184,23 @@ public class WorkoutService {
         dto.setPlan(convertWorkoutPlansToDto(workout.getPlans(), fcMax));
 
         // Champs non encore implémentés
-        dto.setGrade(null);
         dto.setAiReview(null);
-        dto.setPerformanceDetails(null);
 
         return dto;
+    }
+
+    private List<WorkoutPerfDetailsDto> buildWorkoutPerfDetailsToDto(Workout workout) {
+        List<BPMDataPoint> bpmDataPoints = workout.getActualBPMDataPoints();
+        List<WorkoutPlan> plans = workout.getPlans();
+        List<WorkoutPerfDetailsDto> perfDetails = new ArrayList<>();
+
+        if (bpmDataPoints == null || bpmDataPoints.isEmpty() || plans == null || plans.isEmpty()) {
+            return null;
+        }
+
+        // TODO finish this method
+
+        return perfDetails;
     }
 
     /**
@@ -243,7 +258,6 @@ public class WorkoutService {
         newWorkout.setSource(workout.getSource());
         newWorkout.setDurationSec((int) (newWorkout.getEndTime().toEpochSecond() - newWorkout.getStartTime().toEpochSecond()));
         newWorkout.setAvgSpeed(workout.getAvgSpeed());
-
         newWorkout.setActualBPMDataPoints(workout.getBpmDataPoints());
         newWorkout.setActualSpeedDataPoints(workout.getSpeedDataPoints());
 
@@ -265,7 +279,6 @@ public class WorkoutService {
         existingWorkout.setSource(workout.getSource());
         existingWorkout.setDurationSec((int) (existingWorkout.getEndTime().toEpochSecond() - existingWorkout.getStartTime().toEpochSecond()));
         existingWorkout.setAvgSpeed(workout.getAvgSpeed());
-
         existingWorkout.setActualBPMDataPoints(workout.getBpmDataPoints());
         existingWorkout.setActualSpeedDataPoints(workout.getSpeedDataPoints());
 

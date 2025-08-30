@@ -62,6 +62,11 @@ public class Workout {
     @Enumerated(EnumType.STRING)
     private WorkoutType type;
 
+    private Double grade;
+
+    @Column(name = "ai_analysis", columnDefinition = "TEXT")
+    private String aiAnalysis;
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BPMDataPoint> actualBPMDataPoints = new ArrayList<>();
 
@@ -157,6 +162,9 @@ public class Workout {
 
     public List<WorkoutPlan> getPlans() { return plans; }
     public void setPlans(List<WorkoutPlan> plans) { this.plans = plans; }
+
+    public Double getGrade() { return grade; }
+    public void setGrade(Double grade) { this.grade = grade; }
 
     @Override
     public String toString() {

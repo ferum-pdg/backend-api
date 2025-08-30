@@ -25,6 +25,7 @@ import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.workout.Workout;
 import org.heigvd.service.AccountService;
 import org.heigvd.service.TrainingPlanService;
+import org.heigvd.service.WorkoutAnalyserService;
 import org.heigvd.service.WorkoutService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
@@ -50,6 +51,9 @@ public class WorkoutResource {
 
     @Inject
     WorkoutService workoutService;
+
+    @Inject
+    WorkoutAnalyserService was;
 
     @Inject
     AccountService accountService;
@@ -124,7 +128,7 @@ public class WorkoutResource {
 
     @POST
     @Transactional
-    public Response insertNewRecordedWorkout(@Context SecurityContext context, @Valid WorkoutUploadDto workout) {
+    public Response insertNewRecordedWorkout(@Context SecurityContext context, @Valid WorkoutUploadDto workoutDto) {
         UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
         Optional<Account> a = accountService.findById(authenticatedAccountId);
 
@@ -134,16 +138,15 @@ public class WorkoutResource {
                     .build();
         }
 
-        Optional<Workout> w = workoutService.findClosestWorkout(workout, a.get());
-
+        Optional<Workout> w = workoutService.findClosestWorkout(workoutDto, a.get());
         Workout toReturn;
 
         if (w.isEmpty()) {
             System.out.println("Creating new workout");
-            toReturn = workoutService.createWorkoutOutOfTP(a.get(), workout);
+            toReturn = workoutService.createWorkoutOutOfTP(a.get(), workoutDto);
         } else {
             System.out.println("Merging with existing workout");
-            toReturn = workoutService.mergeWorkoutWithExisting(w.get(), workout);
+            toReturn = was.analyse(workoutService.mergeWorkoutWithExisting(w.get(), workoutDto));
         }
 
         return Response.ok(new WorkoutLightDto(toReturn)).build();
