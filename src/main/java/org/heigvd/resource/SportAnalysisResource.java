@@ -1,7 +1,6 @@
 package org.heigvd.resource;
 
-import org.heigvd.service.SportAnalysisService;
-
+import org.heigvd.service.AIService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -12,7 +11,7 @@ import jakarta.ws.rs.core.Response;
 public class SportAnalysisResource {
 
     @Inject
-    SportAnalysisService analysisService;
+    AIService analysisService;
 
     @GET
     @Path("/ping")

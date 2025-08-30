@@ -13,7 +13,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 @ApplicationScoped
-public class SportAnalysisService {
+public class AIService {
 
     @Inject
     ObjectMapper objectMapper;
@@ -144,7 +144,7 @@ public class SportAnalysisService {
         JsonNode jsonResponse = objectMapper.readTree(body);
         JsonNode choices = jsonResponse.get("choices");
 
-        if (choices != null && choices.size() > 0) {
+        if (choices != null && !choices.isEmpty()) {
             String content = choices.get(0).get("message").get("content").asText();
 
             JsonNode usage = jsonResponse.get("usage");

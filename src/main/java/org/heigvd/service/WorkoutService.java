@@ -54,70 +54,6 @@ public class WorkoutService {
     }
 
     /**
-     * Liste les workouts d'un utilisateur, triés par date décroissante.
-     * @param accountId identifiant du compte
-     * @return liste des workouts
-     */
-    public List<Workout> findByAccountId(UUID accountId) {
-        return em.createQuery(
-                        "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
-                                "ORDER BY w.startTime DESC",
-                        Workout.class)
-                .setParameter("accountId", accountId)
-                .getResultList();
-    }
-
-    @Transactional
-    public List<Workout> getCurrentWeekWorkouts(UUID accountId) {
-        OffsetDateTime now = OffsetDateTime.now();
-        // On prend le LocalDate courant
-        LocalDate today = now.toLocalDate();
-        // Début de semaine = lundi 00:00
-        LocalDateTime startOfWeekLdt = today
-                .with(java.time.DayOfWeek.MONDAY)
-                .atStartOfDay();
-        // Fin de semaine = dimanche 23:59:59
-        LocalDateTime endOfWeekLdt = startOfWeekLdt.plusDays(6).withHour(23).withMinute(59).withSecond(59);
-        // Conversion en OffsetDateTime avec le même offset que "now"
-        OffsetDateTime startOfWeek = startOfWeekLdt.atOffset(now.getOffset());
-        OffsetDateTime endOfWeek   = endOfWeekLdt.atOffset(now.getOffset());
-
-        return em.createQuery(
-                        "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
-                                "AND w.startTime >= :startOfWeek AND w.startTime <= :endOfWeek " +
-                                "ORDER BY w.startTime ASC",
-                        Workout.class)
-                .setParameter("accountId", accountId)
-                .setParameter("startOfWeek", startOfWeek)
-                .setParameter("endOfWeek", endOfWeek)
-                .getResultList();
-    }
-
-    public List<Workout> getWorkoutForWeek(UUID accountId, int weekNumber) {
-        Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
-        if (tp.isEmpty()) {
-            return List.of();
-        } else {
-            LocalDate planStartDate = tp.get().getStartDate();
-            LocalDate startOfWeek = planStartDate.plusWeeks(weekNumber - 1).with(java.time.DayOfWeek.MONDAY);
-            LocalDate endOfWeek = startOfWeek.plusDays(6);
-
-            OffsetDateTime startOfWeekOdt = startOfWeek.atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
-            OffsetDateTime endOfWeekOdt = endOfWeek.atTime(23, 59, 59).atOffset(OffsetDateTime.now().getOffset());
-
-            return em.createQuery(
-                            "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
-                                    "AND w.startTime >= :startOfWeek AND w.startTime <= :endOfWeek " +
-                                    "ORDER BY w.startTime ASC",
-                            Workout.class)
-                    .setParameter("accountId", accountId)
-                    .setParameter("startOfWeek", startOfWeekOdt)
-                    .setParameter("endOfWeek", endOfWeekOdt)
-                    .getResultList();
-        }
-    }
-
-    /**
      * Liste les workouts d'un utilisateur pour un sport donné.
      * @param accountId identifiant du compte
      * @param sport sport ciblé
@@ -131,24 +67,6 @@ public class WorkoutService {
                 .setParameter("accountId", accountId)
                 .setParameter("sport", sport)
                 .getResultList();
-    }
-
-    public List<Workout> getNextNWorkouts(UUID accountId) {
-        Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
-        if(tp.isEmpty()) {
-            return getAllWorkouts(accountId);
-        } else {
-            Integer nbWorkouts = trainingPlanService.getNbWorkoutsPerWeek(accountId);
-            // return the next nbWorkouts for the user based on the current date
-            return em.createQuery(
-                            "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.startTime >= :startTime " +
-                                    "ORDER BY w.startTime ASC",
-                            Workout.class)
-                    .setParameter("accountId", accountId)
-                    .setParameter("startTime", OffsetDateTime.now())
-                    .setMaxResults(nbWorkouts)
-                    .getResultList();
-        }
     }
 
     public List<Workout> getAllWorkouts(UUID accountId) {
