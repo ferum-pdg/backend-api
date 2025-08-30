@@ -21,16 +21,10 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.training_plan.TrainingPlan;
-import org.heigvd.entity.workout.Workout;
-import org.heigvd.service.AccountService;
-import org.heigvd.service.GoalService;
-import org.heigvd.service.TrainingPlanService;
-import org.heigvd.training_generator.generator_V1.TrainingPlanGeneratorV1;
-import org.heigvd.training_generator.generator_V1.TrainingWorkoutsGeneratorV1;
+import org.heigvd.service.*;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,13 +51,12 @@ public class TrainingPlanResource {
     AccountService accountService;
 
     @Inject
-    TrainingPlanGeneratorV1 trainingGeneratorV1;
-
-    @Inject
-    TrainingWorkoutsGeneratorV1 trainingWorkoutsGeneratorV1;
+    TrainingGeneratorService tgs;
 
     @Inject
     EntityManager em;
+    @Inject
+    WorkoutService workoutService;
 
     @GET
     /**
@@ -130,7 +123,7 @@ public class TrainingPlanResource {
             return Response.status(Response.Status.NOT_FOUND).entity("Account not found").build();
         }
 
-        TrainingPlan newTrainingPlan = trainingGeneratorV1.generate(trainingPlanRequestDto, account.get());
+        TrainingPlan newTrainingPlan = tgs.generate(trainingPlanRequestDto, account.get());
 
         if (newTrainingPlan == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Failed to generate training plan").build();
@@ -138,11 +131,7 @@ public class TrainingPlanResource {
 
         trainingPlanService.create(newTrainingPlan);
 
-        List<Workout> firstWorkouts = trainingWorkoutsGeneratorV1.generate(newTrainingPlan, LocalDate.now());
-
-        newTrainingPlan.setWorkouts(firstWorkouts);
-
-        trainingPlanService.merge(newTrainingPlan);
+        workoutService.generateWorkout(newTrainingPlan, LocalDate.now());
 
         return Response.status(Response.Status.CREATED).entity(new TrainingPlanResponseDto(newTrainingPlan)).build();
     }

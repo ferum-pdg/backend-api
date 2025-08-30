@@ -10,21 +10,27 @@ import org.heigvd.entity.training_plan.DailyPlan;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.training_plan.TrainingPlanPhase;
 import org.heigvd.entity.training_plan.WeeklyPlan;
-import org.heigvd.entity.workout.WorkoutType;
 import org.heigvd.service.GoalService;
+import org.heigvd.training_generator.interfaces.TrainingPlanGenerator;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
 
 @ApplicationScoped
-public class TrainingPlanGeneratorV1 {
+public class TrainingPlanGeneratorV1 implements TrainingPlanGenerator {
 
     @Inject
     GoalService goalService;
 
+    @Override
+    public String getVersion() {
+        return "V1";
+    }
+
     // GENERATORS ------------------------------------------------------------------------------------------------------
 
+    @Override
     public TrainingPlan generate(TrainingPlanRequestDto tpDto, Account account) {
 
         List<Goal> goals = goalService.getGoalsByIds(tpDto.getGoalIds());

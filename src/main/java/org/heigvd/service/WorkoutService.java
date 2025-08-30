@@ -4,14 +4,20 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import org.heigvd.dto.workout_dto.WorkoutFullDto;
+import org.heigvd.dto.workout_dto.WorkoutPlanDetailsDto;
+import org.heigvd.dto.workout_dto.WorkoutPlanDto;
 import org.heigvd.dto.workout_dto.WorkoutUploadDto;
 import org.heigvd.entity.*;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.workout.Workout;
 import org.heigvd.entity.workout.WorkoutStatus;
+import org.heigvd.entity.workout.details.WorkoutPlan;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,6 +35,9 @@ public class WorkoutService {
 
     @Inject
     TrainingPlanService trainingPlanService;
+
+    @Inject
+    TrainingGeneratorService tgs;
 
     /**
      * Recherche un workout par identifiant.
@@ -193,7 +202,6 @@ public class WorkoutService {
         }
     }
 
-
     public Optional<Workout> findClosestWorkout(WorkoutUploadDto workout, Account account) {
         Sport sport = Sport.valueOf(workout.getSport().toUpperCase());
         // Find workouts that are the same day, sport
@@ -213,6 +221,93 @@ public class WorkoutService {
                 .findFirst();
 
         return getWorkout;
+    }
+
+    public void generateWorkout(TrainingPlan trainingPlan, LocalDate date) {
+        List<Workout> workouts = tgs.generate(trainingPlan, date);
+
+        for (Workout w : workouts) {
+            em.persist(w);
+        }
+    }
+
+    /**
+     * Convertit un Workout en WorkoutFullDto
+     * @param workout L'entité Workout à convertir
+     * @param fcMax Fréquence cardiaque maximale de l'utilisateur (toujours définie)
+     * @return WorkoutFullDto complet avec tous les détails
+     */
+    public WorkoutFullDto toWorkoutFullDto(Workout workout, int fcMax) {
+        if (workout == null) {
+            return null;
+        }
+
+        WorkoutFullDto dto = new WorkoutFullDto();
+
+        // Informations de base
+        dto.setId(workout.getId());
+        dto.setSport(workout.getSport());
+        dto.setType(workout.getWorkoutType());
+        dto.setStatus(workout.getStatus());
+        dto.setStart(workout.getStartTime());
+        dto.setEnd(workout.getEndTime());
+        dto.setDurationSec(workout.getDurationSec());
+        dto.setDay(workout.getStartTime().getDayOfWeek());
+
+        // Métriques de performance
+        dto.setAvgHeartRate(workout.getAvgHeartRate());
+        dto.setDistanceMeters(workout.getDistanceMeters() > 0 ? workout.getDistanceMeters() : null);
+        dto.setCaloriesKcal(workout.getCaloriesKcal() > 0 ? workout.getCaloriesKcal() : null);
+
+        // Conversion du plan d'entraînement avec FC Max
+        dto.setPlan(convertWorkoutPlansToDto(workout.getPlans(), fcMax));
+
+        // Champs non encore implémentés
+        dto.setGrade(null);
+        dto.setAiReview(null);
+        dto.setPerformanceDetails(null);
+
+        return dto;
+    }
+
+    /**
+     * Convertit une liste de WorkoutPlan en WorkoutPlanDto
+     * @param workoutPlans Liste des plans d'entraînement
+     * @param fcMax Fréquence cardiaque maximale pour calculer les zones cibles
+     * @return Liste des WorkoutPlanDto
+     */
+    private List<WorkoutPlanDto> convertWorkoutPlansToDto(List<WorkoutPlan> workoutPlans, int fcMax) {
+        if (workoutPlans == null || workoutPlans.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return workoutPlans.stream()
+                .map(plan -> convertWorkoutPlanToDto(plan, fcMax))
+                .toList();
+    }
+
+    /**
+     * Convertit un WorkoutPlan en WorkoutPlanDto
+     * @param workoutPlan Plan d'entraînement à convertir
+     * @param fcMax Fréquence cardiaque maximale
+     * @return WorkoutPlanDto avec détails
+     */
+    private WorkoutPlanDto convertWorkoutPlanToDto(WorkoutPlan workoutPlan, int fcMax) {
+        WorkoutPlanDto dto = new WorkoutPlanDto();
+        dto.setBlocId(workoutPlan.getBlocId());
+        dto.setRepetitionCount(workoutPlan.getRepetitionCount());
+
+        // Conversion des détails avec calcul automatique des zones FC
+        if (workoutPlan.getDetails() != null && !workoutPlan.getDetails().isEmpty()) {
+            List<WorkoutPlanDetailsDto> detailsDto = workoutPlan.getDetails().stream()
+                    .map(detail -> new WorkoutPlanDetailsDto(detail, fcMax))
+                    .toList();
+            dto.setDetails(detailsDto);
+        } else {
+            dto.setDetails(new ArrayList<>());
+        }
+
+        return dto;
     }
 
     @Transactional

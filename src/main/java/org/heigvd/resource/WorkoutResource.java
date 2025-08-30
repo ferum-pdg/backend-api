@@ -27,6 +27,8 @@ import org.heigvd.service.AccountService;
 import org.heigvd.service.TrainingPlanService;
 import org.heigvd.service.WorkoutService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
+
+import javax.swing.text.html.Option;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -173,6 +175,16 @@ public class WorkoutResource {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
 
+            Optional<Account> optAccount = accountService.findById(authenticatedAccountId);
+
+            if (optAccount.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Account not found\"}")
+                        .build();
+            }
+
+            Account account = optAccount.get();
+
             Optional<Workout> workoutOpt = workoutService.getWorkoutByID(id);
 
             if (workoutOpt.isEmpty()) {
@@ -189,7 +201,9 @@ public class WorkoutResource {
                         .build();
             }
 
-            return Response.ok(workout).build();
+
+
+            return Response.ok(workoutService.toWorkoutFullDto(workout, account.getFCMax())).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")

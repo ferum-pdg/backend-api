@@ -8,6 +8,7 @@ import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
 import org.heigvd.entity.workout.data_point.BPMDataPoint;
 import org.heigvd.entity.workout.data_point.SpeedDataPoint;
+import org.heigvd.entity.workout.details.WorkoutPlan;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -66,6 +67,9 @@ public class Workout {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SpeedDataPoint> actualSpeedDataPoints = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkoutPlan> plans = new ArrayList<>();
 
     // CONSTRUCTORS ---------------------------------------------
 
@@ -151,6 +155,9 @@ public class Workout {
         }
     }
 
+    public List<WorkoutPlan> getPlans() { return plans; }
+    public void setPlans(List<WorkoutPlan> plans) { this.plans = plans; }
+
     @Override
     public String toString() {
         return " {" + "\n" +
@@ -158,6 +165,8 @@ public class Workout {
                 "   sport = " + sport +",\n" +
                 "   startTime = " + startTime.format(DateTimeFormatter.ofPattern("EEEE d MMMM 'at' HH:mm")) + ",\n" +
                 "   status = " + status +",\n" +
+                "   type = " + type +",\n" +
+                "   plans = " + plans + "\n" +
                 " }" + "\n";
     }
 }

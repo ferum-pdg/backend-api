@@ -10,6 +10,7 @@ import org.heigvd.entity.workout.Workout;
 import org.heigvd.entity.workout.WorkoutStatus;
 import org.heigvd.entity.workout.WorkoutType;
 import org.heigvd.service.TrainingPlanService;
+import org.heigvd.training_generator.interfaces.TrainingWorkoutGenerator;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -17,11 +18,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-public class TrainingWorkoutsGeneratorV1 {
+public class WorkoutGeneratorV1 implements TrainingWorkoutGenerator {
 
     @Inject
     TrainingPlanService trainingPlanService;
 
+    @Override
+    public String getVersion() {
+        return "V1";
+    }
+
+    @Override
     public List<Workout> generate(TrainingPlan trainingPlan, LocalDate actualDate) {
         Account account = trainingPlan.getAccount();
 
@@ -55,7 +62,6 @@ public class TrainingWorkoutsGeneratorV1 {
         List<Workout> workouts = new ArrayList<>();
 
         for(DailyPlan dp : dailyPlans) {
-            // First create the offsetDateTime for the day at 18:00
             OffsetDateTime startTime = monday
                     .plusDays(dp.getDayOfWeek().getValue() - 1)
                     .atTime(18, 0)

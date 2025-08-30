@@ -1,6 +1,7 @@
 package org.heigvd.dto.workout_dto;
 
 import org.heigvd.entity.workout.IntensityZone;
+import org.heigvd.entity.workout.details.WorkoutPlanDetails;
 
 public class WorkoutPlanDetailsDto {
 
@@ -19,6 +20,14 @@ public class WorkoutPlanDetailsDto {
         this.bpmMinTarget = bpmMinTarget;
         this.bpmMaxTarget = bpmMaxTarget;
         this.intensityZone = intensityZone;
+    }
+
+    public WorkoutPlanDetailsDto(WorkoutPlanDetails wpDetails, int fcMax) {
+        this.blocDetailId = wpDetails.getBlocDetailId();
+        this.durationSec = wpDetails.getDurationSec();
+        this.intensityZone = wpDetails.getIntensityZone();
+        this.bpmMinTarget = (int) Math.floor(fcMax * wpDetails.getIntensityZone().getMinHr());
+        this.bpmMaxTarget = (int) Math.floor(fcMax * wpDetails.getIntensityZone().getMaxHr());
     }
 
     // GETTERS & SETTERS ----------------------

@@ -1,5 +1,8 @@
 package org.heigvd.dto.workout_dto;
 
+import org.heigvd.entity.workout.details.WorkoutPlan;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class WorkoutPlanDto {
@@ -16,6 +19,11 @@ public class WorkoutPlanDto {
         this.blocId = blocId;
         this.repetitionCount = repetitionCount;
         this.details = details;
+    }
+
+    public WorkoutPlanDto(WorkoutPlan workoutPlan) {
+        this.blocId = workoutPlan.getBlocId();
+        this.repetitionCount = workoutPlan.getRepetitionCount();
     }
 
     // GETTERS & SETTERS ----------------------
