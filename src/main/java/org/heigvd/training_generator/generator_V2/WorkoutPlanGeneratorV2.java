@@ -21,6 +21,10 @@ public class WorkoutPlanGeneratorV2 implements WorkoutPlanGenerator {
     @Override
     public List<WorkoutPlan> generate(Sport sport, WorkoutType workoutType, int fitnessLevel,
                                       double progressionPercent, TrainingPlanPhase phase) {
+        if(workoutType == null) {
+            throw new IllegalArgumentException("Unsupported workout type: null");
+        }
+
         return switch (workoutType) {
             case EF -> generateEnduranceFondamentale(sport, fitnessLevel, progressionPercent, phase);
             case EA -> generateEnduranceActive(sport, fitnessLevel, progressionPercent, phase);

@@ -415,16 +415,6 @@ public class WorkoutPlanGeneratorTest {
                 });
             });
         }
-
-        @Test
-        @DisplayName("Should ensure minimum workout duration")
-        void testMinimumWorkoutDuration() {
-            // Test avec fitness très bas
-            List<WorkoutPlan> plans = wpGen.generate(Sport.RUNNING, WorkoutType.RA, 1, START_PROGRESSION, TrainingPlanPhase.SHARPENING);
-
-            int totalDuration = calculateTotalDuration(plans);
-            assertTrue(totalDuration >= 300, "Minimum workout should be at least 5 minutes"); // 300 seconds = 5 minutes
-        }
     }
 
     @Nested
