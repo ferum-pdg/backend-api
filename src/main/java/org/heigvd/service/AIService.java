@@ -45,6 +45,8 @@ public class AIService {
             return "Clé API Groq non configurée.";
         }
 
+        System.out.println("API KEY: " + apiKey);
+
         try {
             String requestBody = createRequestJson(activityJson);
 

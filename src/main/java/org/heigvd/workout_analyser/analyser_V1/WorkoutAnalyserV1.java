@@ -2,13 +2,16 @@ package org.heigvd.workout_analyser.analyser_V1;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.heigvd.dto.workout_dto.WorkoutFullDto;
 import org.heigvd.entity.workout.Workout;
 import org.heigvd.entity.workout.WorkoutStatus;
 import org.heigvd.entity.workout.data_point.BPMDataPoint;
 import org.heigvd.entity.workout.details.WorkoutPlan;
 import org.heigvd.entity.workout.details.WorkoutPlanDetails;
+import org.heigvd.service.AIService;
 import org.heigvd.service.AccountService;
 import org.heigvd.service.FitnessLevelService;
+import org.heigvd.service.WorkoutService;
 import org.heigvd.workout_analyser.interfaces.WorkoutAnalyser;
 import java.util.List;
 
@@ -17,6 +20,12 @@ public class WorkoutAnalyserV1 implements WorkoutAnalyser {
 
     @Inject
     AccountService accountService;
+
+    @Inject
+    AIService aiService;
+
+    @Inject
+    WorkoutService workoutService;
 
     @Inject
     FitnessLevelService fitnessLevelService;
@@ -30,6 +39,10 @@ public class WorkoutAnalyserV1 implements WorkoutAnalyser {
         // Calculer la note de l'entraînement
         double grade = gradeWorkout(workout);
         workout.setGrade(grade);
+
+        WorkoutFullDto workoutDto = workoutService.toWorkoutFullDto(workout, workout.getAccount().getFCMax());
+        String aiFeedback = aiService.analyzeSportActivity(workoutDto.toString());
+        workout.setAiAnalysis(aiFeedback);
 
         // Mettre à jour le fitness level si nécessaire
         fitnessLevelService.updateFitnessLevel(workout.getAccount(), workout, grade);

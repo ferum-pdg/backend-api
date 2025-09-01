@@ -166,6 +166,9 @@ public class Workout {
     public Double getGrade() { return grade; }
     public void setGrade(Double grade) { this.grade = grade; }
 
+    public String getAiAnalysis() { return aiAnalysis; }
+    public void setAiAnalysis(String aiAnalysis) { this.aiAnalysis = aiAnalysis; }
+
     @Override
     public String toString() {
         return " {" + "\n" +

@@ -174,6 +174,7 @@ public class WorkoutService {
         dto.setDurationSec(workout.getDurationSec());
         dto.setDay(workout.getStartTime().getDayOfWeek());
         dto.setGrade(workout.getGrade());
+        dto.setAiReview(workout.getAiAnalysis());
 
         // Métriques de performance
         dto.setAvgHeartRate(workout.getAvgHeartRate());
@@ -182,9 +183,6 @@ public class WorkoutService {
 
         // Conversion du plan d'entraînement avec FC Max
         dto.setPlan(convertWorkoutPlansToDto(workout.getPlans(), fcMax));
-
-        // Champs non encore implémentés
-        dto.setAiReview(null);
 
         return dto;
     }
