@@ -3,7 +3,7 @@ name: Build and publish Docker image on prod
 on:
   push:
     branches:
-      - prod
+      - cd-ci
 
 permissions:
   contents: read
