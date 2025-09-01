@@ -110,4 +110,28 @@ public class WorkoutFullDto {
 
     public List<WorkoutPerfDetailsDto> getPerformanceDetails() { return performanceDetails; }
     public void setPerformanceDetails(List<WorkoutPerfDetailsDto> performanceDetails) { this.performanceDetails = performanceDetails; }
+
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("WorkoutFullDto{");
+        sb.append("id=").append(id);
+        sb.append(", sport=").append(sport);
+        sb.append(", type=").append(type);
+        sb.append(", status=").append(status);
+        sb.append(", start=").append(start);
+        sb.append(", end=").append(end);
+        sb.append(", day=").append(day);
+        sb.append(", durationSec=").append(durationSec);
+        sb.append(", avgHeartRate=").append(avgHeartRate);
+        sb.append(", distanceMeters=").append(distanceMeters);
+        sb.append(", caloriesKcal=").append(caloriesKcal);
+        sb.append(", grade=").append(grade);
+        sb.append(", aiReview='").append(aiReview).append('\'');
+        sb.append(", plan=").append(plan);
+        sb.append(", performanceDetails=").append(performanceDetails);
+        sb.append('}');
+        return sb.toString();
+    }
 }

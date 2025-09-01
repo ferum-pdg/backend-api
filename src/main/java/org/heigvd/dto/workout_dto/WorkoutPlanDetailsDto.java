@@ -46,4 +46,15 @@ public class WorkoutPlanDetailsDto {
 
     public IntensityZone getIntensityZone() { return intensityZone; }
     public void setIntensityZone(IntensityZone intensityZone) { this.intensityZone = intensityZone; }
+
+    @Override
+    public String toString() {
+        return "WorkoutPlanDetailsDto{" +
+                "blocDetailId=" + blocDetailId +
+                ", durationSec=" + durationSec +
+                ", bpmMinTarget=" + bpmMinTarget +
+                ", bpmMaxTarget=" + bpmMaxTarget +
+                ", intensityZone=" + intensityZone +
+                '}';
+    }
 }
