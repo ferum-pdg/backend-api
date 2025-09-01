@@ -165,8 +165,9 @@ gradle-app.setting
 
 # misc
 .DS_Store
+.env
 .env.development
-.env.development.local
+.env
 .env.test.local
 .env.production.local
 
@@ -174,4 +175,4 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-*.secrets
+*.secrets.env
