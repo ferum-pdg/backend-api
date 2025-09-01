@@ -8,10 +8,12 @@ import org.heigvd.dto.workout_dto.WorkoutFullDto;
 import org.heigvd.dto.workout_dto.WorkoutPlanDetailsDto;
 import org.heigvd.dto.workout_dto.WorkoutPlanDto;
 import org.heigvd.dto.workout_dto.WorkoutUploadDto;
+import org.heigvd.dto.workout_dto.data_point_dto.WorkoutPerfDetailsDto;
 import org.heigvd.entity.*;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.workout.Workout;
 import org.heigvd.entity.workout.WorkoutStatus;
+import org.heigvd.entity.workout.data_point.BPMDataPoint;
 import org.heigvd.entity.workout.details.WorkoutPlan;
 
 import java.time.LocalDate;
@@ -54,70 +56,6 @@ public class WorkoutService {
     }
 
     /**
-     * Liste les workouts d'un utilisateur, triés par date décroissante.
-     * @param accountId identifiant du compte
-     * @return liste des workouts
-     */
-    public List<Workout> findByAccountId(UUID accountId) {
-        return em.createQuery(
-                        "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
-                                "ORDER BY w.startTime DESC",
-                        Workout.class)
-                .setParameter("accountId", accountId)
-                .getResultList();
-    }
-
-    @Transactional
-    public List<Workout> getCurrentWeekWorkouts(UUID accountId) {
-        OffsetDateTime now = OffsetDateTime.now();
-        // On prend le LocalDate courant
-        LocalDate today = now.toLocalDate();
-        // Début de semaine = lundi 00:00
-        LocalDateTime startOfWeekLdt = today
-                .with(java.time.DayOfWeek.MONDAY)
-                .atStartOfDay();
-        // Fin de semaine = dimanche 23:59:59
-        LocalDateTime endOfWeekLdt = startOfWeekLdt.plusDays(6).withHour(23).withMinute(59).withSecond(59);
-        // Conversion en OffsetDateTime avec le même offset que "now"
-        OffsetDateTime startOfWeek = startOfWeekLdt.atOffset(now.getOffset());
-        OffsetDateTime endOfWeek   = endOfWeekLdt.atOffset(now.getOffset());
-
-        return em.createQuery(
-                        "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
-                                "AND w.startTime >= :startOfWeek AND w.startTime <= :endOfWeek " +
-                                "ORDER BY w.startTime ASC",
-                        Workout.class)
-                .setParameter("accountId", accountId)
-                .setParameter("startOfWeek", startOfWeek)
-                .setParameter("endOfWeek", endOfWeek)
-                .getResultList();
-    }
-
-    public List<Workout> getWorkoutForWeek(UUID accountId, int weekNumber) {
-        Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
-        if (tp.isEmpty()) {
-            return List.of();
-        } else {
-            LocalDate planStartDate = tp.get().getStartDate();
-            LocalDate startOfWeek = planStartDate.plusWeeks(weekNumber - 1).with(java.time.DayOfWeek.MONDAY);
-            LocalDate endOfWeek = startOfWeek.plusDays(6);
-
-            OffsetDateTime startOfWeekOdt = startOfWeek.atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
-            OffsetDateTime endOfWeekOdt = endOfWeek.atTime(23, 59, 59).atOffset(OffsetDateTime.now().getOffset());
-
-            return em.createQuery(
-                            "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
-                                    "AND w.startTime >= :startOfWeek AND w.startTime <= :endOfWeek " +
-                                    "ORDER BY w.startTime ASC",
-                            Workout.class)
-                    .setParameter("accountId", accountId)
-                    .setParameter("startOfWeek", startOfWeekOdt)
-                    .setParameter("endOfWeek", endOfWeekOdt)
-                    .getResultList();
-        }
-    }
-
-    /**
      * Liste les workouts d'un utilisateur pour un sport donné.
      * @param accountId identifiant du compte
      * @param sport sport ciblé
@@ -131,24 +69,6 @@ public class WorkoutService {
                 .setParameter("accountId", accountId)
                 .setParameter("sport", sport)
                 .getResultList();
-    }
-
-    public List<Workout> getNextNWorkouts(UUID accountId) {
-        Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
-        if(tp.isEmpty()) {
-            return getAllWorkouts(accountId);
-        } else {
-            Integer nbWorkouts = trainingPlanService.getNbWorkoutsPerWeek(accountId);
-            // return the next nbWorkouts for the user based on the current date
-            return em.createQuery(
-                            "SELECT w FROM Workout w WHERE w.account.id = :accountId AND w.startTime >= :startTime " +
-                                    "ORDER BY w.startTime ASC",
-                            Workout.class)
-                    .setParameter("accountId", accountId)
-                    .setParameter("startTime", OffsetDateTime.now())
-                    .setMaxResults(nbWorkouts)
-                    .getResultList();
-        }
     }
 
     public List<Workout> getAllWorkouts(UUID accountId) {
@@ -253,21 +173,77 @@ public class WorkoutService {
         dto.setEnd(workout.getEndTime());
         dto.setDurationSec(workout.getDurationSec());
         dto.setDay(workout.getStartTime().getDayOfWeek());
+        dto.setGrade(workout.getGrade());
+        dto.setAiReview(workout.getAiAnalysis());
 
         // Métriques de performance
         dto.setAvgHeartRate(workout.getAvgHeartRate());
         dto.setDistanceMeters(workout.getDistanceMeters() > 0 ? workout.getDistanceMeters() : null);
         dto.setCaloriesKcal(workout.getCaloriesKcal() > 0 ? workout.getCaloriesKcal() : null);
+        dto.setPerformanceDetails(buildWorkoutPerfDetailsToDto(workout));
 
         // Conversion du plan d'entraînement avec FC Max
         dto.setPlan(convertWorkoutPlansToDto(workout.getPlans(), fcMax));
 
-        // Champs non encore implémentés
-        dto.setGrade(null);
-        dto.setAiReview(null);
-        dto.setPerformanceDetails(null);
-
         return dto;
+    }
+
+    private List<WorkoutPerfDetailsDto> buildWorkoutPerfDetailsToDto(Workout workout) {
+        List<BPMDataPoint> bpmDataPoints = workout.getActualBPMDataPoints();
+        List<WorkoutPlan> plans = workout.getPlans();
+        List<WorkoutPerfDetailsDto> perfDetails = new ArrayList<>();
+
+        if (bpmDataPoints == null || bpmDataPoints.isEmpty() || plans == null || plans.isEmpty()) {
+            return null;
+        }
+
+        int durationSec = 0;
+
+        for(WorkoutPlan plan : plans) {
+            if (plan.getDetails() == null || plan.getDetails().isEmpty()) {
+                continue;
+            }
+
+            for (var detail : plan.getDetails()) {
+                LocalDateTime detailStart = workout.getStartTime().toLocalDateTime().plusSeconds(durationSec);
+                durationSec += detail.getDurationSec();
+                LocalDateTime detailEnd = workout.getStartTime().toLocalDateTime().plusSeconds(durationSec);
+
+                // Filtrer les BPMDataPoints qui tombent dans l'intervalle de temps du détail
+                List<BPMDataPoint> relevantBPMs = bpmDataPoints.stream()
+                        .filter(bpm -> {
+                            LocalDateTime bpmTime = bpm.getTimestamp().toLocalDateTime();
+                            return !bpmTime.isBefore(detailStart) && !bpmTime.isAfter(detailEnd);
+                        })
+                        .toList();
+
+                if (!relevantBPMs.isEmpty()) {
+                    // Calculer la moyenne des BPMs pertinents
+                    double avgBPM = relevantBPMs.stream()
+                            .mapToDouble(BPMDataPoint::getBpm)
+                            .average()
+                            .orElse(0.0);
+
+                    int fcMax = workout.getAccount().getFCMax();
+
+                    WorkoutPerfDetailsDto perfDetail = new WorkoutPerfDetailsDto();
+                    perfDetail.setBlocId(plan.getBlocId());
+                    perfDetail.setPlannedBPMMin(detail.getIntensityZone().getMinHr() * fcMax);
+                    perfDetail.setPlannedBPMMax(detail.getIntensityZone().getMaxHr() * fcMax);
+                    perfDetail.setActualBPMMean(Math.round(avgBPM));
+                    perfDetails.add(perfDetail);
+                } else {
+                    // Aucun BPM pertinent trouvé pour ce détail
+                    WorkoutPerfDetailsDto perfDetail = new WorkoutPerfDetailsDto();
+                    perfDetail.setBlocId(plan.getBlocId());
+                    perfDetail.setPlannedBPMMin(detail.getIntensityZone().getMinHr() * workout.getAccount().getFCMax());
+                    perfDetail.setPlannedBPMMax(detail.getIntensityZone().getMaxHr() * workout.getAccount().getFCMax());
+                    perfDetails.add(perfDetail);
+                }
+            }
+        }
+
+        return perfDetails;
     }
 
     /**
@@ -325,7 +301,6 @@ public class WorkoutService {
         newWorkout.setSource(workout.getSource());
         newWorkout.setDurationSec((int) (newWorkout.getEndTime().toEpochSecond() - newWorkout.getStartTime().toEpochSecond()));
         newWorkout.setAvgSpeed(workout.getAvgSpeed());
-
         newWorkout.setActualBPMDataPoints(workout.getBpmDataPoints());
         newWorkout.setActualSpeedDataPoints(workout.getSpeedDataPoints());
 
@@ -347,7 +322,6 @@ public class WorkoutService {
         existingWorkout.setSource(workout.getSource());
         existingWorkout.setDurationSec((int) (existingWorkout.getEndTime().toEpochSecond() - existingWorkout.getStartTime().toEpochSecond()));
         existingWorkout.setAvgSpeed(workout.getAvgSpeed());
-
         existingWorkout.setActualBPMDataPoints(workout.getBpmDataPoints());
         existingWorkout.setActualSpeedDataPoints(workout.getSpeedDataPoints());
 

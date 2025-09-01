@@ -165,8 +165,9 @@ gradle-app.setting
 
 # misc
 .DS_Store
+.env
 .env.development
-.env.development.local
+.env
 .env.test.local
 .env.production.local
 

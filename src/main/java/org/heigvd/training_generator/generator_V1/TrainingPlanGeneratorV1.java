@@ -184,8 +184,16 @@ public class TrainingPlanGeneratorV1 implements TrainingPlanGenerator {
                 .mapToInt(Goal::getNbOfWorkoutsPerWeek)
                 .sum();
 
+        int totalNbWorkout = goals.stream()
+                .mapToInt(Goal::getNbOfWorkoutsPerWeek)
+                .sum();
+
         if(swimmingNbWorkout == 0) {
             throw new IllegalArgumentException("Multiple workouts per day are only allowed if swimming is one of the goals.");
+        }
+
+        if(totalNbWorkout - swimmingNbWorkout > availableDays.size()) {
+            throw new IllegalArgumentException("Not enough available days for theses goals.");
         }
 
         List<DayOfWeek> swimmingDays = generateTrivialAvailableDays(availableDays, swimmingNbWorkout);

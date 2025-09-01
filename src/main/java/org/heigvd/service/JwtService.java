@@ -3,6 +3,7 @@ package org.heigvd.service;
 import io.smallrye.jwt.build.Jwt;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,6 +25,7 @@ public class JwtService {
                 .upn(userId.toString())
                 .subject(userId.toString())
                 .groups(Set.of("user"))
+                .expiresIn(Duration.ofDays(30))
                 .sign();
     }
 }

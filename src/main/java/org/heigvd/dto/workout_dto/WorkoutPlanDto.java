@@ -37,4 +37,12 @@ public class WorkoutPlanDto {
     public List<WorkoutPlanDetailsDto> getDetails() { return details; }
     public void setDetails(List<WorkoutPlanDetailsDto> details) { this.details = details; }
 
+    @Override
+    public String toString() {
+        return "WorkoutPlanDto{" +
+                "blocId=" + blocId +
+                ", repetitionCount=" + repetitionCount +
+                ", details=" + details +
+                '}';
+    }
 }
