@@ -31,4 +31,14 @@ public class WorkoutPerfDetailsDto {
 
     public int getActualBPMMean() { return actualBPMMean; }
     public void setActualBPMMean(int actualBPMMean) { this.actualBPMMean = actualBPMMean; }
+
+    @Override
+    public String toString() {
+        return "WorkoutPerfDetailsDto{" +
+                "blocId=" + blocId +
+                ", plannedBPMMin=" + plannedBPMMin +
+                ", plannedBPMMax=" + plannedBPMMax +
+                ", actualBPMMean=" + actualBPMMean +
+                '}';
+    }
 }
