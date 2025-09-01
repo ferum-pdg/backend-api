@@ -70,46 +70,31 @@ public class AIService {
     }
 
     private String createRequestJson(String activityJson) throws Exception {
-        String prompt = String.format("""
-                Tu es un coach sportif intelligent spécialisé dans l'analyse de données d'entraînement multi-sport. Analyse les données JSON d'activités sportives (RUNNING, SWIMMING, CYCLING) et fournis des conseils personnalisés dans le style d'Athlete Intelligence.
-                
-                **Instructions :**
-                1. Adapte l'analyse selon le sport détecté dans le champ "sport"
-                2. Compare les performances réelles aux objectifs planifiés pour chaque bloc
-                3. Évalue la conformité aux zones de FC : parfait (±2 bpm), bon (±5 bpm), à ajuster (>5 bpm)
-                4. Fournis d'abord un aperçu rapide, puis propose une analyse détaillée
-                
-                **Format de réponse :**
-                
-                **[SPORT] - [TYPE] | Note: [GRADE]/10**
-                
-                **Aperçu rapide :**
-                Séance [qualificatif] en [durée formatée] sur [distance][unité]. [Métrique selon sport]. FC moyenne [avgHeartRate] bpm. [Bref commentaire sur la conformité au plan]
-                
-                **Conseil express :**
-                [Une phrase motivante de recommandation principale adaptée au sport]                   
-                
-                **Analyse par bloc :**
-                • Bloc 1 - [intensityZone] ([durée]): FC [actualBPMMean] vs cible [plannedBPMMin-plannedBPMMax] → [évaluation détaillée]
-                • Bloc 2 - [intensityZone] ([durée]): FC [actualBPMMean] vs cible [plannedBPMMin-plannedBPMMax] → [évaluation détaillée]
-                [continuer pour tous les blocs]
-                
-                **Analyse technique :**
-                [Points forts, faiblesses, progression observée - adaptés au sport]
-                
-                **Spécificités par sport :**
-                - **RUNNING** : Focus sur allure, foulée, gestion du dénivelé
-                - **CYCLING** : Focus sur vitesse, puissance, cadence, aérodynamisme \s
-                - **SWIMMING** : Focus sur technique, respiration, virages, allure au 100m
-                
-                **Unités à utiliser :**
-                - **RUNNING/CYCLING** : distance en km
-                - **SWIMMING** : distance en m (si <2000m) ou km (si >2000m)
-                
-                Adopte un ton professionnel, motivant et factuel. L'aperçu doit être concis et impactant, l'analyse détaillée approfondie et spécialisée selon le sport.
-            
-            %s
-            """, activityJson);
+        String prompt = """
+        Ton et style:
+        Encourageant et positif: Commence toujours par féliciter l'effort
+        Personnalisé: Adapte-toi au type de sport et à la performance
+
+        Éléments à analyser:
+        Performance vs objectifs: Compare la durée, distance, calories avec les moyennes
+        Zone cardiaque: Évalue si la fréquence cardiaque correspond au type d'entraînement
+        Progression: Note les améliorations par rapport aux séances précédentes
+        Équilibre effort/récupération: Conseille selon l'intensité
+
+        Format de réponse:
+        Félicitations + observation sur la performance + conseil/objectif pour la suite
+        sans titres ni paragraphes et le tout de faire une centaine de mots max
+
+        Exemples selon le contexte:
+        Sortie tranquille réussie: "Belle sortie en zone 2 ! Parfait pour développer ton endurance de base. Continue à 65-75%% de ta FCmax pour optimiser ces séances."
+        Performance exceptionnelle: "Excellente performance ! Tu as maintenu un rythme soutenu sur toute la distance. Prochaine étape : essaie d'ajouter 5-10%% de distance."
+        Séance difficile: "Bravo d'avoir terminé cette séance exigeante ! Ton corps s'adapte. Pense à bien récupérer avant le prochain entraînement intensif."
+
+        Données d'entraînement à analyser(ces données concernent qu'un seul sortie):
+           \s
+        %s
+       \s
+       \s""".formatted(activityJson);
 
         return String.format("""
             {
@@ -117,21 +102,17 @@ public class AIService {
               "messages": [
                 {
                   "role": "system",
-                  "content": "Tu es un coach sportif expert en français. Analyse les données sportives et donne des conseils constructifs et motivants."
+                  "content": "Tu es un coach sportif expert en français."
                 },
                 {
-                  "role": "user", 
+                  "role": "user",\s
                   "content": %s
                 }
-              ],
-              "max_tokens": %d,
-              "temperature": %.1f
+              ]
             }
-            """,
+           \s""",
                 model,
-                objectMapper.writeValueAsString(prompt),
-                maxTokens,
-                temperature
+                objectMapper.writeValueAsString(prompt)
         );
     }
 
@@ -147,58 +128,9 @@ public class AIService {
         JsonNode choices = jsonResponse.get("choices");
 
         if (choices != null && !choices.isEmpty()) {
-            String content = choices.get(0).get("message").get("content").asText();
-
-            JsonNode usage = jsonResponse.get("usage");
-            if (usage != null && usage.has("total_tokens")) {
-                int totalTokens = usage.get("total_tokens").asInt();
-                content += String.format("\n\nTokens utilisés: %d", totalTokens);
-            }
-
-            return content;
+            return choices.get(0).get("message").get("content").asText();
         }
 
         return "Aucune réponse dans la réponse JSON";
-    }
-
-    public String pingGroq() {
-        if (apiKey == null || apiKey.isEmpty() || "your-groq-key-here".equals(apiKey)) {
-            return "Clé API Groq non configurée";
-        }
-
-        try {
-            String testJson = String.format("""
-                {
-                  "model": "%s",
-                  "messages": [
-                    {"role": "user", "content": "Dis juste 'PING OK' uniquement"}
-                  ],
-                  "max_tokens": 10
-                }
-                """, model);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(apiUrl))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + apiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(testJson))
-                    .timeout(Duration.ofSeconds(timeout))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request,
-                    HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                JsonNode jsonResponse = objectMapper.readTree(response.body());
-                String content = jsonResponse.get("choices").get(0)
-                        .get("message").get("content").asText();
-                return content;
-            } else {
-                return "Erreur ping (" + response.statusCode() + ")";
-            }
-
-        } catch (Exception e) {
-            return "Problème ping : " + e.getMessage();
-        }
     }
 }
