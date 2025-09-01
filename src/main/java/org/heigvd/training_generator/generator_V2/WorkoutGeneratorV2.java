@@ -14,6 +14,7 @@ import org.heigvd.entity.workout.WorkoutType;
 import org.heigvd.entity.workout.details.WorkoutPlan;
 import org.heigvd.service.TrainingGeneratorService;
 import org.heigvd.service.TrainingPlanService;
+import org.heigvd.service.WorkoutService;
 import org.heigvd.training_generator.interfaces.TrainingWorkoutGenerator;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -27,6 +28,9 @@ public class WorkoutGeneratorV2 implements TrainingWorkoutGenerator {
 
     @Inject
     TrainingPlanService trainingPlanService;
+
+    @Inject
+    WorkoutService workoutService;
 
     @Inject
     TrainingGeneratorService tgs;
@@ -65,6 +69,56 @@ public class WorkoutGeneratorV2 implements TrainingWorkoutGenerator {
         }
 
         return workouts;
+    }
+
+    /**
+     * Synchronise les entraînements en générant tous ceux manquants depuis le dernier
+     * entraînement possédant un WorkoutPlan jusqu'à la semaine suivante incluse
+     * @param trainingPlan Plan d'entraînement à synchroniser
+     * @return Liste des nouveaux entraînements générés
+     */
+    @Override
+    public List<Workout> sync(TrainingPlan trainingPlan, LocalDate today) {
+        if (trainingPlan == null) {
+            throw new IllegalArgumentException("Training plan cannot be null");
+        }
+
+        Account account = trainingPlan.getAccount();
+        List<Workout> newWorkouts = new ArrayList<>();
+
+        LocalDate lastGeneratedWorkoutDate = workoutService.getLastGeneratedWorkoutDate(account);
+
+        LocalDate endDate = today.plusWeeks(1).with(java.time.DayOfWeek.SUNDAY);
+
+        if (lastGeneratedWorkoutDate != null && !lastGeneratedWorkoutDate.isBefore(endDate)) {
+            return newWorkouts;
+        }
+
+        int currentWeekNumber = trainingPlanService.getWeekNumberForDate(trainingPlan, today);
+
+        newWorkouts.addAll(
+            generateWorkoutForWeek(
+                trainingPlan,
+                trainingPlan.getWeeklyPlans().get(currentWeekNumber),
+                today.minusDays(today.getDayOfWeek().getValue() - 1),
+                account,
+                currentWeekNumber
+            )
+        );
+
+        if (currentWeekNumber < trainingPlan.getWeeklyPlans().size()) {
+            newWorkouts.addAll(
+                    generateWorkoutForWeek(
+                            trainingPlan,
+                            trainingPlan.getWeeklyPlans().get(currentWeekNumber + 1),
+                            today.plusWeeks(1).minusDays(today.plusWeeks(1).getDayOfWeek().getValue() - 1),
+                            account,
+                            currentWeekNumber + 1
+                    )
+            );
+        }
+
+        return newWorkouts;
     }
 
     /**
@@ -119,7 +173,8 @@ public class WorkoutGeneratorV2 implements TrainingWorkoutGenerator {
                     startTime.plusMinutes(estimatedDurationMinutes),
                     "Smart Training Generator V2",
                     WorkoutStatus.PLANNED,
-                    workoutType
+                    workoutType,
+                    trainingPlan
             );
 
             workout.setPlans(workoutPlans);

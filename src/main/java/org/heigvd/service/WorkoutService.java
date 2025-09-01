@@ -13,6 +13,7 @@ import org.heigvd.entity.*;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.workout.Workout;
 import org.heigvd.entity.workout.WorkoutStatus;
+import org.heigvd.entity.workout.WorkoutType;
 import org.heigvd.entity.workout.data_point.BPMDataPoint;
 import org.heigvd.entity.workout.details.WorkoutPlan;
 
@@ -91,6 +92,16 @@ public class WorkoutService {
                 .getResultList();
     }
 
+    public List<Workout> getAllGeneratedWorkouts(UUID accountId, UUID trainingPlanId) {
+        return em.createQuery(
+                        "SELECT w FROM Workout w JOIN w.plans p WHERE w.account.id = :accountId " +
+                                "AND w.trainingPlan.id = :trainingPlanId ORDER BY w.startTime DESC",
+                        Workout.class)
+                .setParameter("accountId", accountId)
+                .setParameter("trainingPlanId", trainingPlanId)
+                .getResultList();
+    }
+
     @Transactional
     /**
      * Crée un nouveau workout.
@@ -149,6 +160,19 @@ public class WorkoutService {
         for (Workout w : workouts) {
             em.persist(w);
         }
+    }
+
+    public LocalDate getLastGeneratedWorkoutDate(Account account) {
+        return em.createQuery(
+                        "SELECT w FROM Workout w WHERE w.account.id = :accountId" +
+                                " AND w.plans IS NOT EMPTY ORDER BY w.startTime DESC",
+                        Workout.class)
+                .setParameter("accountId", account.getId())
+                .setMaxResults(1)
+                .getResultStream()
+                .findFirst()
+                .map(w -> w.getStartTime().toLocalDate())
+                .orElse(null);
     }
 
     /**

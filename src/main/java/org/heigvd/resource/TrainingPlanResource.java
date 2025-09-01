@@ -54,9 +54,10 @@ public class TrainingPlanResource {
     TrainingGeneratorService tgs;
 
     @Inject
-    EntityManager em;
-    @Inject
     WorkoutService workoutService;
+
+    @Inject
+    EntityManager em;
 
     @GET
     /**
@@ -86,7 +87,7 @@ public class TrainingPlanResource {
                 tp.get().getId(),
                 trainingPlanService.getCurrentWeekNb(tp.get()),
                 tp.get().getWeeklyPlans().size(),
-                tp.get().getWorkouts().size(),
+                workoutService.getAllGeneratedWorkouts(accountId, tp.get().getId()).size(),
                 tp.get().getWeeklyPlans().stream().mapToInt(wp -> wp.getDailyPlans().size()).sum(),
                 tp.get().getWeeklyPlans().get(trainingPlanService.getCurrentWeekNb(tp.get())-1)
         );

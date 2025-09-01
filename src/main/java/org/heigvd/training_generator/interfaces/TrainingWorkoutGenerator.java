@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface TrainingWorkoutGenerator {
     List<Workout> generate(TrainingPlan trainingPlan, LocalDate actualDate);
+    List<Workout> sync(TrainingPlan trainingPlan, LocalDate actualDate);
     String getVersion();
 }
