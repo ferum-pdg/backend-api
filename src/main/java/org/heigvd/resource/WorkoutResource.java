@@ -1,16 +1,11 @@
 package org.heigvd.resource;
 
 import io.quarkus.security.Authenticated;
-
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
-import org.heigvd.dto.workout_dto.WorkoutFullDto;
-import org.heigvd.dto.workout_dto.WorkoutLightDto;
-import org.heigvd.dto.workout_dto.WorkoutUploadDto;
-import jakarta.persistence.EntityManager;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -20,6 +15,9 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.heigvd.dto.workout_dto.WorkoutFullDto;
+import org.heigvd.dto.workout_dto.WorkoutLightDto;
+import org.heigvd.dto.workout_dto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
 import org.heigvd.entity.training_plan.TrainingPlan;
@@ -30,7 +28,6 @@ import org.heigvd.service.WorkoutAnalyserService;
 import org.heigvd.service.WorkoutService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
-import javax.swing.text.html.Option;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +44,6 @@ import java.util.UUID;
 @Produces(RestMediaType.APPLICATION_JSON)
 @Consumes(RestMediaType.APPLICATION_JSON)
 @Tag(name = "Workouts", description = "Gestion des séances d'entraînement")
-@SecurityRequirement(name = "bearerAuth")
 public class WorkoutResource {
 
     @Inject
@@ -63,12 +59,29 @@ public class WorkoutResource {
     TrainingPlanService trainingPlanService;
 
     /**
-     * Get the current and next week workouts for the authenticated user
-     * @param context SecurityContext to get the authenticated user
-     * @return Response containing the list of the nexts n workouts or an error message
+     * Récupère les prochains workouts de l'utilisateur authentifié.
+     *
+     * @param context Contexte de sécurité contenant l'identité JWT
      */
     @GET
-    public Response getMyNextWorkouts(@Context SecurityContext context) {
+    @Operation(
+            summary = "Mes prochains workouts",
+            description = "Retourne les prochains workouts de la semaine courante et suivante pour l'utilisateur authentifié."
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Liste des prochains workouts",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = WorkoutLightDto.class))
+            ),
+            @APIResponse(responseCode = "401", description = "Non authentifié"),
+            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
+    public Response getMyNextWorkouts(
+            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
+            @Context SecurityContext context) {
         try {
             UUID accountId = UUID.fromString(context.getUserPrincipal().getName());
 
@@ -101,14 +114,36 @@ public class WorkoutResource {
 
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .entity("{\"error\": \"Erreur interne du serveur\"}")
                     .build();
         }
     }
 
+    /**
+     * Récupère tous les workouts de l'utilisateur authentifié.
+     *
+     * @param context Contexte de sécurité contenant l'identité JWT
+     */
     @GET
     @Path("/all")
-    public Response getAllMyWorkouts(@Context SecurityContext context) {
+    @Operation(
+            summary = "Tous mes workouts",
+            description = "Retourne tous les workouts de l'utilisateur authentifié."
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Liste complète des workouts",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = WorkoutLightDto.class))
+            ),
+            @APIResponse(responseCode = "401", description = "Non authentifié"),
+            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
+    public Response getAllMyWorkouts(
+            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
+            @Context SecurityContext context) {
         try {
             UUID accountId = UUID.fromString(context.getUserPrincipal().getName());
 
@@ -122,59 +157,106 @@ public class WorkoutResource {
 
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .entity("{\"error\": \"Erreur interne du serveur\"}")
                     .build();
         }
     }
 
+    /**
+     * Crée un nouveau workout à partir des données enregistrées.
+     *
+     * @param context Contexte de sécurité contenant l'identité JWT
+     * @param workoutDto Données du workout à créer
+     */
     @POST
     @Transactional
-    public Response insertNewRecordedWorkout(@Context SecurityContext context, @Valid WorkoutUploadDto workoutDto) {
-        UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
-        Optional<Account> a = accountService.findById(authenticatedAccountId);
+    @Operation(
+            summary = "Créer un workout",
+            description = "Crée un nouveau workout à partir des données d'entraînement enregistrées."
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Workout créé avec succès",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = WorkoutLightDto.class))
+            ),
+            @APIResponse(responseCode = "400", description = "Données invalides ou compte introuvable"),
+            @APIResponse(responseCode = "401", description = "Non authentifié"),
+            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
+    @RequestBody(
+            description = "Données du workout à enregistrer",
+            required = true,
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = WorkoutUploadDto.class))
+    )
+    public Response insertNewRecordedWorkout(
+            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
+            @Context SecurityContext context,
+            @Parameter(description = "Données du workout à créer", required = true)
+            @Valid WorkoutUploadDto workoutDto) {
+        try {
+            UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
+            Optional<Account> a = accountService.findById(authenticatedAccountId);
 
-        if(a.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"Account not found\"}")
+            if(a.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Compte introuvable\"}")
+                        .build();
+            }
+
+            Optional<Workout> w = workoutService.findClosestWorkout(workoutDto, a.get());
+            Workout toReturn;
+
+            if (w.isEmpty()) {
+                System.out.println("Creating new workout");
+                toReturn = workoutService.createWorkoutOutOfTP(a.get(), workoutDto);
+            } else {
+                System.out.println("Merging with existing workout");
+                toReturn = was.analyse(workoutService.mergeWorkoutWithExisting(w.get(), workoutDto));
+            }
+
+            return Response.ok(new WorkoutLightDto(toReturn)).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"Erreur interne du serveur\"}")
                     .build();
         }
-
-        Optional<Workout> w = workoutService.findClosestWorkout(workoutDto, a.get());
-        Workout toReturn;
-
-        if (w.isEmpty()) {
-            System.out.println("Creating new workout");
-            toReturn = workoutService.createWorkoutOutOfTP(a.get(), workoutDto);
-        } else {
-            System.out.println("Merging with existing workout");
-            toReturn = was.analyse(workoutService.mergeWorkoutWithExisting(w.get(), workoutDto));
-        }
-
-        return Response.ok(new WorkoutLightDto(toReturn)).build();
     }
 
-
-    @GET
-    @Path("/{id}")
     /**
      * Récupère un workout par identifiant.
      *
      * @param id Identifiant du workout
-     * @param context Contexte de sécurité
+     * @param context Contexte de sécurité contenant l'identité JWT
      */
-    @Operation(summary = "Détail d'un workout",
-            description = "Retourne un workout par identifiant si celui-ci appartient à l'utilisateur authentifié.")
+    @GET
+    @Path("/{id}")
+    @Operation(
+            summary = "Détail d'un workout",
+            description = "Retourne un workout par identifiant si celui-ci appartient à l'utilisateur authentifié."
+    )
+    @SecurityRequirement(name = "bearerAuth")
     @APIResponses(value = {
-            @APIResponse(responseCode = "200", description = "Workout trouvé",
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Workout trouvé",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Workout.class))),
+                            schema = @Schema(implementation = WorkoutFullDto.class))
+            ),
+            @APIResponse(responseCode = "400", description = "Compte introuvable"),
+            @APIResponse(responseCode = "401", description = "Non authentifié"),
             @APIResponse(responseCode = "403", description = "Accès refusé"),
             @APIResponse(responseCode = "404", description = "Workout introuvable"),
             @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
     public Response getWorkout(
-            @Parameter(description = "Identifiant du workout", required = true)
+            @Parameter(description = "Identifiant unique du workout", required = true)
             @PathParam("id") UUID id,
+            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
             @Context SecurityContext context){
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
@@ -183,7 +265,7 @@ public class WorkoutResource {
 
             if (optAccount.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("{\"error\": \"Account not found\"}")
+                        .entity("{\"error\": \"Compte introuvable\"}")
                         .build();
             }
 
@@ -193,7 +275,7 @@ public class WorkoutResource {
 
             if (workoutOpt.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"error\": \"Workout not found\"}")
+                        .entity("{\"error\": \"Workout introuvable\"}")
                         .build();
             }
 
@@ -201,7 +283,7 @@ public class WorkoutResource {
 
             if (!workout.getAccount().getId().equals(authenticatedAccountId)) {
                 return Response.status(Response.Status.FORBIDDEN)
-                        .entity("{\"error\": \"You can only access your own workouts\"}")
+                        .entity("{\"error\": \"Vous ne pouvez accéder qu'à vos propres workouts\"}")
                         .build();
             }
 
@@ -210,31 +292,43 @@ public class WorkoutResource {
             return Response.ok(dto).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .entity("{\"error\": \"Erreur interne du serveur\"}")
                     .build();
         }
     }
 
-    @GET
-    @Path("/my/sport/{sport}")
     /**
      * Liste les workouts de l'utilisateur authentifié filtrés par sport.
      *
      * @param sport Sport cible (ex: RUNNING)
-     * @param context Contexte de sécurité
+     * @param context Contexte de sécurité contenant l'identité JWT
      */
-    @Operation(summary = "Mes workouts par sport",
-            description = "Retourne les workouts filtrés par sport pour l'utilisateur authentifié.")
+    @GET
+    @Path("/my/sport/{sport}")
+    @Operation(
+            summary = "Mes workouts par sport",
+            description = "Retourne les workouts filtrés par sport pour l'utilisateur authentifié."
+    )
+    @SecurityRequirement(name = "bearerAuth")
     @APIResponses(value = {
-            @APIResponse(responseCode = "200", description = "Liste filtrée des workouts",
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Liste filtrée des workouts",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Workout.class))),
+                            schema = @Schema(implementation = Workout.class))
+            ),
             @APIResponse(responseCode = "400", description = "Sport invalide"),
+            @APIResponse(responseCode = "401", description = "Non authentifié"),
             @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
     public Response getMyWorkoutsBySport(
-            @Parameter(description = "Sport (ex: RUNNING, CYCLING)", required = true)
+            @Parameter(
+                    description = "Type de sport (RUNNING, CYCLING, SWIMMING)",
+                    required = true,
+                    example = "RUNNING"
+            )
             @PathParam("sport") String sport,
+            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
             @Context SecurityContext context) {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
@@ -245,36 +339,41 @@ public class WorkoutResource {
                 return Response.ok(workouts).build();
             } catch (IllegalArgumentException e) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("{\"error\": \"Invalid sport: " + sport + "\"}")
+                        .entity("{\"error\": \"Sport invalide: " + sport + ". Les sports valides sont: RUNNING, CYCLING, SWIMMING.\"}")
                         .build();
             }
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .entity("{\"error\": \"Erreur interne du serveur\"}")
                     .build();
         }
     }
 
-    @DELETE
-    @Path("/{id}")
-    @Transactional
     /**
      * Supprime un workout appartenant à l'utilisateur authentifié.
      *
      * @param id Identifiant du workout
-     * @param context Contexte de sécurité
+     * @param context Contexte de sécurité contenant l'identité JWT
      */
-    @Operation(summary = "Supprimer un workout",
-            description = "Supprime un workout appartenant à l'utilisateur authentifié.")
+    @DELETE
+    @Path("/{id}")
+    @Transactional
+    @Operation(
+            summary = "Supprimer un workout",
+            description = "Supprime un workout appartenant à l'utilisateur authentifié."
+    )
+    @SecurityRequirement(name = "bearerAuth")
     @APIResponses(value = {
-            @APIResponse(responseCode = "204", description = "Supprimé avec succès"),
+            @APIResponse(responseCode = "204", description = "Workout supprimé avec succès"),
+            @APIResponse(responseCode = "401", description = "Non authentifié"),
             @APIResponse(responseCode = "403", description = "Accès refusé"),
             @APIResponse(responseCode = "404", description = "Workout introuvable"),
             @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
     public Response deleteWorkout(
-            @Parameter(description = "Identifiant du workout", required = true)
+            @Parameter(description = "Identifiant unique du workout à supprimer", required = true)
             @PathParam("id") UUID id,
+            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
             @Context SecurityContext context) {
         try {
             UUID authenticatedAccountId = UUID.fromString(context.getUserPrincipal().getName());
@@ -283,62 +382,28 @@ public class WorkoutResource {
             Optional<Workout> workoutOpt = workoutService.getWorkoutByID(id);
             if (workoutOpt.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"error\": \"Workout not found\"}")
+                        .entity("{\"error\": \"Workout introuvable\"}")
                         .build();
             }
 
             Workout workout = workoutOpt.get();
             if (!workout.getAccount().getId().equals(authenticatedAccountId)) {
                 return Response.status(Response.Status.FORBIDDEN)
-                        .entity("{\"error\": \"You can only delete your own workouts\"}")
+                        .entity("{\"error\": \"Vous ne pouvez supprimer que vos propres workouts\"}")
                         .build();
             }
 
             boolean deleted = workoutService.delete(id);
             if (!deleted) {
                 return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"error\": \"Workout not found\"}")
+                        .entity("{\"error\": \"Workout introuvable\"}")
                         .build();
             }
 
             return Response.noContent().build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
-                    .build();
-        }
-    }
-
-    @GET
-    @Path("/my/training-plan/{planId}")
-    /**
-     * (Déprécié) Liste les workouts associés à un plan d'entraînement.
-     *
-     * @param planId Identifiant du plan
-     * @param context Contexte de sécurité
-     */
-    @Operation(summary = "Mes workouts par plan d'entraînement",
-            description = "Retourne les workouts associés à un plan d'entraînement. (Bientôt disponible)",
-            deprecated = true)
-    @APIResponses(value = {
-            @APIResponse(responseCode = "200", description = "Liste des workouts",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Workout.class))),
-            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
-    })
-    public Response getMyWorkoutsByTrainingPlan(
-            @Parameter(description = "Identifiant du plan d'entraînement", required = true)
-            @PathParam("planId") UUID planId,
-            @Context SecurityContext context) {
-        try {
-            // TODO: Implémenter cette méthode quand elle sera disponible dans le service
-            //List<Workout> workouts = workoutService.findByTrainingPlan(authenticatedAccountId, planId);
-            List<Workout> workouts = null;
-
-            return Response.ok(workouts).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .entity("{\"error\": \"Erreur interne du serveur\"}")
                     .build();
         }
     }

@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.*;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
@@ -41,14 +42,14 @@ public class AuthResource {
     @Inject
     JwtService jwtService;
 
-    @POST
-    @Path("/login")
-    @Transactional
     /**
      * Authentifie un utilisateur et retourne un jeton JWT.
      *
      * @param dto Données de connexion (email et mot de passe)
      */
+    @POST
+    @Path("/login")
+    @Transactional
     @Operation(
             summary = "Connexion utilisateur",
             description = "Authentifie un utilisateur avec email et mot de passe et retourne un jeton JWT."
@@ -66,7 +67,9 @@ public class AuthResource {
     @RequestBody(description = "Identifiants de connexion", required = true,
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = LoginRequestDto.class)))
-    public Response login(@Valid LoginRequestDto dto) {
+    public Response login(
+            @Parameter(description = "Identifiants de connexion (email et mot de passe)", required = true)
+            @Valid LoginRequestDto dto) {
         try {
             Optional<Account> userOpt = accountService.findByEmail(dto.getEmail());
 
@@ -87,14 +90,14 @@ public class AuthResource {
         }
     }
 
-    @GET
-    @Path("/me")
-    @Authenticated
     /**
      * Retourne les informations du compte de l'utilisateur authentifié.
      *
      * @param context Contexte de sécurité contenant l'identité JWT
      */
+    @GET
+    @Path("/me")
+    @Authenticated
     @Operation(
             summary = "Profil utilisateur",
             description = "Retourne les informations du compte associé au jeton JWT."
@@ -104,10 +107,13 @@ public class AuthResource {
             @APIResponse(responseCode = "200", description = "Profil trouvé",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = AccountDto.class))),
+            @APIResponse(responseCode = "401", description = "Non authentifié"),
             @APIResponse(responseCode = "404", description = "Utilisateur introuvable"),
             @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
-    public Response getMe(SecurityContext context) {
+    public Response getMe(
+            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
+            SecurityContext context) {
         try {
             String userId = context.getUserPrincipal().getName();
 
@@ -142,17 +148,16 @@ public class AuthResource {
         }
     }
 
-
-    @PUT
-    @Path("/me")
-    @Authenticated
-    @Transactional
     /**
      * Met à jour le profil de l'utilisateur authentifié.
      *
      * @param context Contexte de sécurité contenant l'identité JWT
      * @param accountDto Nouvelles informations du compte
      */
+    @PUT
+    @Path("/me")
+    @Authenticated
+    @Transactional
     @Operation(
             summary = "Mise à jour du profil",
             description = "Met à jour les informations du profil de l'utilisateur authentifié."
@@ -162,13 +167,19 @@ public class AuthResource {
             @APIResponse(responseCode = "200", description = "Profil mis à jour",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = AccountDto.class))),
+            @APIResponse(responseCode = "400", description = "Données invalides"),
+            @APIResponse(responseCode = "401", description = "Non authentifié"),
             @APIResponse(responseCode = "404", description = "Utilisateur introuvable"),
             @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
     @RequestBody(description = "Nouvelles informations du compte", required = true,
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = AccountDto.class)))
-    public Response updateMe(SecurityContext context, @Valid AccountDto accountDto) {
+    public Response updateMe(
+            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
+            SecurityContext context,
+            @Parameter(description = "Nouvelles informations du profil utilisateur", required = true)
+            @Valid AccountDto accountDto) {
         try {
             String userId = context.getUserPrincipal().getName();
 
