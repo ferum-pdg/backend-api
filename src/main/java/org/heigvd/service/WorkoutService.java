@@ -180,6 +180,7 @@ public class WorkoutService {
         dto.setAvgHeartRate(workout.getAvgHeartRate());
         dto.setDistanceMeters(workout.getDistanceMeters() > 0 ? workout.getDistanceMeters() : null);
         dto.setCaloriesKcal(workout.getCaloriesKcal() > 0 ? workout.getCaloriesKcal() : null);
+        dto.setPerformanceDetails(buildWorkoutPerfDetailsToDto(workout));
 
         // Conversion du plan d'entraînement avec FC Max
         dto.setPlan(convertWorkoutPlansToDto(workout.getPlans(), fcMax));
@@ -196,7 +197,51 @@ public class WorkoutService {
             return null;
         }
 
-        // TODO finish this method
+        int durationSec = 0;
+
+        for(WorkoutPlan plan : plans) {
+            if (plan.getDetails() == null || plan.getDetails().isEmpty()) {
+                continue;
+            }
+
+            for (var detail : plan.getDetails()) {
+                LocalDateTime detailStart = workout.getStartTime().toLocalDateTime().plusSeconds(durationSec);
+                durationSec += detail.getDurationSec();
+                LocalDateTime detailEnd = workout.getStartTime().toLocalDateTime().plusSeconds(durationSec);
+
+                // Filtrer les BPMDataPoints qui tombent dans l'intervalle de temps du détail
+                List<BPMDataPoint> relevantBPMs = bpmDataPoints.stream()
+                        .filter(bpm -> {
+                            LocalDateTime bpmTime = bpm.getTimestamp().toLocalDateTime();
+                            return !bpmTime.isBefore(detailStart) && !bpmTime.isAfter(detailEnd);
+                        })
+                        .toList();
+
+                if (!relevantBPMs.isEmpty()) {
+                    // Calculer la moyenne des BPMs pertinents
+                    double avgBPM = relevantBPMs.stream()
+                            .mapToDouble(BPMDataPoint::getBpm)
+                            .average()
+                            .orElse(0.0);
+
+                    int fcMax = workout.getAccount().getFCMax();
+
+                    WorkoutPerfDetailsDto perfDetail = new WorkoutPerfDetailsDto();
+                    perfDetail.setBlocId(plan.getBlocId());
+                    perfDetail.setPlannedBPMMin(detail.getIntensityZone().getMinHr() * fcMax);
+                    perfDetail.setPlannedBPMMax(detail.getIntensityZone().getMaxHr() * fcMax);
+                    perfDetail.setActualBPMMean(Math.round(avgBPM));
+                    perfDetails.add(perfDetail);
+                } else {
+                    // Aucun BPM pertinent trouvé pour ce détail
+                    WorkoutPerfDetailsDto perfDetail = new WorkoutPerfDetailsDto();
+                    perfDetail.setBlocId(plan.getBlocId());
+                    perfDetail.setPlannedBPMMin(detail.getIntensityZone().getMinHr() * workout.getAccount().getFCMax());
+                    perfDetail.setPlannedBPMMax(detail.getIntensityZone().getMaxHr() * workout.getAccount().getFCMax());
+                    perfDetails.add(perfDetail);
+                }
+            }
+        }
 
         return perfDetails;
     }

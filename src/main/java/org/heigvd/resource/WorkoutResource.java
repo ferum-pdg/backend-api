@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
+import org.heigvd.dto.workout_dto.WorkoutFullDto;
 import org.heigvd.dto.workout_dto.WorkoutLightDto;
 import org.heigvd.dto.workout_dto.WorkoutUploadDto;
 import jakarta.persistence.EntityManager;
@@ -204,9 +205,9 @@ public class WorkoutResource {
                         .build();
             }
 
+            WorkoutFullDto dto = workoutService.toWorkoutFullDto(workout, account.getFCMax());
 
-
-            return Response.ok(workoutService.toWorkoutFullDto(workout, account.getFCMax())).build();
+            return Response.ok(dto).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
