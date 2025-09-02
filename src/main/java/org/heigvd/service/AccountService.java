@@ -4,30 +4,28 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import org.heigvd.dto.workout_dto.WorkoutUploadDto;
 import org.heigvd.entity.Account;
-import org.heigvd.entity.workout.Workout;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@ApplicationScoped
 /**
- * Service d'accès et de gestion des comptes utilisateurs.
+ * Service for user account access and management.
  *
- * Fournit des méthodes de recherche, création, mise à jour,
- * suppression et utilitaires de hachage/vérification de mot de passe.
+ * Provides methods for searching, creating, updating,
+ * deleting and password hashing/verification utilities.
  */
+@ApplicationScoped
 public class AccountService {
 
     @Inject
     EntityManager em;
 
     /**
-     * Récupère tous les comptes utilisateurs.
-     * @return liste des comptes
+     * Retrieves all user accounts.
+     * @return list of accounts
      */
     public List<Account> getAllUsers() {
         return em.createQuery("SELECT a FROM Account a", Account.class)
@@ -35,9 +33,9 @@ public class AccountService {
     }
 
     /**
-     * Recherche un compte par email.
-     * @param email email recherché
-     * @return un Optional du compte s'il existe
+     * Searches for an account by email.
+     * @param email email to search for
+     * @return an Optional of the account if it exists
      */
     public Optional<Account> findByEmail(String email) {
         try {
@@ -51,8 +49,8 @@ public class AccountService {
     }
 
     /**
-     * Recherche un compte par identifiant sous forme de String UUID.
-     * @param id identifiant du compte
+     * Searches for an account by identifier as String UUID.
+     * @param id account identifier
      * @return Optional<Account>
      */
     public Optional<Account> findById(String id) {
@@ -65,8 +63,8 @@ public class AccountService {
     }
 
     /**
-     * Recherche un compte par identifiant UUID.
-     * @param id identifiant du compte
+     * Searches for an account by UUID identifier.
+     * @param id account identifier
      * @return Optional<Account>
      */
     public Optional<Account> findById(UUID id) {
@@ -78,18 +76,14 @@ public class AccountService {
         }
     }
 
-    @Transactional
-    public void mergeWorkouts(Workout workout, WorkoutUploadDto workoutUploadDto) {
-    }
-
-    @Transactional
     /**
-     * Crée un compte, en hachant le mot de passe et en générant un UUID si nécessaire.
-     * @param account entité compte à créer
-     * @return le compte persistant
+     * Creates an account, hashing the password and generating a UUID if necessary.
+     * @param account account entity to create
+     * @return the persisted account
      */
+    @Transactional
     public Account create(Account account) {
-        // Hash le mot de passe avant de sauvegarder
+        // Hash the password before saving
         if (account.getPassword() != null) {
             account.setPassword(hashPassword(account.getPassword()));
         }
@@ -97,20 +91,20 @@ public class AccountService {
         return account;
     }
 
-    @Transactional
     /**
-     * Met à jour un compte existant.
-     * @param account compte à mettre à jour
+     * Updates an existing account.
+     * @param account account to update
      */
+    @Transactional
     public void update(Account account) {
         em.merge(account);
     }
 
-    @Transactional
     /**
-     * Supprime un compte par identifiant String UUID.
-     * @param id identifiant du compte
+     * Deletes an account by String UUID identifier.
+     * @param id account identifier
      */
+    @Transactional
     public void delete(String id) {
         Account account = em.find(Account.class, UUID.fromString(id));
         if (account != null) {
@@ -118,11 +112,11 @@ public class AccountService {
         }
     }
 
-    @Transactional
     /**
-     * Supprime un compte par identifiant UUID.
-     * @param id identifiant du compte
+     * Deletes an account by UUID identifier.
+     * @param id account identifier
      */
+    @Transactional
     public void delete(UUID id) {
         Account account = em.find(Account.class, id);
         if (account != null) {
@@ -131,28 +125,28 @@ public class AccountService {
     }
 
     /**
-     * Vérifie un mot de passe en clair contre un hash BCrypt.
-     * @param rawPassword mot de passe en clair
-     * @param hashedPassword hash bcrypt
-     * @return true si correspond
+     * Verifies a plain text password against a BCrypt hash.
+     * @param rawPassword plain text password
+     * @param hashedPassword bcrypt hash
+     * @return true if matches
      */
     public boolean checkPassword(String rawPassword, String hashedPassword) {
         return BCrypt.checkpw(rawPassword, hashedPassword);
     }
 
     /**
-     * Hache un mot de passe avec BCrypt.
-     * @param rawPassword mot de passe en clair
-     * @return hash bcrypt
+     * Hashes a password with BCrypt.
+     * @param rawPassword plain text password
+     * @return bcrypt hash
      */
     public String hashPassword(String rawPassword) {
         return BCrypt.hashpw(rawPassword, BCrypt.gensalt());
     }
 
     /**
-     * Recherche des comptes par nom de famille (LIKE %nom%).
-     * @param lastName nom de famille
-     * @return liste des comptes correspondants
+     * Searches for accounts by last name (LIKE %name%).
+     * @param lastName last name
+     * @return list of matching accounts
      */
     public List<Account> findByLastName(String lastName) {
         return em.createQuery("SELECT a FROM Account a WHERE a.lastName LIKE :lastName", Account.class)

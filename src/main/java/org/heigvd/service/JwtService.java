@@ -7,17 +7,17 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 
-@ApplicationScoped
 /**
- * Service utilitaire pour la génération de jetons JWT.
+ * Utility service for JWT token generation.
  */
+@ApplicationScoped
 public class JwtService {
 
     /**
-     * Génère un jeton JWT signé pour un utilisateur.
+     * Generates a signed JWT token for a user.
      *
-     * @param userId identifiant de l'utilisateur
-     * @return jeton JWT signé
+     * @param userId user identifier
+     * @return signed JWT token
      */
     public String generateToken(UUID userId) {
         return Jwt

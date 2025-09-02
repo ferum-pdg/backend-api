@@ -12,6 +12,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+/**
+ * Service for AI-powered sport activity analysis.
+ *
+ * Uses the Groq API to analyze workout data and provide personalized feedback.
+ */
 @ApplicationScoped
 public class AIService {
 
@@ -40,9 +45,15 @@ public class AIService {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
+    /**
+     * Analyzes a sport activity using AI and returns personalized feedback.
+     *
+     * @param activityJson JSON string containing the activity data to analyze
+     * @return AI-generated analysis and feedback about the activity
+     */
     public String analyzeSportActivity(String activityJson) {
         if (apiKey == null || apiKey.isEmpty() || "your-groq-key-here".equals(apiKey)) {
-            return "Clé API Groq non configurée.";
+            return "Groq API key not configured.";
         }
 
         System.out.println("API KEY: " + apiKey);
@@ -65,10 +76,17 @@ public class AIService {
             return processResponse(response);
 
         } catch (Exception e) {
-            return "Erreur lors de l'analyse : " + e.getMessage();
+            return "Error during analysis: " + e.getMessage();
         }
     }
 
+    /**
+     * Creates the JSON request body for the Groq API call.
+     *
+     * @param activityJson the activity data to include in the prompt
+     * @return formatted JSON request body as string
+     * @throws Exception if JSON serialization fails
+     */
     private String createRequestJson(String activityJson) throws Exception {
         String prompt = """
         Ton et style:
@@ -116,12 +134,19 @@ public class AIService {
         );
     }
 
+    /**
+     * Processes the HTTP response from the Groq API.
+     *
+     * @param response the HTTP response from the API
+     * @return the AI-generated content or an error message
+     * @throws Exception if JSON processing fails
+     */
     private String processResponse(HttpResponse<String> response) throws Exception {
         int statusCode = response.statusCode();
         String body = response.body();
 
         if (statusCode != 200) {
-            return "Erreur API (" + statusCode + ") : " + body;
+            return "API Error (" + statusCode + "): " + body;
         }
 
         JsonNode jsonResponse = objectMapper.readTree(body);
@@ -131,6 +156,6 @@ public class AIService {
             return choices.get(0).get("message").get("content").asText();
         }
 
-        return "Aucune réponse dans la réponse JSON";
+        return "No response in JSON response";
     }
 }

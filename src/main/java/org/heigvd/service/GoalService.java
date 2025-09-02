@@ -9,20 +9,20 @@ import org.heigvd.entity.Sport;
 import java.util.List;
 import java.util.UUID;
 
-@ApplicationScoped
 /**
- * Service d'accès aux objectifs d'entraînement (Goals).
+ * Service for accessing training goals (Goals).
  */
+@ApplicationScoped
 public class GoalService {
 
     @Inject
     EntityManager em;
 
     /**
-     * Récupère un objectif pour un sport et une distance cible donnée.
-     * @param sport sport visé
-     * @param targetDistance distance cible
-     * @return objectif correspondant
+     * Retrieves a goal for a given sport and target distance.
+     * @param sport target sport
+     * @param targetDistance target distance
+     * @return corresponding goal
      */
     public Goal getSpecificGoal(Sport sport, Double targetDistance) {
         return em.createQuery("SELECT g FROM Goal g WHERE g.sport = :sport AND g.targetDistance = :targetDistance", Goal.class)
@@ -32,9 +32,9 @@ public class GoalService {
     }
 
     /**
-     * Récupère une liste d'objectifs par identifiants.
-     * @param goalIds identifiants des objectifs
-     * @return liste des objectifs
+     * Retrieves a list of goals by identifiers.
+     * @param goalIds goal identifiers
+     * @return list of goals
      */
     public List<Goal> getGoalsByIds(List<UUID> goalIds) {
         return em.createQuery("SELECT g FROM Goal g WHERE g.id IN :goalIds", Goal.class)
@@ -43,20 +43,29 @@ public class GoalService {
     }
 
     /**
-     * Récupère un objectif par identifiant.
-     * @param id identifiant de l'objectif
-     * @return objectif
+     * Retrieves a goal by identifier.
+     * @param id goal identifier
+     * @return goal
      */
     public Goal getGoalById(UUID id) {
         return em.find(Goal.class, id);
     }
 
+    /**
+     * Retrieves goals filtered by sport.
+     * @param sport target sport
+     * @return list of goals for the specified sport
+     */
     public List<Goal> getGoalsBySport(Sport sport) {
         return em.createQuery("SELECT g FROM Goal g WHERE g.sport IN :sport", Goal.class)
                 .setParameter("sport", sport)
                 .getResultList();
     }
 
+    /**
+     * Retrieves all available goals.
+     * @return list of all goals
+     */
     public List<Goal> getAllGoals() {
         return em.createQuery("SELECT g FROM Goal g", Goal.class)
                 .getResultList();

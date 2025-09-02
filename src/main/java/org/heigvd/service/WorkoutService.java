@@ -13,7 +13,6 @@ import org.heigvd.entity.*;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.workout.Workout;
 import org.heigvd.entity.workout.WorkoutStatus;
-import org.heigvd.entity.workout.WorkoutType;
 import org.heigvd.entity.workout.data_point.BPMDataPoint;
 import org.heigvd.entity.workout.details.WorkoutPlan;
 
@@ -25,26 +24,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@ApplicationScoped
 /**
- * Service de gestion des séances d'entraînement (Workouts).
+ * Service for workout management.
  *
- * Permet la recherche, la création et la suppression de workouts.
+ * Provides search, creation and deletion operations for workouts.
  */
+@ApplicationScoped
 public class WorkoutService {
 
     @Inject
     EntityManager em;
 
     @Inject
-    TrainingPlanService trainingPlanService;
-
-    @Inject
     TrainingGeneratorService tgs;
 
     /**
-     * Recherche un workout par identifiant.
-     * @param id identifiant du workout
+     * Searches for a workout by identifier.
+     * @param id workout identifier
      * @return Optional<Workout>
      */
     public Optional<Workout> getWorkoutByID(UUID id) {
@@ -57,10 +53,10 @@ public class WorkoutService {
     }
 
     /**
-     * Liste les workouts d'un utilisateur pour un sport donné.
-     * @param accountId identifiant du compte
-     * @param sport sport ciblé
-     * @return liste des workouts filtrés
+     * Lists workouts for a user for a given sport.
+     * @param accountId account identifier
+     * @param sport target sport
+     * @return list of filtered workouts
      */
     public List<Workout> findByAccountIdAndSport(UUID accountId, Sport sport) {
         return em.createQuery(
@@ -72,6 +68,11 @@ public class WorkoutService {
                 .getResultList();
     }
 
+    /**
+     * Retrieves all workouts for a user.
+     * @param accountId account identifier
+     * @return list of all workouts ordered by start time descending
+     */
     public List<Workout> getAllWorkouts(UUID accountId) {
         return em.createQuery(
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId ORDER BY w.startTime DESC",
@@ -80,6 +81,13 @@ public class WorkoutService {
                 .getResultList();
     }
 
+    /**
+     * Retrieves workouts between two dates for a user.
+     * @param accountId account identifier
+     * @param start start date and time
+     * @param end end date and time
+     * @return list of workouts within the date range
+     */
     public List<Workout> getWorkoutsBetweenDates(UUID accountId, OffsetDateTime start, OffsetDateTime end) {
         return em.createQuery(
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId " +
@@ -92,6 +100,12 @@ public class WorkoutService {
                 .getResultList();
     }
 
+    /**
+     * Retrieves all generated workouts for a user and training plan.
+     * @param accountId account identifier
+     * @param trainingPlanId training plan identifier
+     * @return list of generated workouts
+     */
     public List<Workout> getAllGeneratedWorkouts(UUID accountId, UUID trainingPlanId) {
         return em.createQuery(
                         "SELECT w FROM Workout w JOIN w.plans p WHERE w.account.id = :accountId " +
@@ -102,24 +116,23 @@ public class WorkoutService {
                 .getResultList();
     }
 
-    @Transactional
     /**
-     * Crée un nouveau workout.
-     * @param workout entité workout à persister
-     * @return le workout créé
+     * Creates a new workout.
+     * @param workout workout entity to persist
+     * @return the created workout
      */
+    @Transactional
     public Workout create(Workout workout) {
-
         em.persist(workout);
         return workout;
     }
 
-    @Transactional
     /**
-     * Supprime un workout par identifiant.
-     * @param id identifiant du workout
-     * @return true si supprimé, false sinon
+     * Deletes a workout by identifier.
+     * @param id workout identifier
+     * @return true if deleted, false otherwise
      */
+    @Transactional
     public boolean delete(UUID id) {
         try {
             Workout workout = em.find(Workout.class, id);
@@ -133,9 +146,15 @@ public class WorkoutService {
         }
     }
 
+    /**
+     * Finds the closest workout matching the uploaded workout data.
+     * @param workout uploaded workout data
+     * @param account user account
+     * @return Optional containing the closest matching workout if found
+     */
     public Optional<Workout> findClosestWorkout(WorkoutUploadDto workout, Account account) {
         Sport sport = Sport.valueOf(workout.getSport().toUpperCase());
-        // Find workouts that are the same day, sport
+
         OffsetDateTime startOfDay = workout.getStart().toLocalDate().atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
         OffsetDateTime endOfDay = workout.getEnd().toLocalDate().atTime(23, 59, 59).atOffset(OffsetDateTime.now().getOffset());
         Optional<Workout> getWorkout = em.createQuery(
@@ -154,6 +173,11 @@ public class WorkoutService {
         return getWorkout;
     }
 
+    /**
+     * Generates workouts for a training plan on a specific date.
+     * @param trainingPlan the training plan
+     * @param date target date for workout generation
+     */
     public void generateWorkout(TrainingPlan trainingPlan, LocalDate date) {
         List<Workout> workouts = tgs.generate(trainingPlan, date);
 
@@ -162,6 +186,11 @@ public class WorkoutService {
         }
     }
 
+    /**
+     * Gets the date of the last generated workout for an account.
+     * @param account user account
+     * @return LocalDate of the last generated workout or null if none found
+     */
     public LocalDate getLastGeneratedWorkoutDate(Account account) {
         return em.createQuery(
                         "SELECT w FROM Workout w WHERE w.account.id = :accountId" +
@@ -176,10 +205,10 @@ public class WorkoutService {
     }
 
     /**
-     * Convertit un Workout en WorkoutFullDto
-     * @param workout L'entité Workout à convertir
-     * @param fcMax Fréquence cardiaque maximale de l'utilisateur (toujours définie)
-     * @return WorkoutFullDto complet avec tous les détails
+     * Converts a Workout to WorkoutFullDto.
+     * @param workout The Workout entity to convert
+     * @param fcMax User's maximum heart rate (always defined)
+     * @return Complete WorkoutFullDto with all details
      */
     public WorkoutFullDto toWorkoutFullDto(Workout workout, int fcMax) {
         if (workout == null) {
@@ -188,7 +217,6 @@ public class WorkoutService {
 
         WorkoutFullDto dto = new WorkoutFullDto();
 
-        // Informations de base
         dto.setId(workout.getId());
         dto.setSport(workout.getSport());
         dto.setType(workout.getWorkoutType());
@@ -200,13 +228,11 @@ public class WorkoutService {
         dto.setGrade(workout.getGrade());
         dto.setAiReview(workout.getAiAnalysis());
 
-        // Métriques de performance
         dto.setAvgHeartRate(workout.getAvgHeartRate());
         dto.setDistanceMeters(workout.getDistanceMeters() > 0 ? workout.getDistanceMeters() : null);
         dto.setCaloriesKcal(workout.getCaloriesKcal() > 0 ? workout.getCaloriesKcal() : null);
         dto.setPerformanceDetails(buildWorkoutPerfDetailsToDto(workout));
 
-        // Conversion du plan d'entraînement avec FC Max
         dto.setPlan(convertWorkoutPlansToDto(workout.getPlans(), fcMax));
 
         return dto;
@@ -233,7 +259,6 @@ public class WorkoutService {
                 durationSec += detail.getDurationSec();
                 LocalDateTime detailEnd = workout.getStartTime().toLocalDateTime().plusSeconds(durationSec);
 
-                // Filtrer les BPMDataPoints qui tombent dans l'intervalle de temps du détail
                 List<BPMDataPoint> relevantBPMs = bpmDataPoints.stream()
                         .filter(bpm -> {
                             LocalDateTime bpmTime = bpm.getTimestamp().toLocalDateTime();
@@ -242,7 +267,7 @@ public class WorkoutService {
                         .toList();
 
                 if (!relevantBPMs.isEmpty()) {
-                    // Calculer la moyenne des BPMs pertinents
+                    // Calculate average of relevant BPMs
                     double avgBPM = relevantBPMs.stream()
                             .mapToDouble(BPMDataPoint::getBpm)
                             .average()
@@ -257,7 +282,6 @@ public class WorkoutService {
                     perfDetail.setActualBPMMean(Math.round(avgBPM));
                     perfDetails.add(perfDetail);
                 } else {
-                    // Aucun BPM pertinent trouvé pour ce détail
                     WorkoutPerfDetailsDto perfDetail = new WorkoutPerfDetailsDto();
                     perfDetail.setBlocId(plan.getBlocId());
                     perfDetail.setPlannedBPMMin(detail.getIntensityZone().getMinHr() * workout.getAccount().getFCMax());
@@ -271,10 +295,10 @@ public class WorkoutService {
     }
 
     /**
-     * Convertit une liste de WorkoutPlan en WorkoutPlanDto
-     * @param workoutPlans Liste des plans d'entraînement
-     * @param fcMax Fréquence cardiaque maximale pour calculer les zones cibles
-     * @return Liste des WorkoutPlanDto
+     * Converts a list of WorkoutPlan to WorkoutPlanDto.
+     * @param workoutPlans List of training plans
+     * @param fcMax Maximum heart rate to calculate target zones
+     * @return List of WorkoutPlanDto
      */
     private List<WorkoutPlanDto> convertWorkoutPlansToDto(List<WorkoutPlan> workoutPlans, int fcMax) {
         if (workoutPlans == null || workoutPlans.isEmpty()) {
@@ -287,17 +311,16 @@ public class WorkoutService {
     }
 
     /**
-     * Convertit un WorkoutPlan en WorkoutPlanDto
-     * @param workoutPlan Plan d'entraînement à convertir
-     * @param fcMax Fréquence cardiaque maximale
-     * @return WorkoutPlanDto avec détails
+     * Converts a WorkoutPlan to WorkoutPlanDto.
+     * @param workoutPlan Training plan to convert
+     * @param fcMax Maximum heart rate
+     * @return WorkoutPlanDto with details
      */
     private WorkoutPlanDto convertWorkoutPlanToDto(WorkoutPlan workoutPlan, int fcMax) {
         WorkoutPlanDto dto = new WorkoutPlanDto();
         dto.setBlocId(workoutPlan.getBlocId());
         dto.setRepetitionCount(workoutPlan.getRepetitionCount());
 
-        // Conversion des détails avec calcul automatique des zones FC
         if (workoutPlan.getDetails() != null && !workoutPlan.getDetails().isEmpty()) {
             List<WorkoutPlanDetailsDto> detailsDto = workoutPlan.getDetails().stream()
                     .map(detail -> new WorkoutPlanDetailsDto(detail, fcMax))
@@ -310,6 +333,12 @@ public class WorkoutService {
         return dto;
     }
 
+    /**
+     * Creates a workout outside of a training plan from uploaded data.
+     * @param account user account
+     * @param workout uploaded workout data
+     * @return created workout
+     */
     @Transactional
     public Workout createWorkoutOutOfTP(Account account, WorkoutUploadDto workout) {
         Workout newWorkout = new Workout();
@@ -333,6 +362,12 @@ public class WorkoutService {
         return newWorkout;
     }
 
+    /**
+     * Merges uploaded workout data with an existing workout.
+     * @param existingWorkout the existing workout to update
+     * @param workout uploaded workout data
+     * @return updated workout
+     */
     @Transactional
     public Workout mergeWorkoutWithExisting(Workout existingWorkout, WorkoutUploadDto workout) {
         existingWorkout.setSport(Sport.valueOf(workout.getSport().toUpperCase()));
