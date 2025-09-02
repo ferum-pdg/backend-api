@@ -21,10 +21,6 @@ import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.heigvd.dto.training_plan_dto.TrainingPlanLightDto;
-import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
-import org.heigvd.dto.training_plan_dto.TrainingPlanResponseDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.service.*;
@@ -65,11 +61,7 @@ public class TrainingPlanResource {
     @Inject
     EntityManager em;
 
-    /**
-     * Retrieves the training plan of the authenticated user.
-     *
-     * @param securityContext Security context containing the JWT identity
-     */
+
     @GET
     @Operation(
             summary = "Get my training plan",
@@ -87,6 +79,11 @@ public class TrainingPlanResource {
             @APIResponse(responseCode = "404", description = "Training plan not found"),
             @APIResponse(responseCode = "500", description = "Internal server error")
     })
+    /**
+     * Retrieves the training plan of the authenticated user.
+     *
+     * @param securityContext Security context containing the JWT identity
+     */
     public Response getMyTrainingPlan(
             @Parameter(description = "Security context with JWT identity", hidden = true)
             SecurityContext securityContext) {
@@ -144,6 +141,11 @@ public class TrainingPlanResource {
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = TrainingPlanRequestDto.class))
     )
+    /**
+     * Creates a new training plan for the authenticated user based on the provided parameters.
+     *
+     * @param securityContext Security context containing the JWT identity
+     */
     public Response createTrainingPlan(
             @Parameter(description = "Security context with JWT identity", hidden = true)
             SecurityContext securityContext,
