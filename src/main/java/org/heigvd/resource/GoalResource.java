@@ -17,69 +17,69 @@ import org.heigvd.service.GoalService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
 /**
- * Ressource REST de gestion des objectifs.
+ * REST resource for goals management.
  *
- * Fournit les opérations de consultation des objectifs disponibles,
- * soit tous les objectifs, soit filtrés par sport.
+ * Provides operations to retrieve available goals,
+ * either all goals or filtered by sport.
  */
 @Path("/goals")
 @Produces(RestMediaType.APPLICATION_JSON)
 @Consumes(RestMediaType.APPLICATION_JSON)
-@Tag(name = "Goals", description = "Gestion des objectifs")
+@Tag(name = "Goals", description = "Goals management")
 public class GoalResource {
 
     @Inject
     GoalService goalService;
 
     /**
-     * Retourne tous les objectifs disponibles.
+     * Returns all available goals.
      */
     @GET
     @Operation(
-            summary = "Liste tous les objectifs",
-            description = "Retourne la liste complète de tous les objectifs disponibles dans l'application."
+            summary = "List all goals",
+            description = "Returns the complete list of all available goals in the application."
     )
     @APIResponses(value = {
             @APIResponse(
                     responseCode = "200",
-                    description = "Liste des objectifs récupérée avec succès",
+                    description = "Goals list retrieved successfully",
                     content = @Content(mediaType = "application/json")
             ),
-            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+            @APIResponse(responseCode = "500", description = "Internal server error")
     })
     public Response getAllGoals() {
         try {
             return Response.ok(goalService.getAllGoals()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Erreur interne du serveur\"}")
+                    .entity("{\"error\": \"Internal server error\"}")
                     .build();
         }
     }
 
     /**
-     * Retourne les objectifs filtrés par sport.
+     * Returns goals filtered by sport.
      *
-     * @param sport Le sport pour lequel récupérer les objectifs (RUNNING, CYCLING, SWIMMING)
+     * @param sport The sport for which to retrieve goals (RUNNING, CYCLING, SWIMMING)
      */
     @GET
     @Path("/{sport}")
     @Operation(
-            summary = "Objectifs par sport",
-            description = "Retourne la liste des objectifs disponibles pour un sport spécifique."
+            summary = "Goals by sport",
+            description = "Returns the list of available goals for a specific sport."
     )
     @APIResponses(value = {
             @APIResponse(
                     responseCode = "200",
-                    description = "Objectifs du sport récupérés avec succès",
+                    description = "Sport goals retrieved successfully",
                     content = @Content(mediaType = "application/json")
             ),
-            @APIResponse(responseCode = "400", description = "Sport invalide"),
-            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+            @APIResponse(responseCode = "400", description = "Invalid sport"),
+            @APIResponse(responseCode = "500", description = "Internal server error")
     })
     public Response getGoalsBySport(
             @Parameter(
-                    description = "Type de sport (RUNNING, CYCLING, SWIMMING)",
+                    description = "Sport type (RUNNING, CYCLING, SWIMMING)",
                     required = true
             )
             @PathParam("sport") String sport) {
@@ -90,13 +90,13 @@ public class GoalResource {
                 sportEnum = Sport.valueOf(sport.toUpperCase());
             } catch (IllegalArgumentException e) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("{\"error\": \"Sport invalide. Les sports valides sont: RUNNING, CYCLING, SWIMMING.\"}")
+                        .entity("{\"error\": \"Invalid sport. Valid sports are: RUNNING, CYCLING, SWIMMING.\"}")
                         .build();
             }
             return Response.ok(goalService.getGoalsBySport(sportEnum)).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Erreur interne du serveur\"}")
+                    .entity("{\"error\": \"Internal server error\"}")
                     .build();
         }
     }

@@ -30,15 +30,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Ressource REST pour la gestion des plans d'entraînement.
+ * REST resource for training plan management.
  *
- * Permet de récupérer le plan en cours et d'en générer un nouveau.
+ * Allows retrieving the current plan and generating a new one.
  */
 @Path("/training-plan")
 @Produces(RestMediaType.APPLICATION_JSON)
 @Consumes(RestMediaType.APPLICATION_JSON)
 @Authenticated
-@Tag(name = "Training Plans", description = "Gestion des plans d'entraînement")
+@Tag(name = "Training Plans", description = "Training plan management")
 public class TrainingPlanResource {
 
     @Inject
@@ -60,29 +60,29 @@ public class TrainingPlanResource {
     WorkoutService workoutService;
 
     /**
-     * Récupère le plan d'entraînement de l'utilisateur authentifié.
+     * Retrieves the training plan of the authenticated user.
      *
-     * @param securityContext Contexte de sécurité contenant l'identité JWT
+     * @param securityContext Security context containing the JWT identity
      */
     @GET
     @Operation(
-            summary = "Mon plan d'entraînement",
-            description = "Retourne le plan d'entraînement de l'utilisateur authentifié s'il existe."
+            summary = "Get my training plan",
+            description = "Returns the training plan of the authenticated user if it exists."
     )
     @SecurityRequirement(name = "bearerAuth")
     @APIResponses(value = {
             @APIResponse(
                     responseCode = "200",
-                    description = "Plan trouvé",
+                    description = "Training plan found",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = TrainingPlanLightDto.class))
             ),
-            @APIResponse(responseCode = "401", description = "Non authentifié"),
-            @APIResponse(responseCode = "404", description = "Plan introuvable"),
-            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+            @APIResponse(responseCode = "401", description = "Not authenticated"),
+            @APIResponse(responseCode = "404", description = "Training plan not found"),
+            @APIResponse(responseCode = "500", description = "Internal server error")
     })
     public Response getMyTrainingPlan(
-            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
+            @Parameter(description = "Security context with JWT identity", hidden = true)
             SecurityContext securityContext) {
         try {
             UUID accountId = UUID.fromString(securityContext.getUserPrincipal().getName());
@@ -91,7 +91,7 @@ public class TrainingPlanResource {
 
             if (tp.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"error\": \"Plan d'entraînement introuvable\"}")
+                        .entity("{\"error\": \"Training plan not found\"}")
                         .build();
             }
 
@@ -108,46 +108,46 @@ public class TrainingPlanResource {
 
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Erreur interne du serveur\"}")
+                    .entity("{\"error\": \"Internal server error\"}")
                     .build();
         }
     }
 
     /**
-     * Génère et crée un plan d'entraînement pour l'utilisateur authentifié.
+     * Generates and creates a training plan for the authenticated user.
      *
-     * @param securityContext Contexte de sécurité contenant l'identité JWT
-     * @param trainingPlanRequestDto Paramètres de génération du plan
+     * @param securityContext Security context containing the JWT identity
+     * @param trainingPlanRequestDto Training plan generation parameters
      */
     @POST
     @Transactional
     @Operation(
-            summary = "Créer un plan d'entraînement",
-            description = "Génère et crée un plan d'entraînement personnalisé pour l'utilisateur authentifié."
+            summary = "Create a training plan",
+            description = "Generates and creates a personalized training plan for the authenticated user."
     )
     @SecurityRequirement(name = "bearerAuth")
     @APIResponses(value = {
             @APIResponse(
                     responseCode = "201",
-                    description = "Plan créé avec succès",
+                    description = "Training plan created successfully",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = TrainingPlanResponseDto.class))
             ),
-            @APIResponse(responseCode = "400", description = "Paramètres invalides"),
-            @APIResponse(responseCode = "401", description = "Non authentifié"),
-            @APIResponse(responseCode = "404", description = "Compte utilisateur introuvable"),
-            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+            @APIResponse(responseCode = "400", description = "Invalid parameters"),
+            @APIResponse(responseCode = "401", description = "Not authenticated"),
+            @APIResponse(responseCode = "404", description = "User account not found"),
+            @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @RequestBody(
-            description = "Paramètres de génération du plan d'entraînement",
+            description = "Training plan generation parameters",
             required = true,
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = TrainingPlanRequestDto.class))
     )
     public Response createTrainingPlan(
-            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
+            @Parameter(description = "Security context with JWT identity", hidden = true)
             SecurityContext securityContext,
-            @Parameter(description = "Paramètres pour la génération du plan d'entraînement", required = true)
+            @Parameter(description = "Parameters for training plan generation", required = true)
             @Valid TrainingPlanRequestDto trainingPlanRequestDto) {
         try {
             UUID accountId = UUID.fromString(securityContext.getUserPrincipal().getName());
@@ -155,7 +155,7 @@ public class TrainingPlanResource {
             Optional<Account> account = accountService.findById(accountId);
             if (account.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"error\": \"Compte utilisateur introuvable\"}")
+                        .entity("{\"error\": \"User account not found\"}")
                         .build();
             }
 
@@ -163,7 +163,7 @@ public class TrainingPlanResource {
 
             if (newTrainingPlan == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("{\"error\": \"Échec de la génération du plan d'entraînement\"}")
+                        .entity("{\"error\": \"Training plan generation failed\"}")
                         .build();
             }
 
@@ -176,7 +176,7 @@ public class TrainingPlanResource {
 
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Erreur interne du serveur\"}")
+                    .entity("{\"error\": \"Internal server error\"}")
                     .build();
         }
     }
