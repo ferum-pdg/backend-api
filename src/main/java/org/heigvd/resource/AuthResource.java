@@ -16,6 +16,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.heigvd.dto.AccountDto;
+import org.heigvd.dto.CreateAccountDto;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 import org.heigvd.dto.LoginRequestDto;
 import org.heigvd.dto.LoginResponseDto;
@@ -217,6 +218,73 @@ public class AuthResource {
             );
 
             return Response.ok(updatedAccountDto).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"error\": \"Internal server error: " + e.getMessage() + "\"}")
+                    .build();
+        }
+    }
+
+    /**
+     * Creates a new user account.
+     *
+     * @param dto Account information for the new user
+     */
+    @POST
+    @Path("/register")
+    @Transactional
+    @Operation(
+            summary = "Create user account",
+            description = "Creates a new user account with the provided information."
+    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "201",
+                    description = "Account created successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponseDto.class))
+            ),
+            @APIResponse(responseCode = "400", description = "Invalid data or email already exists"),
+            @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    @RequestBody(description = "Account information", required = true,
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = CreateAccountDto.class)))
+    public Response createAccount(
+            @Parameter(description = "Account information for new user", required = true)
+            @Valid CreateAccountDto dto) {
+        try {
+            // Check if email already exists
+            Optional<Account> existingUser = accountService.findByEmail(dto.getEmail());
+            if (existingUser.isPresent()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Email already exists\"}")
+                        .build();
+            }
+
+            // Create new account
+            Account newAccount = new Account();
+            newAccount.setEmail(dto.getEmail());
+            newAccount.setPassword(dto.getPassword()); // The create method will hash it automatically
+            newAccount.setFirstName(dto.getFirstName());
+            newAccount.setLastName(dto.getLastName());
+            newAccount.setPhoneNumber(dto.getPhoneNumber());
+            newAccount.setBirthDate(dto.getBirthDate());
+            newAccount.setWeight(dto.getWeight());
+            newAccount.setHeight(dto.getHeight());
+            newAccount.setFCMax(dto.getFcMax());
+
+            // Save the account (password will be hashed in the service)
+            Account savedAccount = accountService.create(newAccount);
+
+            // Generate JWT token for the new user
+            String token = jwtService.generateToken(savedAccount.getId());
+
+            // Return the JWT token
+            return Response.status(Response.Status.CREATED)
+                    .entity(new LoginResponseDto(token))
+                    .build();
 
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
