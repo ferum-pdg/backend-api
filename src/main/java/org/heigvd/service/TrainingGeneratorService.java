@@ -44,6 +44,11 @@ public class TrainingGeneratorService {
         return generator.generate(sport, workoutType, fitnessLevel, progressionPercent, phase);
     }
 
+    public List<Workout> sync(TrainingPlan trainingPlan, LocalDate today) {
+        TrainingWorkoutGenerator generator = generatorFactory.getTrainingWorkoutGenerator();
+        return generator.sync(trainingPlan, today);
+    }
+
     // Méthodes utilitaires pour obtenir les versions actuellement utilisées
     public String getCurrentTrainingPlanGeneratorVersion() {
         return generatorFactory.getTrainingPlanGenerator().getVersion();

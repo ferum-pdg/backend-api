@@ -44,6 +44,7 @@ import java.util.UUID;
 @Produces(RestMediaType.APPLICATION_JSON)
 @Consumes(RestMediaType.APPLICATION_JSON)
 @Tag(name = "Workouts", description = "Workout management")
+@SecurityRequirement(name = "bearerAuth")
 public class WorkoutResource {
 
     @Inject

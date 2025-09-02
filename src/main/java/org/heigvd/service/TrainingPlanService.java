@@ -114,6 +114,15 @@ public class TrainingPlanService {
                 .findFirst();
     }
 
+    public Optional<TrainingPlan> getMyCurrentTrainingPlan(UUID accountId) {
+        LocalDate currentDate = LocalDate.now();
+        return em.createQuery("SELECT tp FROM TrainingPlan tp WHERE tp.account.id = :accountId AND tp.startDate <= :currentDate AND tp.endDate >= :currentDate", TrainingPlan.class)
+                .setParameter("accountId", accountId)
+                .setParameter("currentDate", currentDate)
+                .getResultStream()
+                .findFirst();
+    }
+
     public Integer getCurrentWeekNb(TrainingPlan tp) {
         if (tp.getStartDate() == null || tp.getEndDate() == null) {
             return null; // Training plan dates are not set

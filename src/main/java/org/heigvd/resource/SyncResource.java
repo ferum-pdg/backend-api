@@ -1,6 +1,7 @@
 package org.heigvd.resource;
 
 import io.quarkus.security.Authenticated;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -13,12 +14,22 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.heigvd.entity.Account;
+import org.heigvd.entity.training_plan.TrainingPlan;
+import org.heigvd.service.AccountService;
+import org.heigvd.service.TrainingGeneratorService;
+import org.heigvd.service.TrainingPlanService;
+import org.heigvd.service.WorkoutAnalyserService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.UUID;
+
 /**
- * Ressource REST de synchronisation des données.
+ * REST resource for data synchronization.
  *
- * Fournit les opérations de synchronisation pour l'utilisateur authentifié.
+ * Allows synchronizing user data.
  */
 @Path("/sync")
 @Produces(RestMediaType.APPLICATION_JSON)
@@ -28,10 +39,17 @@ import org.jboss.resteasy.reactive.common.util.RestMediaType;
 public class SyncResource {
 
     /**
-     * Synchronise les données de l'utilisateur authentifié.
+     * Synchronize user data when requested.
      *
-     * @param context Contexte de sécurité contenant l'identité JWT
+     * @param context security context containing the JWT identity
      */
+    @Inject
+    TrainingGeneratorService tgs;
+
+    @Inject
+    TrainingPlanService trainingPlanService;
+
+
     @POST
     @Operation(
             summary = "Synchronisation des données",
@@ -43,16 +61,25 @@ public class SyncResource {
             @APIResponse(responseCode = "401", description = "Non authentifié"),
             @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
+
+
     public Response sync(
             @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
-            SecurityContext context) {
-        try {
-            // Logique de synchronisation à implémenter
-            return Response.ok().build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Erreur interne du serveur\"}")
-                    .build();
+            SecurityContext securityContext) {
+
+        LocalDate today = LocalDate.now();
+
+        UUID accountId = UUID.fromString(securityContext.getUserPrincipal().getName());
+
+        Optional<TrainingPlan> tp = trainingPlanService.getMyCurrentTrainingPlan(accountId);
+
+        if (tp.isPresent()) {
+            tgs.sync(tp.get(), today);
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("No current training plan found to sync.").build();
         }
+
+        return Response.ok().build();
     }
+
 }

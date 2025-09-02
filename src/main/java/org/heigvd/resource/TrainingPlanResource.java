@@ -1,5 +1,6 @@
 package org.heigvd.resource;
 
+
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -8,6 +9,10 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.heigvd.dto.training_plan_dto.TrainingPlanLightDto;
+import org.heigvd.dto.training_plan_dto.TrainingPlanRequestDto;
+import org.heigvd.dto.training_plan_dto.TrainingPlanResponseDto;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -39,6 +44,7 @@ import java.util.UUID;
 @Consumes(RestMediaType.APPLICATION_JSON)
 @Authenticated
 @Tag(name = "Training Plans", description = "Training plan management")
+@SecurityRequirement(name = "bearerAuth")
 public class TrainingPlanResource {
 
     @Inject
@@ -54,10 +60,10 @@ public class TrainingPlanResource {
     TrainingGeneratorService tgs;
 
     @Inject
-    EntityManager em;
+    WorkoutService workoutService;
 
     @Inject
-    WorkoutService workoutService;
+    EntityManager em;
 
     /**
      * Retrieves the training plan of the authenticated user.
@@ -87,7 +93,7 @@ public class TrainingPlanResource {
         try {
             UUID accountId = UUID.fromString(securityContext.getUserPrincipal().getName());
 
-            Optional<TrainingPlan> tp = trainingPlanService.getMyTrainingPlan(accountId);
+            Optional<TrainingPlan> tp = trainingPlanService.getMyCurrentTrainingPlan(accountId);
 
             if (tp.isEmpty()) {
                 return Response.status(Response.Status.NOT_FOUND)
@@ -99,7 +105,7 @@ public class TrainingPlanResource {
                     tp.get().getId(),
                     trainingPlanService.getCurrentWeekNb(tp.get()),
                     tp.get().getWeeklyPlans().size(),
-                    tp.get().getWorkouts().size(),
+                    workoutService.getAllGeneratedWorkouts(accountId, tp.get().getId()).size(),
                     tp.get().getWeeklyPlans().stream().mapToInt(wp -> wp.getDailyPlans().size()).sum(),
                     tp.get().getWeeklyPlans().get(trainingPlanService.getCurrentWeekNb(tp.get())-1)
             );
@@ -111,26 +117,8 @@ public class TrainingPlanResource {
                     .entity("{\"error\": \"Internal server error\"}")
                     .build();
         }
-
-        TrainingPlanLightDto trainingPlanLightDto = new TrainingPlanLightDto(
-                tp.get().getId(),
-                trainingPlanService.getCurrentWeekNb(tp.get()),
-                tp.get().getWeeklyPlans().size(),
-                workoutService.getAllGeneratedWorkouts(accountId, tp.get().getId()).size(),
-                tp.get().getWeeklyPlans().stream().mapToInt(wp -> wp.getDailyPlans().size()).sum(),
-                tp.get().getWeeklyPlans().get(trainingPlanService.getCurrentWeekNb(tp.get())-1)
-        );
-
-        // Assuming the training plan is found, return it
-        return Response.ok(trainingPlanLightDto).build();
     }
 
-    /**
-     * Generates and creates a training plan for the authenticated user.
-     *
-     * @param securityContext Security context containing the JWT identity
-     * @param trainingPlanRequestDto Training plan generation parameters
-     */
     @POST
     @Transactional
     @Operation(
