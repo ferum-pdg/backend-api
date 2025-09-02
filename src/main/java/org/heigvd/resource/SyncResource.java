@@ -35,7 +35,7 @@ import java.util.UUID;
 @Produces(RestMediaType.APPLICATION_JSON)
 @Consumes(RestMediaType.APPLICATION_JSON)
 @Authenticated
-@Tag(name = "Sync", description = "Synchronisation des données")
+@Tag(name = "Sync", description = "Data synchronization")
 public class SyncResource {
 
     /**
@@ -49,22 +49,19 @@ public class SyncResource {
     @Inject
     TrainingPlanService trainingPlanService;
 
-
     @POST
     @Operation(
-            summary = "Synchronisation des données",
-            description = "Lance la synchronisation des données pour l'utilisateur authentifié."
+            summary = "Data synchronization",
+            description = "Triggers data synchronization for the authenticated user."
     )
     @SecurityRequirement(name = "bearerAuth")
     @APIResponses(value = {
-            @APIResponse(responseCode = "200", description = "Synchronisation réussie"),
-            @APIResponse(responseCode = "401", description = "Non authentifié"),
-            @APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+            @APIResponse(responseCode = "200", description = "Synchronization successful"),
+            @APIResponse(responseCode = "401", description = "Not authenticated"),
+            @APIResponse(responseCode = "500", description = "Internal server error")
     })
-
-
     public Response sync(
-            @Parameter(description = "Contexte de sécurité avec l'identité JWT", hidden = true)
+            @Parameter(description = "Security context with JWT identity", hidden = true)
             SecurityContext securityContext) {
 
         LocalDate today = LocalDate.now();
@@ -81,5 +78,4 @@ public class SyncResource {
 
         return Response.ok().build();
     }
-
 }

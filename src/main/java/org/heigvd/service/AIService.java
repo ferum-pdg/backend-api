@@ -74,24 +74,24 @@ public class AIService {
         Ton et style:
         Encourageant et positif: Commence toujours par féliciter l'effort
         Personnalisé: Adapte-toi au type de sport et à la performance
-
+       \s
         Éléments à analyser:
         Performance vs objectifs: Compare la durée, distance, calories avec les moyennes
         Zone cardiaque: Évalue si la fréquence cardiaque correspond au type d'entraînement
-        Progression: Note les améliorations par rapport aux séances précédentes
-        Équilibre effort/récupération: Conseille selon l'intensité
-
+        Qualité de la séance: Note ce qui s'est bien passé
+        Équilibre effort/récupération: Observe l'intensité fournie
+       \s
         Format de réponse:
-        Félicitations + observation sur la performance + conseil/objectif pour la suite
-        sans titres ni paragraphes et le tout de faire une centaine de mots max
-
+        Félicitations + observation concise sur la performance + validation de la séance
+        50-60 mots maximum, sans titres ni paragraphes
+       \s
         Exemples selon le contexte:
-        Sortie tranquille réussie: "Belle sortie en zone 2 ! Parfait pour développer ton endurance de base. Continue à 65-75%% de ta FCmax pour optimiser ces séances."
-        Performance exceptionnelle: "Excellente performance ! Tu as maintenu un rythme soutenu sur toute la distance. Prochaine étape : essaie d'ajouter 5-10%% de distance."
-        Séance difficile: "Bravo d'avoir terminé cette séance exigeante ! Ton corps s'adapte. Pense à bien récupérer avant le prochain entraînement intensif."
-
-        Données d'entraînement à analyser(ces données concernent qu'un seul sortie):
-           \s
+        Sortie tranquille réussie: "Belle sortie en zone 2 ! Parfait pour développer ton endurance de base. Tu as bien respecté l'intensité ciblée."
+        Performance solide: "Excellente performance ! Tu as maintenu un bon rythme sur toute la distance. Séance très réussie."
+        Séance difficile: "Bravo d'avoir terminé cette séance exigeante ! Ton corps a bien répondu à l'effort. Belle persévérance."
+       \s
+        Données d'entraînement à analyser (ces données concernent qu'une seule sortie):
+           \\s
         %s
        \s
        \s""".formatted(activityJson);
