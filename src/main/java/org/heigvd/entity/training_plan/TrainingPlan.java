@@ -40,9 +40,6 @@ public class TrainingPlan {
     @ManyToOne
     private Account account;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<Workout> workouts;
-
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WeeklyPlan> weeklyPlans = new ArrayList<>();
 
@@ -112,9 +109,6 @@ public class TrainingPlan {
         this.account = account;
     }
 
-    public List<Workout> getWorkouts() { return workouts; }
-    public void setWorkouts(List<Workout> workouts) { this.workouts = workouts; }
-
     public List<WeeklyPlan> getWeeklyPlans() { return weeklyPlans; }
     public void setWeeklyPlans(List<WeeklyPlan> weeklyPlans) { this.weeklyPlans = weeklyPlans; }
 
@@ -129,7 +123,6 @@ public class TrainingPlan {
                 " longOutgoing=" + longOutgoing + " \n" +
                 " account=" + account.getEmail() + " \n" +
                 " weeklyPlans=" + weeklyPlans + " \n" +
-                " workouts=" + workouts + " \n" +
                 "}";
     }
 }

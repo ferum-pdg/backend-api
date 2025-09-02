@@ -111,6 +111,18 @@ public class TrainingPlanResource {
                     .entity("{\"error\": \"Internal server error\"}")
                     .build();
         }
+
+        TrainingPlanLightDto trainingPlanLightDto = new TrainingPlanLightDto(
+                tp.get().getId(),
+                trainingPlanService.getCurrentWeekNb(tp.get()),
+                tp.get().getWeeklyPlans().size(),
+                workoutService.getAllGeneratedWorkouts(accountId, tp.get().getId()).size(),
+                tp.get().getWeeklyPlans().stream().mapToInt(wp -> wp.getDailyPlans().size()).sum(),
+                tp.get().getWeeklyPlans().get(trainingPlanService.getCurrentWeekNb(tp.get())-1)
+        );
+
+        // Assuming the training plan is found, return it
+        return Response.ok(trainingPlanLightDto).build();
     }
 
     /**
