@@ -255,7 +255,6 @@ public class AuthResource {
             @Parameter(description = "Account information for new user", required = true)
             @Valid CreateAccountDto dto) {
         try {
-            // Check if email already exists
             Optional<Account> existingUser = accountService.findByEmail(dto.getEmail());
             if (existingUser.isPresent()) {
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -263,10 +262,9 @@ public class AuthResource {
                         .build();
             }
 
-            // Create new account
             Account newAccount = new Account();
             newAccount.setEmail(dto.getEmail());
-            newAccount.setPassword(dto.getPassword()); // The create method will hash it automatically
+            newAccount.setPassword(dto.getPassword());
             newAccount.setFirstName(dto.getFirstName());
             newAccount.setLastName(dto.getLastName());
             newAccount.setPhoneNumber(dto.getPhoneNumber());
@@ -275,13 +273,10 @@ public class AuthResource {
             newAccount.setHeight(dto.getHeight());
             newAccount.setFCMax(dto.getFcMax());
 
-            // Save the account (password will be hashed in the service)
             Account savedAccount = accountService.create(newAccount);
 
-            // Generate JWT token for the new user
             String token = jwtService.generateToken(savedAccount.getId());
 
-            // Return the JWT token
             return Response.status(Response.Status.CREATED)
                     .entity(new LoginResponseDto(token))
                     .build();

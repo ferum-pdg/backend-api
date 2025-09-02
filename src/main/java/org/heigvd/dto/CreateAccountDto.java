@@ -33,10 +33,10 @@ public class CreateAccountDto {
 
     private Integer fcMax;
 
-    // Default constructor
+    // CONSTRUCTORS ---------------------------------------------
+
     public CreateAccountDto() {}
 
-    // Constructor
     public CreateAccountDto(String email, String password, String firstName, String lastName,
                             String phoneNumber, LocalDate birthDate, Double weight, Double height, Integer fcMax) {
         this.email = email;
@@ -50,7 +50,8 @@ public class CreateAccountDto {
         this.fcMax = fcMax;
     }
 
-    // Getters and setters
+    // GETTERS & SETTERS ----------------------------------------
+
     public String getEmail() {
         return email;
     }
