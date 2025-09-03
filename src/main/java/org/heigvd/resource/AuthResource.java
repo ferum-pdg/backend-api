@@ -17,12 +17,15 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.heigvd.dto.AccountDto;
 import org.heigvd.dto.CreateAccountDto;
+import org.heigvd.service.FitnessLevelService;
 import org.jboss.resteasy.reactive.common.util.RestMediaType;
 import org.heigvd.dto.LoginRequestDto;
 import org.heigvd.dto.LoginResponseDto;
 import org.heigvd.entity.Account;
 import org.heigvd.service.AccountService;
 import org.heigvd.service.JwtService;
+
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -39,6 +42,9 @@ public class AuthResource {
 
     @Inject
     AccountService accountService;
+
+    @Inject
+    FitnessLevelService fitnessLevelService;
 
     @Inject
     JwtService jwtService;
@@ -274,6 +280,7 @@ public class AuthResource {
             newAccount.setFCMax(dto.getFcMax());
 
             Account savedAccount = accountService.create(newAccount);
+            savedAccount.setFitnessLevels(List.of(fitnessLevelService.createFirstFitnessLevel(newAccount)));
 
             String token = jwtService.generateToken(savedAccount.getId());
 

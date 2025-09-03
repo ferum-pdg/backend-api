@@ -64,6 +64,63 @@ public class FitnessLevelService {
         }
     }
 
+    public FitnessLevel createFirstFitnessLevel(Account account) {
+        double bmi = account.getWeight() / Math.pow(account.getHeight() / 100.0, 2);
+        int age = account.getBirthDate().until(LocalDate.now()).getYears();
+        int fcMax = account.getFCMax();
+
+        // Score BMI (0-40 points)
+        int bmiScore;
+        if (bmi < 18.5) {
+            bmiScore = Math.max(0, (int)(15 - (18.5 - bmi) * 2));
+        } else if (bmi >= 18.5 && bmi <= 24.9) {
+            bmiScore = 40;
+        } else if (bmi >= 25 && bmi <= 29.9) {
+            bmiScore = Math.max(10, (int)(40 - (bmi - 25) * 6));
+        } else {
+            bmiScore = Math.max(0, (int)(10 - (bmi - 30) * 2));
+        }
+
+        // Score Age (0-30 points)
+        int ageScore;
+        if (age <= 25) {
+            ageScore = 30;
+        } else if (age <= 35) {
+            ageScore = 28;
+        } else if (age <= 45) {
+            ageScore = 25;
+        } else if (age <= 55) {
+            ageScore = 20;
+        } else if (age <= 65) {
+            ageScore = 15;
+        } else {
+            ageScore = 10;
+        }
+
+        // Score FCMax (0-30 points)
+        int theoreticalFCMax = 220 - age;
+        double fcMaxRatio = (double) fcMax / theoreticalFCMax;
+        int fcMaxScore;
+        if (fcMaxRatio >= 1.0) {
+            fcMaxScore = 30;
+        } else if (fcMaxRatio >= 0.95) {
+            fcMaxScore = 25;
+        } else if (fcMaxRatio >= 0.90) {
+            fcMaxScore = 20;
+        } else if (fcMaxRatio >= 0.85) {
+            fcMaxScore = 15;
+        } else if (fcMaxRatio >= 0.80) {
+            fcMaxScore = 10;
+        } else {
+            fcMaxScore = 5;
+        }
+
+        // Calcul du niveau total (0-100)
+        int estimatedFirstLevel = Math.min(100, Math.max(0, bmiScore + ageScore + fcMaxScore));
+
+        return new FitnessLevel(LocalDate.now(), estimatedFirstLevel);
+    }
+
     /**
      * Determines whether the fitness level should be updated.
      */
