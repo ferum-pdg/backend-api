@@ -102,7 +102,7 @@ public class TrainingPlanResource {
                     tp.get().getId(),
                     trainingPlanService.getCurrentWeekNb(tp.get()),
                     tp.get().getWeeklyPlans().size(),
-                    workoutService.getAllGeneratedWorkouts(accountId, tp.get().getId()).size(),
+                    workoutService.getAllDonePlannedWorkouts(accountId, tp.get().getId()).size(),
                     tp.get().getWeeklyPlans().stream().mapToInt(wp -> wp.getDailyPlans().size()).sum(),
                     tp.get().getWeeklyPlans().get(trainingPlanService.getCurrentWeekNb(tp.get())-1)
             );

@@ -117,6 +117,24 @@ public class WorkoutService {
     }
 
     /**
+     * Retrieves all completed planned workouts for a user and training plan.
+     * @param accountId account identifier
+     * @param trainingPlanId training plan identifier
+     * @return list of completed planned workouts
+     */
+    public List<Workout> getAllDonePlannedWorkouts(UUID accountId, UUID trainingPlanId) {
+        return em.createQuery(
+                        "SELECT w FROM Workout w JOIN w.plans p WHERE w.account.id = :accountId " +
+                                "AND w.trainingPlan.id = :trainingPlanId " +
+                                "AND w.status = :status ORDER BY w.startTime DESC",
+                        Workout.class)
+                .setParameter("accountId", accountId)
+                .setParameter("trainingPlanId", trainingPlanId)
+                .setParameter("status", WorkoutStatus.COMPLETED)
+                .getResultList();
+    }
+
+    /**
      * Creates a new workout.
      * @param workout workout entity to persist
      * @return the created workout
