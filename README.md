@@ -11,7 +11,7 @@
 - **Docker & Docker Compose**
 - **PostgreSQL 15+** (ou via Docker)
 
-### Installation
+### Démarrage de l'application
 
 ```bash
 # Cloner le projet
@@ -20,6 +20,9 @@ cd backend-api
 
 # Lancer l'application en mode développement
 ./mvnw quarkus:dev
+
+# Lancer les tests
+./mvnw test
 ```
 
 L'API sera accessible sur **http://localhost:8080**
@@ -68,6 +71,6 @@ GET    /goals                   # Objectifs disponibles
 > 
 > Ces fichiers sont situés dans le dossier `src/json`.
 
-Pour utiliser ces fichiers il vous suffira juste de les copier-coller dans le body d'une requête `POST` sur `/workout` en utilisant par exemple un outil permettant d'exécuter des requêtes HTTP (Postman, Insomnia, Curl, ...) 
+Pour utiliser ces fichiers il vous suffira de les copier-coller dans le body d'une requête `POST` sur `/workout` en utilisant par exemple un outil permettant d'exécuter des requêtes HTTP comme Postman, Insomnia, Curl, ou HTTPie.
 
-⚠️ **Attention** : lors-ce que votre training plan est défini pour une semaine, il faut que la date du workout soit la même que la date du début de votre plan d'entrainement. Pour cela, faite un CTRL + F pour chercher la date et remplacez la par la date de votre entrainement.
+⚠️ **Attention** : lors-ce que votre training plan est défini pour une semaine, il faut que la date du workout soit la même que la date de l'entrainement planifié par le plan d'entrainement. Pour cela, faite un CTRL + F pour chercher la date et remplacez la par la date de votre entrainement planifié.
