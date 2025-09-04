@@ -68,11 +68,16 @@ public class WorkoutAnalyserV1 implements WorkoutAnalyser {
 
         double grade = gradeWorkout(workout);
         workout.setGrade(grade);
+        String aiFeedback;
 
-        WorkoutFullDto workoutDto = workoutService.toWorkoutFullDto(workout, workout.getAccount().getFCMax());
-        String aiFeedback = aiService.analyzeSportActivity(workoutDto.toString());
+        if(workout.getWorkoutType() == null) {
+            aiFeedback = "Workout type is undefined, unable to provide analysis. This could be due to the workout being imported without Training Plan.";
+        } else {
+            WorkoutFullDto workoutDto = workoutService.toWorkoutFullDto(workout, workout.getAccount().getFCMax());
+            aiFeedback = aiService.analyzeSportActivity(workoutDto.toString());
+        }
+
         workout.setAiAnalysis(aiFeedback);
-
         fitnessLevelService.updateFitnessLevel(workout.getAccount(), workout, grade);
 
         return workout;
@@ -303,7 +308,7 @@ public class WorkoutAnalyserV1 implements WorkoutAnalyser {
      */
     private double evaluateIntensity(Workout workout) {
 
-        if (workout.getAvgHeartRate() == 0) {
+        if (workout.getAvgHeartRate() == 0 || workout.getWorkoutType() == null) {
             return 7.0;
         }
 
@@ -323,6 +328,7 @@ public class WorkoutAnalyserV1 implements WorkoutAnalyser {
                     Math.max(2.0, 10.0 - (intensityPercent - 0.6) * 25);
             case TECHNIC -> intensityPercent <= 0.65 ? 10.0 :
                     Math.max(2.0, 10.0 - (intensityPercent - 0.65) * 22);
+            default -> 5.0;
         };
     }
 
