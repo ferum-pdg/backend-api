@@ -52,9 +52,6 @@ public class Account {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FitnessLevel> fitnessLevels = new ArrayList<>();
 
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
-    private List<Workout> workouts;
-
     // CONSTRUCTORS ---------------------------------------------
 
     public Account() {}

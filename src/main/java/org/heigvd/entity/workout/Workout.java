@@ -6,6 +6,7 @@ import org.heigvd.dto.workout_dto.data_point_dto.WorkoutBPMDataPointDto;
 import org.heigvd.dto.workout_dto.data_point_dto.WorkoutSpeedDataPointDto;
 import org.heigvd.entity.Account;
 import org.heigvd.entity.Sport;
+import org.heigvd.entity.training_plan.TrainingPlan;
 import org.heigvd.entity.workout.data_point.BPMDataPoint;
 import org.heigvd.entity.workout.data_point.SpeedDataPoint;
 import org.heigvd.entity.workout.details.WorkoutPlan;
@@ -76,13 +77,17 @@ public class Workout {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkoutPlan> plans = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "training_plan_id")
+    private TrainingPlan trainingPlan;
+
     // CONSTRUCTORS ---------------------------------------------
 
     public Workout() {}
 
     public Workout(Account account, Sport sport, OffsetDateTime startTime,
                    OffsetDateTime endTime, String source, WorkoutStatus status,
-                   WorkoutType type) {
+                   WorkoutType type, TrainingPlan trainingPlan) {
         this.account = account;
         this.sport = sport;
         this.startTime = startTime;
@@ -91,6 +96,7 @@ public class Workout {
         this.status = status;
         this.type = type;
         this.durationSec = (int) (endTime.toEpochSecond() - startTime.toEpochSecond());
+        this.trainingPlan = trainingPlan;
     }
 
     // METHODS --------------------------------------------------
@@ -168,6 +174,12 @@ public class Workout {
 
     public String getAiAnalysis() { return aiAnalysis; }
     public void setAiAnalysis(String aiAnalysis) { this.aiAnalysis = aiAnalysis; }
+
+    public WorkoutType getType() { return type; }
+    public void setType(WorkoutType type) { this.type = type; }
+
+    public TrainingPlan getTrainingPlan() { return trainingPlan; }
+    public void setTrainingPlan(TrainingPlan trainingPlan) { this.trainingPlan = trainingPlan; }
 
     @Override
     public String toString() {
