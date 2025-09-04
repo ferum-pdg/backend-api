@@ -1,64 +1,73 @@
-# backend-api
-## Status
-![Tests on develop](https://github.com/ferum-pdg/backend-api/actions/workflows/test-develop.yml/badge.svg)
+# 🏃‍♂️ Ferumsport Backend API
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+> API backend pour l'application de génération de plan d'entrainement Ferum, développée avec Quarkus et Java 21.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## 🚀 Démarrage rapide
 
-## Running the application in dev mode
+### Prérequis
 
-You can run your application in dev mode that enables live coding using:
+- **Java 21+** (OpenJDK recommandé)
+- **Maven 3.9+**
+- **Docker & Docker Compose**
+- **PostgreSQL 15+** (ou via Docker)
 
-```shell script
+### Installation
+
+```bash
+# Cloner le projet
+git clone <repository-url>
+cd backend-api
+
+# Lancer l'application en mode développement
 ./mvnw quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+L'API sera accessible sur **http://localhost:8080**
 
-## Packaging and running the application
+## 🏗️ Architecture
 
-The application can be packaged using:
+### Structure du projet
 
-```shell script
-./mvnw package
+```
+src/main/java/org/heigvd/
+├── dto/                     # Data Transfer Objects
+├── entity/                  # Entités JPA
+├── resource/                # REST Controllers
+├── service/                 # Services métier
+├── training_generator/      # Générateurs d'entraînement
+└── workout_analyser/        # Analyseurs de performance
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+### Technologies principales
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+- **[Quarkus](https://quarkus.io/)** - Framework Java natif
+- **JAX-RS (RESTEasy)** - API REST
+- **JPA/Hibernate** - ORM
+- **PostgreSQL** - Base de données
+- **JWT** - Authentification
+- **OpenAPI** - Documentation API
 
-If you want to build an _über-jar_, execute the following command:
+## 📚 API Documentation
 
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
+La documentation interactive est disponible sur :
+- **Swagger UI** : http://localhost:8080/api
+
+### Endpoints principaux
+
+```
+POST   /auth/login              # Authentification
+GET    /auth/me                 # Profil utilisateur
+POST   /training-plan           # Créer un plan d'entraînement
+GET    /workouts                # Séances d'entraînement
+POST   /workouts                # Enregistrer une séance
+GET    /goals                   # Objectifs disponibles
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+## 🔧 Fichiers de tests
+> Etant donné qu'il est compliqué de pouvoir tester la réconciliation entre un entrainement planifié et un entrainement effectué, nous vous mettons à dispositions des workouts de tests avec des données fictives.
+> 
+> Ces fichiers sont situés dans le dossier `src/json`.
 
-## Creating a native executable
+Pour utiliser ces fichiers il vous suffira juste de les copier-coller dans le body d'une requête `POST` sur `/workout` en utilisant par exemple un outil permettant d'exécuter des requêtes HTTP (Postman, Insomnia, Curl, ...) 
 
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/backend-api-1.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Provided Code
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+⚠️ **Attention** : lors-ce que votre training plan est défini pour une semaine, il faut que la date du workout soit la même que la date du début de votre plan d'entrainement. Pour cela, faite un CTRL + F pour chercher la date et remplacez la par la date de votre entrainement.
