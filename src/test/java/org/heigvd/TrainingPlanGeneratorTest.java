@@ -31,8 +31,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Training Plan Generator Tests")
 public class TrainingPlanGeneratorTest {
 
-    private static final Logger log = LoggerFactory.getLogger(TrainingPlanGeneratorTest.class);
-
     @Inject
     TrainingPlanGeneratorV1 tpGen;
 
