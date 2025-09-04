@@ -1,4 +1,4 @@
-# 🏃‍♂️ Ferumsport Backend API
+# 🏃‍♂️ Ferum Backend API
 
 > API backend pour l'application de génération de plan d'entrainement Ferum, développée avec Quarkus et Java 21.
 
