@@ -66,11 +66,21 @@ POST   /workouts                # Enregistrer une séance
 GET    /goals                   # Objectifs disponibles
 ```
 
-## 🔧 Fichiers de tests
-> Etant donné qu'il est compliqué de pouvoir tester la réconciliation entre un entrainement planifié et un entrainement effectué, nous vous mettons à dispositions des workouts de tests avec des données fictives.
-> 
-> Ces fichiers sont situés dans le dossier `src/json`.
+## 🔧 Fichiers de test pour les entraînements
 
-Pour utiliser ces fichiers il vous suffira de les copier-coller dans le body d'une requête `POST` sur `/workout` en utilisant par exemple un outil permettant d'exécuter des requêtes HTTP comme Postman, Insomnia, Curl, ou HTTPie.
+Pour faciliter les tests de réconciliation entre entraînements planifiés et entraînements réalisés, des données d'exemple sont disponibles dans le dossier `src/json`.
 
-⚠️ **Attention** : lors-ce que votre training plan est défini pour une semaine, il faut que la date du workout soit la même que la date de l'entrainement planifié par le plan d'entrainement. Pour cela, faite un CTRL + F pour chercher la date et remplacez la par la date de votre entrainement planifié.
+### Utilisation
+
+Ces fichiers peuvent être utilisés directement comme payload dans une requête `POST` vers l'endpoint `/workout` avec des outils comme Postman, Insomnia, curl ou HTTPie.
+
+### Synchronisation des dates
+
+**Important** : Les dates des entraînements de test doivent correspondre aux dates planifiées dans votre plan d'entraînement.
+
+Pour ajuster les dates :
+1. Recherchez les champs de date dans le fichier JSON (généralement `start` et `end`, ainsi que toutes les timestamps BPM et SPEED)
+2. Remplacez-les par la date correspondant à votre entraînement planifié
+3. Vérifiez que le sport correspond également (`Running`, `Cycling`, ou `Swimming`)
+
+Cette synchronisation permet de tester correctement la fusion entre les données planifiées et les données réellement enregistrées.
