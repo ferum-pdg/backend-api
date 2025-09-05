@@ -213,7 +213,7 @@ public class WorkoutResource {
 
             if (w.isEmpty()) {
                 System.out.println("Creating new workout");
-                toReturn = workoutService.createWorkoutOutOfTP(a.get(), workoutDto);
+                toReturn = was.analyse(workoutService.createWorkoutOutOfTP(a.get(), workoutDto));
             } else {
                 System.out.println("Merging with existing workout");
                 toReturn = was.analyse(workoutService.mergeWorkoutWithExisting(w.get(), workoutDto));

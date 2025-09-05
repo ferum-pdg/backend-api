@@ -38,6 +38,9 @@ public class WorkoutService {
     @Inject
     TrainingGeneratorService tgs;
 
+    @Inject
+    WorkoutAnalyserService was;
+
     /**
      * Searches for a workout by identifier.
      * @param id workout identifier

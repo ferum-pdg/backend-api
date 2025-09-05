@@ -64,6 +64,11 @@ public class FitnessLevelService {
         }
     }
 
+    /**
+     * Creates the first fitness level based on user profile details.
+     * @param account
+     * @return
+     */
     public FitnessLevel createFirstFitnessLevel(Account account) {
         double bmi = account.getWeight() / Math.pow(account.getHeight() / 100.0, 2);
         int age = account.getBirthDate().until(LocalDate.now()).getYears();
@@ -115,8 +120,8 @@ public class FitnessLevelService {
             fcMaxScore = 5;
         }
 
-        // Calcul du niveau total (0-100)
-        int estimatedFirstLevel = Math.min(100, Math.max(0, bmiScore + ageScore + fcMaxScore));
+        // Calcul du niveau total (0-50)
+        int estimatedFirstLevel = (bmiScore + ageScore + fcMaxScore) / 3;
 
         return new FitnessLevel(LocalDate.now(), estimatedFirstLevel);
     }
